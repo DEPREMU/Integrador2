@@ -88,14 +88,6 @@ import { colors } from "@utils";
 
 ---
 
-¡Claro! Aquí tienes una sección recomendando las extensiones para **VS Code** con una breve explicación de cada una:
-
----
-
-¡Claro! Aquí tienes el **README.md** con todas las correcciones y las extensiones marcadas correctamente, listadas con su descripción:
-
----
-
 ## Recommended VS Code Extensions
 
 Here is a list of essential and useful extensions for improving your development experience in this project:
