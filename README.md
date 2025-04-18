@@ -4,6 +4,27 @@
 
 This project is the Tetra 5 integrative.
 
+---
+
+## Index
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Setup Instructions](#setup-instructions)
+- [How to Run](#how-to-run)
+- [Project Structure](#project-structure)
+- [Import Aliasing (`@`)](#import-aliasing-)
+- [Best Practices for an Expo React Native Project](#best-practices-for-an-expo-react-native-project)
+- [Recommended VS Code Extensions](#recommended-vs-code-extensions)
+- [How to code](#how-to-code)
+  - [Early returns](#early-returns)
+  - [JSDOC](#jsdoc)
+  - [Arrow Functions](#arrow-functions)
+  - [Reusability](#reusability)
+  - [CamelCase](#camelcase)
+
+---
+
 ## Prerequisites
 
 Before starting, ensure you have the following installed:
@@ -22,8 +43,14 @@ Before starting, ensure you have the following installed:
    cd Integrador2
    ```
 3. Install dependencies:
+
    ```bash
    npm install
+   ```
+
+4. Install tsc to compile ts to js
+   ```bash
+   npm install -g tsc
    ```
 
 ## How to Run
@@ -39,9 +66,10 @@ Before starting, ensure you have the following installed:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 - `/src`: Contains the source code.
+
   - `/api`: API clients and service layer.
   - `/components`: Reusable UI components.
   - `/constants`: App-wide constants (e.g., colors, config).
@@ -53,16 +81,30 @@ Before starting, ensure you have the following installed:
   - `/types`: TypeScript types and models.
   - `/utils`: Utility functions and helpers.
   - `App.tsx`: App entry point and root navigator wrapper.
+
 - `/assets`: Contains all static assets.
 
   - `/images`: Image assets.
   - `/fonts`: Custom fonts.
   - `/icons`: Icon files.
 
+- `/server`: Contains the backend
+
+  - `/dist`: After compilation, here will be all files .js compiled from ts (not available directly in the repository).
+  - `/src`: Contains all source code in ts.
+    - `/routes`: Contains all routes in the server.
+    - `app.ts`: Contains the configuration (security) for the server.
+    - `config.ts`: Contains all configuration will use the server.
+    - `index.ts`: Contains the server running.
+    - `supabase.ts`: Contains the supabase client.
+    - `types.ts`: Contains all the types used in the server
+  - `.env`: Environment variables.
+  - `package.json`: Dependencies and scripts.
+  - `tsconfig.json`: TypeScript configuration (compile the ts code to js).
+
 - `app.json`: Expo project configuration.
 - `tsconfig.json`: TypeScript configuration (with path aliasing using `@`).
 - `babel.config.js`: Babel configuration (with `@` alias support).
-- `.env`: Environment variables.
 - `package.json`: Dependencies and scripts.
 - `README.md`: Project documentation.
 
@@ -85,6 +127,68 @@ import { colors } from "../../../constants/colors";
 import LoginScreen from "@screens/LoginScreen";
 import { colors } from "@utils";
 ```
+
+---
+
+## Best Practices for an Expo React Native Project
+
+To ensure this project is maintainable, scalable, and efficient, here’s how I recommend you work with it:
+
+### 1. **Organize Your Work**
+
+- Stick to the existing folder structure. For example, place reusable components in `/src/components` and keep screen-specific logic in `/src/screens`.
+- When adding new features, group related files together. For instance, if you create a new screen, include its styles and any custom hooks in the same directory.
+
+### 2. **Use TypeScript Effectively**
+
+- Always define types and interfaces for props, state, and API responses. This will help you catch errors early and make the code easier to understand.
+- If you’re unsure about a type, check the `/src/types` folder or create a new type definition there.
+
+### 3. **Build Reusable Components**
+
+- When creating UI elements, think about whether they can be reused elsewhere. If so, add them to `/src/components`.
+- Keep each component focused on a single responsibility to make it easier to maintain and test.
+
+### 4. **Manage State Wisely**
+
+- For simple state needs, use the Context API or hooks in `/src/hooks`.
+
+### 5. **Focus on Performance**
+
+- Use `React.memo` for components that don’t need to re-render often.
+- Optimize images by compressing them or using Expo’s `ImageManipulator`.
+- Avoid inline styles; instead, use `StyleSheet.create` for better performance.
+- Use arrow functions to make the styles, and use it in the screen.
+
+### 6. **Handle Errors Proactively**
+
+- Think in every single error that can cause the logic, and handle it.
+
+### 7. **[Write Clean Code](#how-to-code)**
+
+- Use Prettier and ESLint to keep the codebase consistent. The project already includes configurations for these tools.
+- Use early returns when is possible [Early returns](#early-returns).
+- Follow the naming conventions used in the project to maintain readability.
+
+### 8. **Test Your Code**
+
+- Write unit tests for new components and utilities.
+- When you finish coding, test the app by web and android, ensuring the code is well done.
+
+### 9. **Secure Sensitive Data**
+
+- Store sensitive information like tokens securely using `expo-secure-store`.
+- All sensitive data, will be managed by the backend ([server](#project-structure)).
+
+### 10. **Work with Git**
+
+- Commit changes frequently with clear messages. For example, “Add login screen” is better than “Fix stuff.”
+- Use feature branches for new functionality and merge them into the main branch via pull requests.
+
+### 11. **Keep Dependencies Updated**
+
+- Regularly check for updates to the Expo SDK and other dependencies. Run `npx expo install --check` to see what’s available (**TIP**: Do not use this with all your changes).
+- After updating, test the app thoroughly to ensure everything works as expected.
 
 ---
 
@@ -145,3 +249,198 @@ Here is a list of essential and useful extensions for improving your development
     [Install Path Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.path-intellisense)
 
 ---
+
+---
+
+---
+
+# How to code
+
+## Early returns
+
+Try using early returns where is possible, it is also possible with for
+
+**Instead of**
+
+```typescript
+const canLogin = (username: string, password: string): boolean => {
+  if (username === "user") {
+    if (password === "1234") {
+      return true;
+    }
+  }
+  return false;
+};
+```
+
+**Write it like this:**
+
+```typescript
+const canLogin = (username: string, password: string): boolean => {
+  // This makes the code more readable.
+  if (username !== "user") return false;
+  if (password !== "1234") return false;
+
+  return true;
+};
+```
+
+---
+
+## JSDOC
+
+/\*\*
+
+- JSDoc is a standardized way to document JavaScript code. It uses special
+- comment syntax to describe the purpose, parameters, return values, and
+- other details of functions, classes, and other code elements. These comments
+- can be processed by tools to generate documentation or provide in-editor
+- assistance.
+-
+- Key elements of JSDoc:
+- - `@param`: Describes a parameter of a function, including its name, type, and purpose.
+- - `@returns`: Describes the return value of a function, including its type and purpose.
+- - `@type`: Specifies the type of a variable or property.
+- - `@example`: Provides an example of how to use the documented code.
+- - `@deprecated`: Marks a function or feature as outdated and suggests alternatives.
+- Example:
+
+```typescript
+/**
+ * Adds two numbers together.
+ * @param {number} a - The first number.
+ * @param {number} b - The second number.
+ * @returns {number} The sum of the two numbers.
+ * @example
+ * console.log(add(2, 3)); // Outputs: 5
+ *
+ */
+const add = (a: number, b: number): number => a + b;
+```
+
+- Using JSDoc improves code readability, maintainability, and helps developers understand the purpose and usage of the code.
+- **TIP**: When a function or variable is documented with JSDoc, you can view its documentation by hovering over the function or variable in your code editor. This feature provides quick insights into the purpose, parameters, and return values of the function or variable, enhancing your development experience.
+
+---
+
+## Arrow Functions
+
+Arrow functions are a concise way to write functions in JavaScript. They are especially useful for writing shorter function expressions and maintaining the `this` context in certain scenarios.
+
+### Syntax
+
+An arrow function uses the `=>` syntax:
+
+```javascript
+// Traditional function
+function add(a, b) {
+  return a + b;
+}
+
+// Arrow function
+const add = (a, b) => a + b;
+```
+
+### Key Features
+
+1. **Concise Syntax**  
+   Arrow functions allow you to write shorter function expressions. If the function body contains only a single expression, you can omit the braces `{}` and the `return` keyword.
+
+   ```typescript
+   // Single-line arrow function
+   const square = (x: number): number => x * x;
+   ```
+
+2. **Implicit Return**  
+   When the function body is a single expression, the result of that expression is implicitly returned.
+
+   ```typescript
+   const greet = (name: Exclude<any, Falsy>): string => `Hello, ${name}!`;
+   ```
+
+3. **No `this` Binding**  
+   Arrow functions do not have their own `this` context. Instead, they inherit `this` from the surrounding scope. This makes them ideal for use in callbacks and event handlers.
+
+   ```javascript
+   class Counter {
+     count = 0;
+
+     increment = () => {
+       this.count++;
+     };
+   }
+   ```
+
+4. **No `arguments` Object**  
+   Arrow functions do not have their own `arguments` object. If you need access to `arguments`, use a regular function.
+
+   ```typescript
+   const logArgs = (...args) => console.log(args);
+   ```
+
+### When to Use Arrow Functions
+
+- For short, simple functions.
+- When you need to preserve the `this` context.
+- In array methods like `map`, `filter`, and `reduce`.
+
+### When Not to Use Arrow Functions
+
+- When defining methods in a class prototype (use regular functions instead).
+- When you need access to the `arguments` object.
+
+---
+
+## Reusability
+
+Everything can be reusable.
+
+For example:
+
+```typescript
+const formatPhoneNumber = (phoneNumber: string, countryCode: string) => {
+  if (countryCode.toLowerCase() === "mx") {
+    return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  } else if (countryCode.toLowerCase() === "us") {
+    //...
+  }
+};
+```
+
+This function can be use in other parts of the code, this function should be in the file **[/src/utils/functions.ts](#project-structure)**
+
+---
+
+## CamelCase
+
+camelCase is a widely used naming convention in programming where the first word is written in lowercase, and each subsequent word starts with an uppercase letter. This style improves readability and helps distinguish between words in variable, function, and property names.
+
+### Examples
+
+```typescript
+import { User } from "@types";
+
+// Variable names
+let userName: number = "JohnDoe";
+let isLoggedIn: boolean = true;
+
+// Function names
+const calculateTotal = (price: number, tax: number): number => price + tax;
+
+// Object properties
+const user: User = {
+  firstName: "John",
+  lastName: "Doe",
+};
+```
+
+### Why Use camelCase?
+
+1. **Readability**  
+   camelCase makes it easier to read, write and understand variable and function names, especially when they consist of multiple words.
+
+2. **Consistency**  
+   Following a consistent naming convention across your codebase improves maintainability and reduces confusion.
+
+3. **Community Standards**  
+   camelCase is the standard naming convention in JavaScript and many other programming languages, making your code more familiar to other developers.

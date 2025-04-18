@@ -1,6 +1,6 @@
 import app from "./app.js";
 import { port } from "./config.js";
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening in port ${port}`);
 });
