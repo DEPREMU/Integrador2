@@ -22,6 +22,7 @@ This project is the Tetra 5 integrative.
   - [Arrow Functions](#arrow-functions)
   - [Reusability](#reusability)
   - [CamelCase](#camelcase)
+  - [Only English](#only-english)
 
 ---
 
@@ -444,3 +445,43 @@ const user: User = {
 
 3. **Community Standards**  
    camelCase is the standard naming convention in JavaScript and many other programming languages, making your code more familiar to other developers.
+
+## **Only English**
+
+Write functions, variable names, documentation and any other thing only in english.
+
+**Do not**
+
+```typescript
+const nombreDeUsuario: string = "Nico";
+/**
+ * Suma dos números.
+ * @param {number} numero1 - El primer numero.
+ * @param {number} b - El segundo numero.
+ * @returns {number} La suma de los dos números.
+ * @example
+ * console.log(sumar(2, 3)); // Salida: 5
+ *
+ */
+const sumar = (numero1: number, numero2: number): number => numero1 + numero2;
+```
+
+**Use only english**
+
+```typescript
+const username: string = "Nico";
+/**
+ * Adds two numbers together.
+ * @param {number} num1 - The first number.
+ * @param {number} num2 - The second number.
+ * @returns {number} The sum of the two numbers.
+ * @example
+ * console.log(add(2, 3)); // Outputs: 5
+ *
+ */
+const add = (num1: number, num2: number): number => num1 + num2;
+// or
+const addition = (num1: number, num2: number): number => num1 + num2;
+```
+
+If the code is in any other language, the pull request will be reject, even if only one variable name is in another language.

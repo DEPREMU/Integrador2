@@ -2,11 +2,33 @@
 
 ## Descripción General
 
-Este proyecto es el integrador del Tetra 5.
+Este proyecto es el integrador de Tetra 5.
 
-## Requisitos Previos
+---
 
-Antes de comenzar, asegúrate de tener instalados los siguientes programas:
+## Índice
+
+- [Descripción General](#descripción-general)
+- [Prerrequisitos](#prerrequisitos)
+- [Instrucciones de Configuración](#instrucciones-de-configuración)
+- [Cómo Ejecutar](#cómo-ejecutar)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Alias de Importación (`@`)](#alias-de-importación-)
+- [Mejores Prácticas para un Proyecto Expo React Native](#mejores-prácticas-para-un-proyecto-expo-react-native)
+- [Extensiones Recomendadas para VS Code](#extensiones-recomendadas-para-vs-code)
+- [Cómo programar](#cómo-programar)
+  - [Early returns](#early-returns)
+  - [JSDOC](#jsdoc)
+  - [Funciones Flecha](#funciones-flecha)
+  - [Reusabilidad](#reusabilidad)
+  - [CamelCase](#camelcase)
+  - [Solo inglés](#solo-inglés)
+
+---
+
+## Prerrequisitos
+
+Antes de comenzar, asegúrate de tener instalado lo siguiente:
 
 - Node.js >= V22.0.0
 - npm
@@ -17,55 +39,73 @@ Antes de comenzar, asegúrate de tener instalados los siguientes programas:
    ```bash
    git clone https://github.com/DEPREMU/Integrador2
    ```
-
-````
-
 2. Navega al directorio del proyecto:
    ```bash
    cd Integrador2
    ```
 3. Instala las dependencias:
+
    ```bash
    npm install
    ```
 
-## Cómo Ejecutarlo
+4. Instala `tsc` para compilar TypeScript a JavaScript:
+   ```bash
+   npm install -g tsc
+   ```
+
+## Cómo Ejecutar
 
 1. Ejecuta el script principal o inicia el servidor:
    ```bash
    npm start
    ```
-2. Abre la aplicación en Expo o abre tu navegador y navega a:
-   ```bash
+2. Abre la app en Expo o abre tu navegador y navega a:
+   ```
    http://localhost:8081
    ```
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 - `/src`: Contiene el código fuente.
+
   - `/api`: Clientes de API y capa de servicios.
-  - `/components`: Componentes reutilizables de la interfaz de usuario.
-  - `/constants`: Constantes globales de la aplicación (por ejemplo, colores, configuración).
-  - `/context`: Contextos de React (por ejemplo, autenticación, tema).
+  - `/components`: Componentes de UI reutilizables.
+  - `/constants`: Constantes de toda la app (ej. colores, configuración).
+  - `/context`: Contextos de React (ej. autenticación, tema).
   - `/hooks`: Hooks personalizados de React.
-  - `/navigation`: Lógica de navegación y tipos (usando React Navigation).
-  - `/screens`: Pantallas de la aplicación como `LoginScreen` y `HomeScreen`.
-  - `/store`: Gestión global del estado (por ejemplo, Zustand, Redux).
-  - `/types`: Tipos y modelos de TypeScript.
-  - `/utils`: Funciones y utilidades.
-  - `App.tsx`: Punto de entrada de la aplicación y envoltorio del navegador raíz.
+  - `/navigation`: Lógica y tipos de navegación (usando React Navigation).
+  - `/screens`: Pantallas de la app como `LoginScreen` y `HomeScreen`.
+  - `/store`: Manejo de estado global (ej. Zustand, Redux).
+  - `/types`: Tipos y modelos TypeScript.
+  - `/utils`: Funciones utilitarias y helpers.
+  - `App.tsx`: Punto de entrada de la app y envoltorio del navegador raíz.
+
 - `/assets`: Contiene todos los recursos estáticos.
 
-  - `/images`: Archivos de imagen.
-  - `/fonts`: Fuentes personalizadas.
-  - `/icons`: Archivos de iconos.
+  - `/images`: Imágenes.
+  - `/fonts`: Tipografías personalizadas.
+  - `/icons`: Archivos de íconos.
 
-- `app.json`: Configuración del proyecto de Expo.
-- `tsconfig.json`: Configuración de TypeScript (con alias de ruta usando `@`).
+- `/server`: Contiene el backend
+
+  - `/dist`: Después de compilar, aquí estarán todos los archivos `.js` compilados desde TypeScript (no disponibles directamente en el repositorio).
+  - `/src`: Contiene todo el código fuente en TypeScript.
+    - `/routes`: Contiene todas las rutas del servidor.
+    - `app.ts`: Contiene la configuración (seguridad) del servidor.
+    - `config.ts`: Contiene toda la configuración que usará el servidor.
+    - `index.ts`: Contiene la ejecución del servidor.
+    - `supabase.ts`: Contiene el cliente de Supabase.
+    - `types.ts`: Contiene todos los tipos usados en el servidor.
+  - `.env`: Variables de entorno.
+  - `package.json`: Dependencias y scripts.
+  - `tsconfig.json`: Configuración de TypeScript (para compilar el código ts a js).
+
+- `app.json`: Configuración del proyecto Expo.
+- `tsconfig.json`: Configuración de TypeScript (con alias de rutas usando `@`).
 - `babel.config.js`: Configuración de Babel (con soporte para alias `@`).
-- `.env`: Variables de entorno.
 - `package.json`: Dependencias y scripts.
 - `README.md`: Documentación del proyecto.
 
@@ -73,7 +113,7 @@ Antes de comenzar, asegúrate de tener instalados los siguientes programas:
 
 ## Alias de Importación (`@`)
 
-Este proyecto utiliza el símbolo `@` como alias de ruta para referirse a la carpeta `/src`. Esto hace que las importaciones sean más limpias y fáciles de gestionar:
+Este proyecto usa el símbolo `@` como alias de ruta para referirse a la carpeta `/src`. Esto hace que las importaciones sean más limpias y fáciles de manejar:
 
 ### En lugar de:
 
@@ -91,59 +131,357 @@ import { colors } from "@utils";
 
 ---
 
+## Mejores Prácticas para un Proyecto Expo React Native
+
+Para asegurar que este proyecto sea mantenible, escalable y eficiente, aquí te indico cómo recomiendo trabajar con él:
+
+### 1. **Organiza tu trabajo**
+
+- Mantén la estructura de carpetas existente. Por ejemplo, coloca componentes reutilizables en `/src/components` y la lógica específica de pantallas en `/src/screens`.
+- Al agregar nuevas funcionalidades, agrupa los archivos relacionados. Por ejemplo, si creas una nueva pantalla, incluye sus estilos y hooks personalizados en el mismo directorio.
+
+### 2. **Usa TypeScript Efectivamente**
+
+- Siempre define tipos e interfaces para props, estado y respuestas de API. Esto te ayudará a detectar errores temprano y facilitará la comprensión del código.
+- Si no estás seguro de un tipo, revisa la carpeta `/src/types` o crea una definición nueva allí.
+
+### 3. **Crea Componentes Reutilizables**
+
+- Al crear elementos de UI, piensa si pueden reutilizarse en otros lugares. Si es así, agrégalo a `/src/components`.
+- Mantén cada componente enfocado en una sola responsabilidad para que sea más fácil de mantener y probar.
+
+### 4. **Gestiona el Estado con Sabiduría**
+
+- Para necesidades simples de estado, usa la API de Contexto o hooks en `/src/hooks`.
+
+### 5. **Enfócate en el Rendimiento**
+
+- Usa `React.memo` para componentes que no necesiten volver a renderizarse a menudo.
+- Optimiza imágenes comprimiéndolas o usando `ImageManipulator` de Expo.
+- Evita estilos en línea; en su lugar, usa `StyleSheet.create`.
+- Usa funciones flecha para definir estilos, y utilízalos en la pantalla.
+
+### 6. **Maneja los Errores Proactivamente**
+
+- Piensa en cada posible error que pueda causar la lógica, y manéjalo.
+
+### 7. **[Escribe Código Limpio](#cómo-programar)**
+
+- Usa Prettier y ESLint para mantener la consistencia del código. El proyecto ya incluye configuraciones para estas herramientas.
+- Usa early returns cuando sea posible [Early returns](#early-returns).
+- Sigue las convenciones de nombres usadas en el proyecto para mantener la legibilidad.
+
+### 8. **Prueba Tu Código**
+
+- Escribe pruebas unitarias para nuevos componentes y utilidades.
+- Al terminar de programar, prueba la app tanto en la web como en Android para asegurarte de que el código esté bien hecho.
+
+### 9. **Protege los Datos Sensibles**
+
+- Almacena la información sensible como tokens de forma segura usando `expo-secure-store`.
+- Todos los datos sensibles serán manejados por el backend ([servidor](#estructura-del-proyecto)).
+
+### 10. **Trabaja con Git**
+
+- Haz commits frecuentemente con mensajes claros. Por ejemplo, “Add login screen” es mejor que “Fix stuff”.
+- Usa ramas de características para nueva funcionalidad y haz merge al branch principal vía pull requests.
+
+### 11. **Mantén las Dependencias Actualizadas**
+
+- Revisa regularmente actualizaciones del SDK de Expo y otras dependencias. Ejecuta `npx expo install --check` para ver qué está disponible (**TIP**: No lo uses con todos tus cambios).
+- Después de actualizar, prueba bien la app para asegurarte de que todo funcione correctamente.
+
+---
+
 ## Extensiones Recomendadas para VS Code
 
 Aquí tienes una lista de extensiones esenciales y útiles para mejorar tu experiencia de desarrollo en este proyecto:
 
 ### Extensiones Requeridas
 
-1. **Code Spell Checker**
-   Ayuda a detectar errores de ortografía en tu código, incluidos los nombres de variables y los comentarios. Proporciona sugerencias para corregir la ortografía mientras escribes.
+1. **Code Spell Checker**  
+   Ayuda a detectar errores ortográficos en tu código, incluyendo nombres de variables y comentarios.  
    [Instalar Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
 
-2. **Spanish - Code Spell Checker**
-   Proporciona la comprobación ortográfica específicamente para el idioma español, ayudándote a encontrar y corregir errores en los comentarios o cadenas escritas en español.
+2. **Spanish - Code Spell Checker**  
+   Verifica la ortografía específicamente en español, útil para comentarios o cadenas de texto en ese idioma.  
    [Instalar Spanish - Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker-spanish)
 
-3. **ES7+ React/Redux/React-Native snippets**
-   Esta extensión ofrece una colección de fragmentos de código útiles para JavaScript y React, incluidos accesos directos para patrones comunes como `componentes funcionales`, `hooks` y `Redux`.
+3. **ES7+ React/Redux/React-Native snippets**  
+   Proporciona fragmentos de código útiles para React y Redux.  
    [Instalar ES7+ React/Redux/React-Native snippets](https://marketplace.visualstudio.com/items?itemName=dsznajder.es7-react-js-snippets)
 
-4. **Prettier - Code formatter**
-   Formatea automáticamente tu código para mantenerlo limpio y consistente en todo tu proyecto. Funciona con varios lenguajes y es especialmente útil para el desarrollo con React Native.
+4. **Prettier - Code formatter**  
+   Formatea tu código automáticamente para mantenerlo limpio y consistente.  
    [Instalar Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-5. **Better Comments**
-   Ayuda a escribir comentarios más legibles y organizados, destacando diferentes tipos de comentarios (por ejemplo, TODOs, alertas, notas) con colores diferentes.
+5. **Better Comments**  
+   Mejora la legibilidad de los comentarios destacando diferentes tipos como TODOs o notas.  
    [Instalar Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 
-6. **React Native Tools**
-   Proporciona un conjunto completo de herramientas para el desarrollo de React Native, incluyendo depuración, ejecución de aplicaciones y pruebas directamente desde VS Code. Esta extensión es esencial para proyectos de React Native, ya que simplifica el proceso de desarrollo y depuración.
+6. **React Native Tools**  
+   Herramientas para desarrollo, depuración y pruebas en React Native desde VS Code.  
    [Instalar React Native Tools](https://marketplace.visualstudio.com/items?itemName=msjsdiag.vscode-react-native)
 
 ### Extensiones Útiles
 
-7. **Error Lens**
-   Muestra los errores y advertencias en línea en tu código mientras escribes, mejorando la visibilidad de los errores y reduciendo la necesidad de revisar constantemente el terminal o el panel de problemas.
+7. **Error Lens**  
+   Muestra errores directamente en el código mientras escribes.  
    [Instalar Error Lens](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens)
 
-8. **Git History**
-   Proporciona un historial interactivo de tus repositorios Git, facilitando la exploración de tus commits y ramas. Es genial para navegar por el historial de proyectos y los diffs.
+8. **Git History**  
+   Visualiza la historia interactiva de tu repositorio Git.  
    [Instalar Git History](https://marketplace.visualstudio.com/items?itemName=donjayamanne.githistory)
 
-9. **GitLens — Git supercharged**
-   Mejora tu experiencia con Git proporcionando información detallada sobre el autor de cada línea de código, historial de commits y más, directamente dentro de VS Code.
+9. **GitLens — Git supercharged**  
+   Mejora la experiencia de Git con historial, blame y más información del repositorio.  
    [Instalar GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
 
-10. **Javascript Auto Backticks**
-    Formatea automáticamente los backticks en JavaScript/TypeScript para permitir cadenas de varias líneas y literales de plantilla fácilmente.
+10. **Javascript Auto Backticks**  
+    Formatea automáticamente comillas invertidas en JS/TS.  
     [Instalar Javascript Auto Backticks](https://marketplace.visualstudio.com/items?itemName=adammaras.javascript-auto-backticks)
 
-11. **npm Intellisense**
-    Proporciona IntelliSense (autocompletado) para módulos de npm, facilitando la importación de paquetes en tu código sugiriéndolos y autocompletándolos.
+11. **npm Intellisense**  
+    Sugerencias automáticas al importar módulos npm.  
     [Instalar npm Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.npm-intellisense)
 
-12. **Path Intellisense**
-    Completa automáticamente las rutas de los archivos mientras escribes tus declaraciones de importación. Acelera el proceso de desarrollo proporcionando sugerencias basadas en la estructura de tu sistema de archivos.
+12. **Path Intellisense**  
+    Completa automáticamente rutas de archivos al escribir imports.  
     [Instalar Path Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.path-intellisense)
-````
+
+---
+
+---
+
+---
+
+# Cómo programar
+
+## Retornos tempranos
+
+Intenta usar retornos tempranos cuando sea posible, también es posible usarlos en bucles `for`.
+
+**En lugar de esto:**
+
+```typescript
+const canLogin = (username: string, password: string): boolean => {
+  if (username === "user") {
+    if (password === "1234") {
+      return true;
+    }
+  }
+  return false;
+};
+```
+
+**Escríbelo así:**
+
+```typescript
+const canLogin = (username: string, password: string): boolean => {
+  // Esto hace que el código sea más legible.
+  if (username !== "user") return false;
+  if (password !== "1234") return false;
+
+  return true;
+};
+```
+
+---
+
+## JSDOC
+
+/\*\*
+
+- JSDoc es una forma estandarizada de documentar código JavaScript. Utiliza una sintaxis especial de comentarios para describir el propósito, los parámetros, los valores de retorno y otros detalles de funciones, clases y otros elementos del código.
+- Estos comentarios pueden ser procesados por herramientas para generar documentación o proporcionar asistencia en el editor.
+
+- Elementos clave de JSDoc:
+  - `@param`: Describe un parámetro de una función, incluyendo su nombre, tipo y propósito.
+  - `@returns`: Describe el valor de retorno de una función, incluyendo su tipo y propósito.
+  - `@type`: Especifica el tipo de una variable o propiedad.
+  - `@example`: Proporciona un ejemplo de cómo usar el código documentado.
+  - `@deprecated`: Marca una función o característica como obsoleta y sugiere alternativas.
+
+Ejemplo:
+
+```typescript
+/**
+ * Suma dos números.
+ * @param {number} a - El primer número.
+ * @param {number} b - El segundo número.
+ * @returns {number} La suma de los dos números.
+ * @example
+ * console.log(add(2, 3)); // Salida: 5
+ *
+ */
+const add = (a: number, b: number): number => a + b;
+```
+
+- Usar JSDoc mejora la legibilidad del código, su mantenibilidad y ayuda a otros desarrolladores a entender el propósito y uso del código.
+- **TIP**: Cuando una función o variable está documentada con JSDoc, puedes ver su documentación al pasar el cursor sobre la función o variable en tu editor de código. Esta característica proporciona una vista rápida del propósito, parámetros y valores de retorno, mejorando la experiencia de desarrollo.
+
+---
+
+## Funciones flecha
+
+Las funciones flecha son una forma concisa de escribir funciones en JavaScript. Son especialmente útiles para escribir funciones cortas y mantener el contexto de `this` en ciertos escenarios.
+
+### Sintaxis
+
+Una función flecha utiliza la sintaxis `=>`:
+
+```javascript
+// Función tradicional
+function add(a, b) {
+  return a + b;
+}
+
+// Función flecha
+const add = (a, b) => a + b;
+```
+
+### Características clave
+
+1. **Sintaxis concisa**  
+   Las funciones flecha permiten escribir expresiones de función más cortas. Si el cuerpo de la función contiene solo una expresión, puedes omitir las llaves `{}` y la palabra clave `return`.
+
+   ```typescript
+   // Función flecha de una sola línea
+   const square = (x: number): number => x * x;
+   ```
+
+2. **Retorno implícito**  
+   Cuando el cuerpo de la función es una única expresión, el resultado de esa expresión se devuelve implícitamente.
+
+   ```typescript
+   const greet = (name: Exclude<any, Falsy>): string => `Hello, ${name}!`;
+   ```
+
+3. **Sin enlace propio a `this`**  
+   Las funciones flecha no tienen su propio contexto `this`. En cambio, lo heredan del ámbito que las rodea. Esto las hace ideales para callbacks y manejadores de eventos.
+
+   ```javascript
+   class Counter {
+     count = 0;
+
+     increment = () => {
+       this.count++;
+     };
+   }
+   ```
+
+4. **Sin objeto `arguments`**  
+   Las funciones flecha no tienen su propio objeto `arguments`. Si necesitas acceso a `arguments`, usa una función tradicional.
+
+   ```typescript
+   const logArgs = (...args) => console.log(args);
+   ```
+
+### Cuándo usar funciones flecha
+
+- Para funciones cortas y simples.
+- Cuando necesitas preservar el contexto de `this`.
+- En métodos de arrays como `map`, `filter` y `reduce`.
+
+### Cuándo **no** usar funciones flecha
+
+- Al definir métodos en el prototipo de una clase (usa funciones tradicionales).
+- Cuando necesitas acceso al objeto `arguments`.
+
+---
+
+## Reutilización
+
+Todo puede ser reutilizable.
+
+Por ejemplo:
+
+```typescript
+const formatPhoneNumber = (phoneNumber: string, countryCode: string) => {
+  if (countryCode.toLowerCase() === "mx") {
+    return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  } else if (countryCode.toLowerCase() === "us") {
+    //...
+  }
+};
+```
+
+Esta función puede usarse en otras partes del código. Esta función debería estar en el archivo **[/src/utils/functions.ts](#project-structure)**.
+
+---
+
+## camelCase
+
+camelCase es una convención de nombres ampliamente utilizada en programación, donde la primera palabra se escribe en minúsculas y cada palabra subsiguiente comienza con mayúscula. Este estilo mejora la legibilidad y ayuda a distinguir las palabras en nombres de variables, funciones y propiedades.
+
+### Ejemplos
+
+```typescript
+import { User } from "@types";
+
+// Nombres de variables
+let userName: number = "JohnDoe";
+let isLoggedIn: boolean = true;
+
+// Nombres de funciones
+const calculateTotal = (price: number, tax: number): number => price + tax;
+
+// Propiedades de objetos
+const user: User = {
+  firstName: "John",
+  lastName: "Doe",
+};
+```
+
+### ¿Por qué usar camelCase?
+
+1. **Legibilidad**  
+   camelCase facilita leer, escribir y entender los nombres de variables y funciones, especialmente cuando tienen varias palabras.
+
+2. **Consistencia**  
+   Seguir una convención de nombres consistente mejora el mantenimiento del código y reduce la confusión.
+
+3. **Estándares de la comunidad**  
+   camelCase es la convención estándar de nombres en JavaScript y muchos otros lenguajes, lo que hace que tu código sea más familiar para otros desarrolladores.
+
+---
+
+## **Solo inglés**
+
+Escribe funciones, nombres de variables, documentación y cualquier otro elemento **solo en inglés**.
+
+**No hagas esto:**
+
+```typescript
+const nombreDeUsuario: string = "Nico";
+/**
+ * Suma dos números.
+ * @param {number} numero1 - El primer número.
+ * @param {number} b - El segundo número.
+ * @returns {number} La suma de los dos números.
+ * @example
+ * console.log(sumar(2, 3)); // Salida: 5
+ *
+ */
+const sumar = (numero1: number, numero2: number): number => numero1 + numero2;
+```
+
+**Haz esto:**
+
+```typescript
+const username: string = "Nico";
+/**
+ * Adds two numbers together.
+ * @param {number} num1 - The first number.
+ * @param {number} num2 - The second number.
+ * @returns {number} The sum of the two numbers.
+ * @example
+ * console.log(add(2, 3)); // Outputs: 5
+ *
+ */
+const add = (num1: number, num2: number): number => num1 + num2;
+// o
+const addition = (num1: number, num2: number): number => num1 + num2;
+```
+
+Si el código está en otro idioma, el pull request será rechazado, incluso si solo una variable está en otro idioma.
