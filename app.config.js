@@ -21,7 +21,26 @@ export default {
         backgroundColor: "#ffffff",
       },
       package: "com.integrador2.app",
+      permissions: [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "NOTIFICATIONS",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+      ],
     },
+    plugins: [
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          android: {
+            usesCleartextTraffic: true,
+          },
+        },
+      ],
+    ],
     web: {
       favicon: "./assets/favicon.png",
     },

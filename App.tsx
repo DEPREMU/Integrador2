@@ -1,10 +1,10 @@
 import { LayoutProvider } from "@/context/LayoutContext";
 import AppNavigator from "@/navigation/AppNavigator";
 
-const App = () => 
-<LayoutProvider>
+const App = () => (
+  <LayoutProvider>
     <AppNavigator />;
-</LayoutProvider>
-
+  </LayoutProvider>
+);
 
 export default App;
