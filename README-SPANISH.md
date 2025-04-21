@@ -23,6 +23,25 @@ Este proyecto es el integrador de Tetra 5.
   - [Reusabilidad](#reusabilidad)
   - [CamelCase](#camelcase)
   - [Solo inglés](#solo-inglés)
+- [Dependencias](#dependencias)
+  - [Dependencias Principales](#dependencias-principales)
+    - [@react-native-async-storage/async-storage](#react-native-async-storageasync-storage)
+    - [@react-navigation/native](#react-navigationnative)
+    - [@react-navigation/native-stack](#react-navigationnative-stack)
+    - [@supabase/supabase-js](#supabasesupabase-js)
+    - [axios](#axios)
+  - [Dependencias Específicas de Expo](#dependencias-específicas-de-expo)
+    - [expo-background-fetch](#expo-background-fetch)
+    - [expo-build-properties](#expo-build-properties)
+    - [expo-notifications](#expo-notifications)
+    - [expo-secure-store](#expo-secure-store)
+    - [expo-status-bar](#expo-status-bar)
+  - [Bibliotecas de UI y Animación](#bibliotecas-de-ui-y-animación)
+    - [react-native-paper](#react-native-paper)
+    - [react-native-reanimated](#react-native-reanimated)
+    - [react-native-safe-area-context](#react-native-safe-area-context)
+    - [react-native-screens](#react-native-screens)
+    - [react-native-web](#react-native-web)
 
 ---
 
@@ -484,4 +503,76 @@ const add = (num1: number, num2: number): number => num1 + num2;
 const addition = (num1: number, num2: number): number => num1 + num2;
 ```
 
-Si el código está en otro idioma, el pull request será rechazado, incluso si solo una variable está en otro idioma.
+**Si el código está en otro idioma, el pull request será rechazado, incluso si solo una variable está en otro idioma.**
+
+## Dependencias
+
+Este proyecto utiliza las siguientes dependencias para proporcionar funcionalidad y mejorar la experiencia de desarrollo:
+
+### Dependencias Principales
+
+1. **`@react-native-async-storage/async-storage`**  
+   Proporciona un sistema de almacenamiento de clave-valor simple, persistente y asíncrono para aplicaciones React Native. Útil para almacenar pequeñas cantidades de datos como preferencias de usuario o datos no sensibles.  
+   [Más información](https://github.com/react-native-async-storage/async-storage)
+
+2. **`@react-navigation/native`**  
+   La biblioteca principal para la navegación en aplicaciones React Native. Proporciona una forma flexible y personalizable de manejar la navegación entre pantallas.  
+   [Más información](https://reactnavigation.org/)
+
+3. **`@react-navigation/native-stack`**  
+   Un navegador de pila para React Navigation, optimizado para el rendimiento y facilidad de uso. Ideal para gestionar transiciones entre pantallas.  
+   [Más información](https://reactnavigation.org/docs/native-stack-navigator)
+
+4. **`@supabase/supabase-js`**  
+   Una biblioteca cliente de JavaScript para interactuar con Supabase, una plataforma backend-as-a-service. Esto se usará solo para autenticación.  
+   [Más información](https://supabase.com/docs/reference/javascript)
+
+5. **`axios`**  
+   Un cliente HTTP basado en promesas para realizar solicitudes API. Simplifica el manejo de solicitudes y respuestas, incluyendo el manejo de errores e interceptores.  
+   [Más información](https://axios-http.com/)
+
+### Dependencias Específicas de Expo
+
+6. **`expo-background-fetch`**  
+   Permite que las tareas en segundo plano se ejecuten periódicamente, incluso cuando la aplicación no está en primer plano. Útil para tareas como sincronización de datos.  
+   [Más información](https://docs.expo.dev/versions/latest/sdk/background-fetch/)
+
+7. **`expo-build-properties`**  
+   Permite la personalización de propiedades de compilación nativas para aplicaciones Expo, como configuraciones de Gradle o Xcode. Esto se usa solo para solicitudes HTTP (eliminar en producción).  
+   [Más información](https://docs.expo.dev/versions/latest/sdk/build-properties/)
+
+8. **`expo-notifications`**  
+   Proporciona herramientas para gestionar notificaciones push, incluyendo la programación y el manejo de interacciones del usuario.  
+   [Más información](https://docs.expo.dev/versions/latest/sdk/notifications/)
+
+9. **`expo-secure-store`**  
+   Ofrece una forma segura de almacenar datos sensibles como tokens o credenciales utilizando los mecanismos de almacenamiento seguro del dispositivo.  
+   [Más información](https://docs.expo.dev/versions/latest/sdk/securestore/)
+
+10. **`expo-status-bar`**  
+    Una biblioteca ligera para gestionar la apariencia de la barra de estado. Se usará para el manejo de temas.  
+    [Más información](https://docs.expo.dev/versions/latest/sdk/status-bar/)
+
+### Bibliotecas de UI y Animación
+
+11. **`react-native-paper`**  
+    Una biblioteca para construir componentes de Material Design hermosos y personalizables en React Native.  
+    [Más información](https://callstack.github.io/react-native-paper/)
+
+12. **`react-native-reanimated`**  
+    Una poderosa biblioteca de animación para crear animaciones suaves y complejas en React Native.  
+    [Más información](https://docs.swmansion.com/react-native-reanimated/)
+
+13. **`react-native-safe-area-context`**  
+    Proporciona utilidades para manejar los márgenes de áreas seguras, asegurando que la interfaz de usuario de tu aplicación se muestre correctamente en dispositivos con muescas o esquinas redondeadas.  
+    [Más información](https://github.com/th3rdwave/react-native-safe-area-context)
+
+14. **`react-native-screens`**  
+    Optimiza el renderizado y las transiciones de pantallas en aplicaciones React Native, mejorando el rendimiento y el uso de memoria.  
+    [Más información](https://github.com/software-mansion/react-native-screens)
+
+15. **`react-native-web`**  
+    Permite que los componentes de React Native se ejecuten en la web, permitiendo el desarrollo multiplataforma.  
+    [Más información](https://necolas.github.io/react-native-web/)
+
+---
