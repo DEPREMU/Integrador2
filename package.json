@@ -5,7 +5,7 @@
   "scripts": {
     "backend": "cd server & npm install & tsc & node dist/index.js",
     "expo": "npx expo start",
-    "start": "concurrently \"npm run backend\" \"npm run expo\""
+    "start": "npm install & concurrently \"npm run backend\" \"npm run expo\""
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
