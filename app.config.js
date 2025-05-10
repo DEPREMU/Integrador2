@@ -4,11 +4,11 @@ export default {
     slug: "Integrador2",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/icon-512.jpg",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/icon-512.jpg",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -17,8 +17,8 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff",
+        foregroundImage: "./assets/icon-512.jpg",
+        backgroundColor: "#000000",
       },
       package: "com.integrador2.app",
       permissions: [
@@ -42,7 +42,7 @@ export default {
       ],
     ],
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./assets/icon-512.jpg",
     },
   },
 };
