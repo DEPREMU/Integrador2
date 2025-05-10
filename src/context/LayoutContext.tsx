@@ -1,4 +1,3 @@
-// layoutContext.js
 import { Dimensions, Platform, ScaledSize } from "react-native";
 import React, { createContext, useContext, useState, useEffect } from "react";
 
@@ -11,7 +10,7 @@ const LayoutContext = createContext({
   height: 0,
 });
 
-interface LayoutProviderProps {//duda
+interface LayoutProviderProps {
   children: any;
 }
 
@@ -24,14 +23,14 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     };
     const subscription = Dimensions.addEventListener("change", onChange);
 
-    return () => subscription?.remove();//duda
+    return () => subscription?.remove();
   }, []);
 
   const { width, height } = dimensions;
   const isWeb: boolean = Platform.OS === "web";
   const isPhone: boolean = width <= 768 && height <= 1600;
   const isTablet: boolean = width > 768 && height <= 1600;
-  const isLargeTablet: boolean = width > 1024 && height <= 2048;//tambien cuenta con pantallas de escritorio o esas no las vamos manjear, solo web?
+  const isLargeTablet: boolean = width > 1024 && height <= 2048;
 
   const layoutData = { isTablet, isLargeTablet, isPhone, isWeb, width, height };
 

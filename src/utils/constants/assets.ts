@@ -1,1 +1,1 @@
-export const APP_ICON = require("@assets/favicon.png"); //! Edit
+export const APP_ICON = require("@assets/icon-512.jpg");
