@@ -1,3 +1,16 @@
+import CryptoJS from "crypto-js";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import * as Localization from "expo-localization";
+import {
+  LANGUAGE_KEY_STORAGE,
+  languages,
+  LanguagesSupported,
+  languagesSupported,
+} from "@utils";
+
 /**
  * Validates whether a given string is a properly formatted email address.
  *
@@ -73,4 +86,151 @@ export const getLineNumber = (): number => {
     }
   }
   return -1;
+};
+
+/**
+ * Asynchronously saves data to local storage using AsyncStorage.
+ *
+ * @param key - The key under which the value will be stored.
+ * @param value - The value to be stored. Can be of any type.
+ *
+ * @remarks
+ * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
+ * - It is recommended to use this function for storing simple key-value pairs.
+ */
+export const saveData = async (key: string, value: any) =>
+  await AsyncStorage.setItem(key, value);
+
+/**
+ * Asynchronously saves data securely using platform-specific storage mechanisms.
+ *
+ * On web platforms, the data is encrypted using AES encryption and stored in `localStorage`.
+ * On other platforms, the data is stored using `SecureStore`.
+ *
+ * @param key - The key under which the value will be stored.
+ * @param value - The value to be stored. Can be of any type.
+ *
+ * @remarks
+ * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
+ * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
+ * - On non-web platforms, the `SecureStore` API is used for secure storage.
+ *
+ * @throws Will log an error to the console if an exception occurs during the save operation.
+ */
+export const saveDataSecure = async (key: string, value: any) => {
+  try {
+    if (Constants.expoConfig == null) return;
+    if (Constants.expoConfig.extra == undefined) return;
+
+    if (Platform.OS === "web") {
+      const secretKey = Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT;
+      const encryptedValue = CryptoJS.AES.encrypt(value, secretKey);
+      localStorage.setItem(key, encryptedValue.toString());
+    } else {
+      await SecureStore.setItemAsync(key, value);
+    }
+  } catch (error) {
+    console.error(`./globalVariables/saveDataSecure() => ${error}`);
+  }
+};
+
+/**
+ * Asynchronously removes data from local storage using AsyncStorage.
+ *
+ * @param key - The key of the value to be removed.
+ *
+ * @remarks
+ * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
+ * - It is recommended to use this function for removing simple key-value pairs.
+ */
+export const removeData = async (key: string) =>
+  await AsyncStorage.removeItem(key);
+
+/**
+ * Asynchronously removes data securely using platform-specific storage mechanisms.
+ *
+ * On web platforms, the data is removed from `localStorage`.
+ * On other platforms, the data is removed using `SecureStore`.
+ * @param key - The key of the value to be removed.
+ * @remarks
+ * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
+ * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
+ * - On non-web platforms, the `SecureStore` API is used for secure storage.
+ * @throws Will log an error to the console if an exception occurs during the save operation.
+ */
+export const removeDataSecure = async (key: string) => {
+  try {
+    if (Platform.OS == "web") localStorage.removeItem(key);
+    else await SecureStore.deleteItemAsync(key);
+  } catch (error) {
+    console.error(`./globalVariables/removeDataSecure() => ${error}`);
+  }
+};
+
+/**
+ * Asynchronously loads data from local storage using AsyncStorage.
+ *
+ * @param key - The key of the value to be loaded.
+ * @returns The value associated with the specified key, or `null` if not found.
+ *
+ * @remarks
+ * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
+ * - It is recommended to use this function for loading simple key-value pairs.
+ */
+export const loadData = async (key: string) => await AsyncStorage.getItem(key);
+
+/**
+ * Asynchronously loads data securely using platform-specific storage mechanisms.
+ *
+ * On web platforms, the data is decrypted using AES encryption and retrieved from `localStorage`.
+ * On other platforms, the data is retrieved using `SecureStore`.
+ *
+ * @param key - The key of the value to be loaded.
+ * @returns The decrypted value associated with the specified key, or `null` if not found.
+ *
+ * @remarks
+ * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
+ * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
+ * - On non-web platforms, the `SecureStore` API is used for secure storage.
+ */
+export const loadDataSecure = async (key: string) => {
+  if (Platform.OS != "web") return await SecureStore.getItemAsync(key);
+
+  const value = localStorage.getItem(key);
+  if (!value) return null;
+  const uncryptedValue = CryptoJS.AES.decrypt(
+    value,
+    Constants.expoConfig?.extra?.SECRET_KEY_TO_ENCRYPT
+  ).toString(CryptoJS.enc.Utf8);
+  return uncryptedValue;
+};
+
+/**
+ * Checks the user's language preference and saves it if not already set.
+ *
+ * @returns The user's preferred language, or "en" if not found.
+ *
+ * @remarks
+ * - This function uses `expo-localization` to get the device's locale.
+ * - It checks if the language is supported and saves it to local storage.
+ * - If no language is found, it defaults to "en".
+ */
+export const checkLanguage = async (): Promise<LanguagesSupported> => {
+  try {
+    const data = await loadData(LANGUAGE_KEY_STORAGE);
+    if (data) return data as LanguagesSupported;
+
+    const locales = Localization.getLocales()[0];
+    const language = locales.languageTag.split("-")[0];
+    const languageAvailable = languagesSupported.includes(
+      language as keyof typeof languages
+    );
+    if (language && languageAvailable) {
+      await saveData(LANGUAGE_KEY_STORAGE, language);
+      return language as LanguagesSupported;
+    }
+  } catch (error) {
+    console.error(`./globalVariables/checkLanguage() => ${error}`);
+  }
+  return "en";
 };

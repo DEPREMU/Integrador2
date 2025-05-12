@@ -4,11 +4,14 @@ export default {
     slug: "Integrador2",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon-512.jpg",
+    icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
+    extra: {
+      SECRET_KEY_TO_ENCRYPT: "cnaiosbcqiufb92bf89qbf89w2fbQF@qwfQfqaV#v",
+    },
     splash: {
-      image: "./assets/icon-512.jpg",
+      image: "./assets/icon.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -17,7 +20,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/icon-512.jpg",
+        foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#000000",
       },
       package: "com.integrador2.app",
@@ -32,6 +35,7 @@ export default {
     },
     plugins: [
       "expo-secure-store",
+      "expo-localization",
       [
         "expo-build-properties",
         {
@@ -42,7 +46,7 @@ export default {
       ],
     ],
     web: {
-      favicon: "./assets/icon-512.jpg",
+      favicon: "./assets/favicon.png",
     },
   },
 };
