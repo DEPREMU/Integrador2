@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Text, Button } from "react-native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/navigation/navigationTypes";
+import { View, Text } from "react-native";
+import ButtonComponent from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
-import ButtonComponent from "@/components/Button";
+import { RootStackParamList } from "@navigation/navigationTypes";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useModal } from "@/context/ModalContext";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

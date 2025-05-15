@@ -1,1 +1,1 @@
-export const APP_NAME = "Integrador2"; //! Edit
+export const APP_NAME = "MediTime";
