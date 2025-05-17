@@ -1,5 +1,3 @@
-export type RootStackParamList = {
-  Login: undefined;
-  Home: undefined;
-  Signin: undefined;
-};
+export type ScreensAvailable = "Login" | "Signin" | "Home";
+
+export type RootStackParamList = Record<ScreensAvailable, undefined>;

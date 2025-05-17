@@ -1,15 +1,15 @@
+import {
+  languages,
+  LanguagesSupported,
+  languagesSupported,
+} from "./translates";
 import CryptoJS from "crypto-js";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import * as Localization from "expo-localization";
-import {
-  LANGUAGE_KEY_STORAGE,
-  languages,
-  LanguagesSupported,
-  languagesSupported,
-} from "@utils";
+import { LANGUAGE_KEY_STORAGE } from "./constants/keysStorage";
 
 /**
  * Validates whether a given string is a properly formatted email address.

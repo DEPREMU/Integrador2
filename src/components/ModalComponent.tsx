@@ -1,15 +1,13 @@
-import { useResponsiveLayout } from "@/context/LayoutContext";
-import { useStylesModalComponent } from "@/styles/components/stylesModalComponent";
-import React, { useEffect } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
-  AnimatableValue,
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
   withTiming,
+  SharedValue,
+  useSharedValue,
+  useAnimatedStyle,
 } from "react-native-reanimated";
+import React, { useEffect } from "react";
+import { useResponsiveLayout } from "@/context/LayoutContext";
+import { Pressable, Text, View } from "react-native";
+import { useStylesModalComponent } from "@/styles/components/stylesModalComponent";
 
 interface ModalProps {
   title: string;
@@ -63,8 +61,8 @@ const ModalComponent: React.FC<ModalProps> = ({
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.modal}>
           <Text style={styles.title}>{title}</Text>
-          <View style={styles.body}>{body}</View>
-          <View style={styles.buttons}>{buttons}</View>
+          {body !== null && <View style={styles.body}>{body}</View>}
+          {buttons !== null && <View style={styles.buttons}>{buttons}</View>}
         </Pressable>
       </Pressable>
     </Animated.View>

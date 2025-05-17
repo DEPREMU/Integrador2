@@ -14,6 +14,10 @@ interface ModalContextProps {
 
 const ModalContext = createContext<ModalContextProps | undefined>(undefined);
 
+interface ModalProviderProps {
+  children: ReactNode;
+}
+
 /**
  * Provides a context for managing a modal's state and behavior.
  *
@@ -30,15 +34,13 @@ const ModalContext = createContext<ModalContextProps | undefined>(undefined);
  * @property {function} openModal - Function to open the modal with a specified title, body, and buttons.
  * @property {function} closeModal - Function to close the modal and reset its state.
  */
-export const ModalProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [title, setTitle] = useState<string>("");
+export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
+  const idTimeout = useRef<NodeJS.Timeout | null>(null);
   const [body, setBody] = useState<ReactNode>(null);
+  const [title, setTitle] = useState<string>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [buttons, setButtons] = useState<ReactNode>(null);
   const [hideModal, setHideModal] = useState<boolean>(true);
-  const idTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const clearIdTimeout = () => {
     if (!idTimeout.current) return;

@@ -1,16 +1,17 @@
 import React from "react";
-import HomeScreen from "@/screens/HomeScreen";
-import LoginScreen from "@/screens/auth/LoginScreen";
-import SigninScreen from "@/screens/auth/SigninScreen";
+import HomeScreen from "@screens/HomeScreen";
+import LoginScreen from "@screens/auth/LoginScreen";
+import SigninScreen from "@screens/auth/SigninScreen";
 import { RootStackParamList } from "./navigationTypes";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function AppNavigator() {
-  return (
-    <NavigationContainer>
+const AppNavigator: React.FC = () => (
+  <NavigationContainer>
+    <BackgroundTaskProvider>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
           name="Login"
@@ -28,6 +29,8 @@ export default function AppNavigator() {
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
+    </BackgroundTaskProvider>
+  </NavigationContainer>
+);
+
+export default AppNavigator;

@@ -10,7 +10,7 @@ import React, {
   useContext,
   createContext,
 } from "react";
-import { checkLanguage } from "@/utils";
+import { checkLanguage } from "@utils";
 
 interface LanguageContextProps {
   language: LanguagesSupported;

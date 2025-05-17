@@ -4,7 +4,6 @@ import ButtonComponent from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useModal } from "@/context/ModalContext";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
