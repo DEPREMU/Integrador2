@@ -1,5 +1,6 @@
 import express from "express";
 import { loginHandler } from "./login.js";
+import { decryptHandler, encryptHandler } from "./encryption.js";
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -8,7 +9,9 @@ import { loginHandler } from "./login.js";
  */
 const router = express.Router();
 
-// All routes are prefixed with /api
+// All routes are prefixed with /api/v1
 router.post("/login", loginHandler);
+router.post("/encrypt", encryptHandler);
+router.post("/decrypt", decryptHandler);
 
 export default router;

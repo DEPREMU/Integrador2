@@ -1,15 +1,20 @@
 import {
+  RequestEncrypt,
+  RequestDecrypt,
+  ResponseEncrypt,
+  ResponseDecrypt,
+} from "../../server/src/TypesAPI";
+import {
   languages,
   LanguagesSupported,
   languagesSupported,
 } from "./translates";
-import CryptoJS from "crypto-js";
-import Constants from "expo-constants";
+import { API_URL } from "./constants/constants";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import * as Localization from "expo-localization";
-import { LANGUAGE_KEY_STORAGE } from "./constants/keysStorage";
+import { KEYS_STORAGE, KeyStorageValues } from "./constants/keysStorage";
 
 /**
  * Validates whether a given string is a properly formatted email address.
@@ -37,6 +42,46 @@ export const isValidPassword = (password: string): boolean => {
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
   return passwordRegex.test(password);
 };
+
+/**
+ * Generates an options object for a fetch request.
+ *
+ * @param method - The HTTP method to use for the request. Can be either "POST" or "GET".
+ * @param body - An optional request body, which can be of type `RequestEncrypt` or `RequestDecrypt`.
+ *               If provided, it will be stringified and included in the request.
+ * @returns An object containing the HTTP method, headers, and optionally the stringified body.
+ */
+export const fetchOptions = (
+  method: "POST" | "GET",
+  body?: RequestEncrypt | RequestDecrypt
+) => ({
+  method,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  body: body ? JSON.stringify(body) : undefined,
+});
+
+/**
+ * Constructs a full API route URL by appending the given route to the base API URL.
+ *
+ * @param route - The specific route to append to the base API URL.
+ * @returns The full API route URL as a string.
+ *
+ * @remarks
+ * This function is useful for constructing API endpoints dynamically.
+ * For example, if the base API URL is "https://example.com/api/v1"
+ * and the route is "users", the resulting URL will be:
+ * "https://example.com/api/v1/users".
+ *
+ * @example
+ * ```typescript
+ * const userRoute = getRouteAPI("users");
+ * console.log(userRoute); // Outputs: "https://example.com/api/v1/users"
+ * ```
+ */
+export const getRouteAPI = (route: string): string => `${API_URL}/${route}`;
 
 /**
  * Retrieves the file name of the caller function from the stack trace.
@@ -89,78 +134,108 @@ export const getLineNumber = (): number => {
 };
 
 /**
- * Asynchronously saves data to local storage using AsyncStorage.
+ * Asynchronously saves data to storage, with support for both web and native platforms.
+ * On web, it uses `localStorage`, and on native platforms, it uses `AsyncStorage`.
  *
- * @param key - The key under which the value will be stored.
- * @param value - The value to be stored. Can be of any type.
- *
- * @remarks
- * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
- * - It is recommended to use this function for storing simple key-value pairs.
+ * @param key - The key under which the value will be stored. Must be a valid `KeyStorageValues`.
+ * @param value - The value to be stored. If the value is not a string, it will be serialized to JSON.
+ * @returns A promise that resolves when the data has been successfully saved.
  */
-export const saveData = async (key: string, value: any) =>
+export const saveData = async (
+  key: KeyStorageValues,
+  value: any
+): Promise<void> => {
+  if (Platform.OS === "web") {
+    localStorage.setItem(
+      key,
+      typeof value === "string" ? value : JSON.stringify(value)
+    );
+    return;
+  }
   await AsyncStorage.setItem(key, value);
+};
 
 /**
- * Asynchronously saves data securely using platform-specific storage mechanisms.
+ * Saves data securely in storage. Depending on the platform, it either uses
+ * SecureStore for non-web platforms or encrypts the data and stores it in
+ * localStorage for web platforms.
  *
- * On web platforms, the data is encrypted using AES encryption and stored in `localStorage`.
- * On other platforms, the data is stored using `SecureStore`.
+ * @param key - The key under which the data will be stored. Must be a valid `KeyStorageValues`.
+ * @param value - The data to be stored. Can be of any type. Non-string values will be stringified.
+ * @returns A promise that resolves when the data is successfully stored.
  *
- * @param key - The key under which the value will be stored.
- * @param value - The value to be stored. Can be of any type.
+ * @throws Logs an error to the console if an issue occurs during the storage process.
  *
- * @remarks
- * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
- * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
- * - On non-web platforms, the `SecureStore` API is used for secure storage.
+ * Platform-specific behavior:
+ * - **Non-web platforms**: Uses `SecureStore.setItemAsync` to store the data securely.
+ * - **Web platforms**: Sends the data to an encryption API endpoint, retrieves the encrypted data,
+ *   and stores it in `localStorage`.
  *
- * @throws Will log an error to the console if an exception occurs during the save operation.
+ * Notes:
+ * - If the encryption API returns an error or no encrypted data, the function logs the error and exits.
  */
-export const saveDataSecure = async (key: string, value: any) => {
+export const saveDataSecure = async (key: KeyStorageValues, value: any) => {
   try {
-    if (Constants.expoConfig == null) return;
-    if (Constants.expoConfig.extra == undefined) return;
+    const newValue = typeof value === "string" ? value : JSON.stringify(value);
 
-    if (Platform.OS === "web") {
-      const secretKey = Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT;
-      const encryptedValue = CryptoJS.AES.encrypt(value, secretKey);
-      localStorage.setItem(key, encryptedValue.toString());
-    } else {
-      await SecureStore.setItemAsync(key, value);
+    if (Platform.OS !== "web") {
+      await SecureStore.setItemAsync(key, newValue);
+      return;
     }
+
+    const dataEncrypted: ResponseEncrypt = await fetch(
+      getRouteAPI("encrypt"),
+      fetchOptions("POST", {
+        dataToEncrypt: newValue,
+      })
+    ).then((response) => response.json());
+
+    if (dataEncrypted.error) {
+      console.error(
+        `./globalVariables/saveDataSecure() => ${dataEncrypted.error.message} - ${dataEncrypted.error.timestamp}`
+      );
+      return;
+    }
+    if (!dataEncrypted.dataEncrypted) return;
+
+    localStorage.setItem(key, dataEncrypted.dataEncrypted);
   } catch (error) {
     console.error(`./globalVariables/saveDataSecure() => ${error}`);
   }
 };
 
 /**
- * Asynchronously removes data from local storage using AsyncStorage.
+ * Removes a stored data item associated with the specified key.
  *
- * @param key - The key of the value to be removed.
+ * This function handles data removal differently depending on the platform:
+ * - On web platforms, it uses `localStorage.removeItem`.
+ * - On non-web platforms, it uses `AsyncStorage.removeItem`.
  *
- * @remarks
- * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
- * - It is recommended to use this function for removing simple key-value pairs.
+ * @param key - The key associated with the data to be removed. Must be of type `KeyStorageValues`.
+ * @returns A promise that resolves when the data has been removed (for non-web platforms).
  */
-export const removeData = async (key: string) =>
+export const removeData = async (key: KeyStorageValues) => {
+  if (Platform.OS === "web") {
+    localStorage.removeItem(key);
+    return;
+  }
   await AsyncStorage.removeItem(key);
+};
 
 /**
- * Asynchronously removes data securely using platform-specific storage mechanisms.
+ * Removes a stored data item securely based on the provided key.
  *
- * On web platforms, the data is removed from `localStorage`.
- * On other platforms, the data is removed using `SecureStore`.
- * @param key - The key of the value to be removed.
- * @remarks
- * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
- * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
- * - On non-web platforms, the `SecureStore` API is used for secure storage.
- * @throws Will log an error to the console if an exception occurs during the save operation.
+ * This function handles both web and non-web platforms. On web platforms,
+ * it uses `localStorage` to remove the item. On non-web platforms, it uses
+ * `SecureStore.deleteItemAsync` to securely delete the item.
+ *
+ * @param key - The key of the storage item to be removed. Must be of type `KeyStorageValues`.
+ *
+ * @throws Will log an error to the console if the removal process fails.
  */
-export const removeDataSecure = async (key: string) => {
+export const removeDataSecure = async (key: KeyStorageValues) => {
   try {
-    if (Platform.OS == "web") localStorage.removeItem(key);
+    if (Platform.OS === "web") localStorage.removeItem(key);
     else await SecureStore.deleteItemAsync(key);
   } catch (error) {
     console.error(`./globalVariables/removeDataSecure() => ${error}`);
@@ -168,41 +243,55 @@ export const removeDataSecure = async (key: string) => {
 };
 
 /**
- * Asynchronously loads data from local storage using AsyncStorage.
+ * Asynchronously loads data associated with the given key from storage.
  *
- * @param key - The key of the value to be loaded.
- * @returns The value associated with the specified key, or `null` if not found.
+ * On web platforms, it retrieves the value from `localStorage`. On other platforms,
+ * it uses `AsyncStorage` to fetch the value.
  *
- * @remarks
- * - This function uses `AsyncStorage` from `@react-native-async-storage/async-storage`.
- * - It is recommended to use this function for loading simple key-value pairs.
+ * @param key - The key used to retrieve the stored value. Must be of type `KeyStorageValues`.
+ * @returns A promise that resolves to the stored value as a string, or `null` if no value is found.
  */
-export const loadData = async (key: string) => await AsyncStorage.getItem(key);
+export const loadData = async (key: KeyStorageValues) => {
+  if (Platform.OS === "web") return localStorage.getItem(key);
+  const value = await AsyncStorage.getItem(key);
+  return value;
+};
 
 /**
- * Asynchronously loads data securely using platform-specific storage mechanisms.
+ * Asynchronously loads secure data associated with the given key.
  *
- * On web platforms, the data is decrypted using AES encryption and retrieved from `localStorage`.
- * On other platforms, the data is retrieved using `SecureStore`.
+ * This function retrieves data securely depending on the platform:
+ * - On non-web platforms, it uses `SecureStore.getItemAsync` to fetch the data.
+ * - On web platforms, it retrieves the data from `localStorage` and decrypts it
+ *   using a backend API.
  *
- * @param key - The key of the value to be loaded.
- * @returns The decrypted value associated with the specified key, or `null` if not found.
+ * @param key - The key associated with the data to retrieve. Must be a valid `KeyStorageValues`.
+ * @returns A promise that resolves to the decrypted data as a string, or `null` if:
+ * - The data is not found.
+ * - An error occurs during decryption.
+ * - The decrypted data is empty or invalid.
  *
- * @remarks
- * - Requires `expo-constants` to access `expoConfig` and its `extra` properties.
- * - On web platforms, the encryption key is retrieved from `Constants.expoConfig.extra.SECRET_KEY_TO_ENCRYPT`.
- * - On non-web platforms, the `SecureStore` API is used for secure storage.
+ * @throws Will log an error to the console if the decryption API returns an error.
  */
-export const loadDataSecure = async (key: string) => {
-  if (Platform.OS != "web") return await SecureStore.getItemAsync(key);
+export const loadDataSecure = async (key: KeyStorageValues) => {
+  if (Platform.OS !== "web") return await SecureStore.getItemAsync(key);
 
   const value = localStorage.getItem(key);
+
   if (!value) return null;
-  const uncryptedValue = CryptoJS.AES.decrypt(
-    value,
-    Constants.expoConfig?.extra?.SECRET_KEY_TO_ENCRYPT
-  ).toString(CryptoJS.enc.Utf8);
-  return uncryptedValue;
+  const decryptedValue = await fetch(
+    getRouteAPI("decrypt"),
+    fetchOptions("POST", { dataToDecrypt: value })
+  ).then((response) => response.json() as ResponseDecrypt);
+  if (decryptedValue.error) {
+    console.error(
+      `./globalVariables/loadDataSecure() => ${decryptedValue.error.message} - ${decryptedValue.error.timestamp}`
+    );
+    return null;
+  }
+  if (!decryptedValue.dataDecrypted) return null;
+
+  return decryptedValue.dataDecrypted;
 };
 
 /**
@@ -217,7 +306,7 @@ export const loadDataSecure = async (key: string) => {
  */
 export const checkLanguage = async (): Promise<LanguagesSupported> => {
   try {
-    const data = await loadData(LANGUAGE_KEY_STORAGE);
+    const data = await loadData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE);
     if (data) return data as LanguagesSupported;
 
     const locales = Localization.getLocales()[0];
@@ -226,7 +315,7 @@ export const checkLanguage = async (): Promise<LanguagesSupported> => {
       language as keyof typeof languages
     );
     if (language && languageAvailable) {
-      await saveData(LANGUAGE_KEY_STORAGE, language);
+      await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, language);
       return language as LanguagesSupported;
     }
   } catch (error) {

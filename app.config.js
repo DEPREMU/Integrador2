@@ -1,15 +1,12 @@
 export default {
   expo: {
-    name: "Integrador2",
-    slug: "Integrador2",
+    name: "MediTime",
+    slug: "MediTime",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
-    extra: {
-      SECRET_KEY_TO_ENCRYPT: "cnaiosbcqiufb92bf89qbf89w2fbQF@qwfQfqaV#v",
-    },
     splash: {
       image: "./assets/icon.png",
       resizeMode: "contain",

@@ -31,6 +31,6 @@ app.use(
 app.use(express.json());
 
 // Use prefix /api in each route
-app.use("/api", router);
+app.use("/api/v1", router);
 
 export default app;
