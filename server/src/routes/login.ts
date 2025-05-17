@@ -1,5 +1,5 @@
-import express from "express";
-import * as types from "../types.js";
+import { Request, Response } from "express";
+import { TypeBodyLogin, ResponseLogin } from "../TypesAPI.js";
 
 /**
  * Handles the login request by validating the request body and returning a response.
@@ -19,25 +19,27 @@ import * as types from "../types.js";
  * - `error`: null or an object with an error message and timestamp.
  */
 export const loginHandler = (
-  req: express.Request<{}, {}, types.TypeBodyLogin>,
-  res: any
+  req: Request<{}, {}, TypeBodyLogin>,
+  res: Response<ResponseLogin>
 ) => {
-  const body: types.TypeBodyLogin = req.body;
+  const body: TypeBodyLogin = req.body;
 
   if (!body) {
-    return res.json({
+    res.json({
       data: null,
       error: { message: "Missing body", timestamp: new Date().toISOString() },
     });
+    return;
   }
   if (!body.username || !body.password) {
-    return res.json({
+    res.json({
       data: null,
       error: {
         message: "Missing username or password",
         timestamp: new Date().toISOString(),
       },
     });
+    return;
   }
 
   // TODO: Implement login logic

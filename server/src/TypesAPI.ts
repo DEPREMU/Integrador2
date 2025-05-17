@@ -1,3 +1,5 @@
+import { Falsy } from "react-native";
+
 export type ResponseEncrypt = {
   dataEncrypted?: string;
   error?: { message: string; timestamp: string };
@@ -15,4 +17,25 @@ export type RequestEncrypt = {
 export type RequestDecrypt = {
   dataToDecrypt: string;
 };
-  
+
+export type DataLogin = {
+  token: string;
+  user: {
+    id: string;
+  };
+}; //! Verify this type
+
+export type ResponseLogin = {
+  data: DataLogin | null;
+  error: { message: string; timestamp: string } | null;
+};
+
+export type TypeLoginResponse = {
+  data: DataLogin | Falsy;
+  error: Falsy | { message: string; timestamp: string };
+};
+
+export type TypeBodyLogin = {
+  username?: "string";
+  password?: "string";
+};
