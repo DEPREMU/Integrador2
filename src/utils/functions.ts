@@ -4,17 +4,13 @@ import {
   ResponseEncrypt,
   ResponseDecrypt,
 } from "../../server/src/TypesAPI";
-import {
-  languages,
-  LanguagesSupported,
-  languagesSupported,
-} from "./translates";
 import { API_URL } from "./constants/constants";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import * as Localization from "expo-localization";
 import { KEYS_STORAGE, KeyStorageValues } from "./constants/keysStorage";
+import { LanguagesSupported, languagesSupported } from "./translates";
 
 /**
  * Validates whether a given string is a properly formatted email address.
@@ -134,164 +130,193 @@ export const getLineNumber = (): number => {
 };
 
 /**
- * Asynchronously saves data to storage, with support for both web and native platforms.
- * On web, it uses `localStorage`, and on native platforms, it uses `AsyncStorage`.
+ * Securely stores a value under a specified key.
  *
- * @param key - The key under which the value will be stored. Must be a valid `KeyStorageValues`.
- * @param value - The value to be stored. If the value is not a string, it will be serialized to JSON.
- * @returns A promise that resolves when the data has been successfully saved.
+ * - On **native platforms**, it uses `SecureStore`.
+ * - On **web**, it encrypts the data using an API and stores it in `localStorage`.
+ *
+ * @param key - The storage key. Must be a valid `KeyStorageValues`.
+ * @param value - The value to store. Will be stringified if not a string.
+ * @param callback - Optional callback executed after the operation, receives an error if failed.
  */
-export const saveData = async (
+export const saveDataSecure = async (
   key: KeyStorageValues,
-  value: any
+  value: any,
+  callback?: (err?: Error) => any
 ): Promise<void> => {
-  if (Platform.OS === "web") {
-    localStorage.setItem(
-      key,
-      typeof value === "string" ? value : JSON.stringify(value)
-    );
-    return;
-  }
-  await AsyncStorage.setItem(key, value);
-};
-
-/**
- * Saves data securely in storage. Depending on the platform, it either uses
- * SecureStore for non-web platforms or encrypts the data and stores it in
- * localStorage for web platforms.
- *
- * @param key - The key under which the data will be stored. Must be a valid `KeyStorageValues`.
- * @param value - The data to be stored. Can be of any type. Non-string values will be stringified.
- * @returns A promise that resolves when the data is successfully stored.
- *
- * @throws Logs an error to the console if an issue occurs during the storage process.
- *
- * Platform-specific behavior:
- * - **Non-web platforms**: Uses `SecureStore.setItemAsync` to store the data securely.
- * - **Web platforms**: Sends the data to an encryption API endpoint, retrieves the encrypted data,
- *   and stores it in `localStorage`.
- *
- * Notes:
- * - If the encryption API returns an error or no encrypted data, the function logs the error and exits.
- */
-export const saveDataSecure = async (key: KeyStorageValues, value: any) => {
   try {
-    const newValue = typeof value === "string" ? value : JSON.stringify(value);
+    const stringifiedValue =
+      typeof value === "string" ? value : JSON.stringify(value);
 
     if (Platform.OS !== "web") {
-      await SecureStore.setItemAsync(key, newValue);
-      return;
+      await SecureStore.setItemAsync(key, stringifiedValue);
+      return callback?.();
     }
 
-    const dataEncrypted: ResponseEncrypt = await fetch(
+    const response = await fetch(
       getRouteAPI("encrypt"),
       fetchOptions("POST", {
-        dataToEncrypt: newValue,
-      })
-    ).then((response) => response.json());
+        dataToEncrypt: stringifiedValue,
+      } satisfies RequestEncrypt)
+    );
+    const result = (await response.json()) as ResponseEncrypt;
 
-    if (dataEncrypted.error) {
+    if (result.error || !result.dataEncrypted) {
+      const message =
+        result.error?.message || "No encrypted data returned from API";
       console.error(
-        `./globalVariables/saveDataSecure() => ${dataEncrypted.error.message} - ${dataEncrypted.error.timestamp}`
+        `saveDataSecure() => ${message} - ${result.error?.timestamp || ""}`
       );
-      return;
+      return callback?.(new Error(message));
     }
-    if (!dataEncrypted.dataEncrypted) return;
 
-    localStorage.setItem(key, dataEncrypted.dataEncrypted);
+    localStorage.setItem(key, result.dataEncrypted);
+    return callback?.();
   } catch (error) {
-    console.error(`./globalVariables/saveDataSecure() => ${error}`);
+    console.error(`saveDataSecure() => ${error}`);
+    return callback?.(
+      new Error(error instanceof Error ? error.message : String(error))
+    );
   }
 };
 
 /**
- * Removes a stored data item associated with the specified key.
+ * Loads secure data stored under a given key.
  *
- * This function handles data removal differently depending on the platform:
- * - On web platforms, it uses `localStorage.removeItem`.
- * - On non-web platforms, it uses `AsyncStorage.removeItem`.
+ * - On **native platforms**, it retrieves the value via `SecureStore`.
+ * - On **web**, it decrypts the value stored in `localStorage` using an API.
  *
- * @param key - The key associated with the data to be removed. Must be of type `KeyStorageValues`.
- * @returns A promise that resolves when the data has been removed (for non-web platforms).
+ * @param key - The key to retrieve. Must be a valid `KeyStorageValues`.
+ * @returns The decrypted string or `null` if not found or decryption fails.
  */
-export const removeData = async (key: KeyStorageValues) => {
-  if (Platform.OS === "web") {
-    localStorage.removeItem(key);
-    return;
+export const loadDataSecure = async (
+  key: KeyStorageValues,
+  callback?: (value: string | null, err?: Error) => any
+): Promise<string | null> => {
+  if (Platform.OS !== "web") {
+    const value = await SecureStore.getItemAsync(key);
+    if (callback) return callback(value);
+    return await SecureStore.getItemAsync(key);
   }
-  await AsyncStorage.removeItem(key);
+  const storedValue = localStorage.getItem(key);
+  if (!storedValue) return callback?.(null, new Error("No value found"));
+
+  try {
+    const response = await fetch(
+      getRouteAPI("decrypt"),
+      fetchOptions("POST", {
+        dataToDecrypt: storedValue,
+      } satisfies RequestDecrypt)
+    );
+    const result = (await response.json()) as ResponseDecrypt;
+
+    if (result.error || !result.dataDecrypted) {
+      console.error(
+        `loadDataSecure() => ${result.error?.message} - ${result.error?.timestamp}`
+      );
+      return callback?.(
+        null,
+        new Error(result.error?.message || "Decryption failed")
+      );
+    }
+
+    return result.dataDecrypted;
+  } catch (error) {
+    console.error(`loadDataSecure() => ${error}`);
+    return callback?.(
+      null,
+      new Error(error instanceof Error ? error.message : String(error))
+    );
+  }
 };
 
 /**
- * Removes a stored data item securely based on the provided key.
+ * Removes securely stored data under the given key.
  *
- * This function handles both web and non-web platforms. On web platforms,
- * it uses `localStorage` to remove the item. On non-web platforms, it uses
- * `SecureStore.deleteItemAsync` to securely delete the item.
+ * - On **native platforms**, uses `SecureStore.deleteItemAsync`.
+ * - On **web**, removes from `localStorage`.
  *
- * @param key - The key of the storage item to be removed. Must be of type `KeyStorageValues`.
- *
- * @throws Will log an error to the console if the removal process fails.
+ * @param key - The key of the data to remove.
+ * @param callback - Optional callback executed after the operation, receives an error if failed.
  */
-export const removeDataSecure = async (key: KeyStorageValues) => {
+export const removeDataSecure = async (
+  key: KeyStorageValues,
+  callback?: (err?: Error) => any
+): Promise<void> => {
   try {
     if (Platform.OS === "web") localStorage.removeItem(key);
     else await SecureStore.deleteItemAsync(key);
   } catch (error) {
-    console.error(`./globalVariables/removeDataSecure() => ${error}`);
-  }
-};
-
-/**
- * Asynchronously loads data associated with the given key from storage.
- *
- * On web platforms, it retrieves the value from `localStorage`. On other platforms,
- * it uses `AsyncStorage` to fetch the value.
- *
- * @param key - The key used to retrieve the stored value. Must be of type `KeyStorageValues`.
- * @returns A promise that resolves to the stored value as a string, or `null` if no value is found.
- */
-export const loadData = async (key: KeyStorageValues) => {
-  if (Platform.OS === "web") return localStorage.getItem(key);
-  const value = await AsyncStorage.getItem(key);
-  return value;
-};
-
-/**
- * Asynchronously loads secure data associated with the given key.
- *
- * This function retrieves data securely depending on the platform:
- * - On non-web platforms, it uses `SecureStore.getItemAsync` to fetch the data.
- * - On web platforms, it retrieves the data from `localStorage` and decrypts it
- *   using a backend API.
- *
- * @param key - The key associated with the data to retrieve. Must be a valid `KeyStorageValues`.
- * @returns A promise that resolves to the decrypted data as a string, or `null` if:
- * - The data is not found.
- * - An error occurs during decryption.
- * - The decrypted data is empty or invalid.
- *
- * @throws Will log an error to the console if the decryption API returns an error.
- */
-export const loadDataSecure = async (key: KeyStorageValues) => {
-  if (Platform.OS !== "web") return await SecureStore.getItemAsync(key);
-
-  const value = localStorage.getItem(key);
-
-  if (!value) return null;
-  const decryptedValue = await fetch(
-    getRouteAPI("decrypt"),
-    fetchOptions("POST", { dataToDecrypt: value })
-  ).then((response) => response.json() as ResponseDecrypt);
-  if (decryptedValue.error) {
-    console.error(
-      `./globalVariables/loadDataSecure() => ${decryptedValue.error.message} - ${decryptedValue.error.timestamp}`
+    console.error(`removeDataSecure() => ${error}`);
+    return callback?.(
+      new Error(error instanceof Error ? error.message : String(error))
     );
-    return null;
   }
-  if (!decryptedValue.dataDecrypted) return null;
 
-  return decryptedValue.dataDecrypted;
+  return callback?.();
+};
+
+/**
+ * Stores data under a specified key.
+ *
+ * - On **web**, uses `localStorage`.
+ * - On **native**, uses `AsyncStorage`.
+ *
+ * @param key - The key to store the value under.
+ * @param value - The value to store. Non-string values will be stringified.
+ */
+export const saveData = async (
+  key: KeyStorageValues,
+  value: any,
+  callback?: () => any
+): Promise<void> => {
+  const stringValue = typeof value === "string" ? value : JSON.stringify(value);
+
+  if (Platform.OS === "web") localStorage.setItem(key, stringValue);
+  else await AsyncStorage.setItem(key, stringValue);
+  return callback?.();
+};
+
+/**
+ * Loads data associated with a given key.
+ *
+ * - On **web**, reads from `localStorage`.
+ * - On **native**, uses `AsyncStorage`.
+ *
+ * @param key - The key to retrieve the value from.
+ * @returns The stored value as a string, or `null` if not found.
+ */
+export const loadData = async (
+  key: KeyStorageValues,
+  callback?: (value: string | null) => any
+): Promise<string | null> => {
+  if (Platform.OS === "web") return callback?.(localStorage.getItem(key));
+  return callback?.(await AsyncStorage.getItem(key));
+};
+
+/**
+ * Removes data associated with a specified key.
+ *
+ * - On **web**, removes from `localStorage`.
+ * - On **native**, removes from `AsyncStorage`.
+ *
+ * @param key - The key of the value to remove.
+ * @param callback - Optional callback executed after deletion.
+ */
+export const removeData = async (
+  key: KeyStorageValues,
+  callback?: (err?: Error) => any
+): Promise<void> => {
+  try {
+    if (Platform.OS === "web") localStorage.removeItem(key);
+    else await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error(`removeData() => ${error}`);
+    return callback?.(
+      new Error(error instanceof Error ? error.message : String(error))
+    );
+  }
+  return callback?.();
 };
 
 /**
@@ -306,17 +331,20 @@ export const loadDataSecure = async (key: KeyStorageValues) => {
  */
 export const checkLanguage = async (): Promise<LanguagesSupported> => {
   try {
-    const data = await loadData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE);
-    if (data) return data as LanguagesSupported;
+    const data = (await loadData(
+      KEYS_STORAGE.LANGUAGE_KEY_STORAGE
+    )) as LanguagesSupported;
+    if (data) {
+      const languageAvailable = languagesSupported.includes(data);
+      if (languageAvailable) return data;
+    }
 
     const locales = Localization.getLocales()[0];
-    const language = locales.languageTag.split("-")[0];
-    const languageAvailable = languagesSupported.includes(
-      language as keyof typeof languages
-    );
+    const language = locales.languageTag.split("-")[0] as LanguagesSupported;
+    const languageAvailable = languagesSupported.includes(language);
     if (language && languageAvailable) {
       await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, language);
-      return language as LanguagesSupported;
+      return language;
     }
   } catch (error) {
     console.error(`./globalVariables/checkLanguage() => ${error}`);
