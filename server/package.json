@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm install"
+    "start": "npm install && tsc && node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -13,8 +13,10 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
+    "mongodb": "^6.16.0",
     "path": "^0.12.7"
   },
   "devDependencies": {

@@ -1,14 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
+import { env } from "./env.js";
 
-const env = dotenv.config().parsed;
-
-if (!env || env.SUPABASE_URL === undefined || env.SUPABASE_KEY === undefined) {
-  throw new Error("Failed to load environment variables");
-}
-
-const supabaseUrl = env?.SUPABASE_URL;
-const supabaseKey = env?.SUPABASE_KEY;
+const supabaseUrl = env.SUPABASE_URL;
+const supabaseKey = env.SUPABASE_KEY;
 
 /**
  * Initializes and exports a Supabase client instance.
