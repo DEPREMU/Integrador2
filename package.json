@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "backend": "cd server & npm install & tsc & node dist/index.js",
+    "backend": "cd server & npm start",
     "expo": "npx expo start",
-    "start": "npm install & concurrently \"npm run backend\" \"npm run expo\""
+    "getLocalIP": "node ./getLocalApiUrl.js",
+    "install": "if not exist node_modules npm install",
+    "project": "concurrently \"npm run expo\" \"npm run backend\"",
+    "start": "npm run getLocalIP & npm run install & npm run project"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
