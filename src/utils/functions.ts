@@ -4,10 +4,11 @@ import {
   ResponseEncrypt,
   ResponseDecrypt,
 } from "../../server/src/TypesAPI";
-import { API_URL } from "./constants/constants";
+import { API_URL } from "./constants/API_URL";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
+import * as ImagePicker from "expo-image-picker";
 import * as Localization from "expo-localization";
 import { KEYS_STORAGE, KeyStorageValues } from "./constants/keysStorage";
 import { LanguagesSupported, languagesSupported } from "./translates";
@@ -78,6 +79,27 @@ export const fetchOptions = (
  * ```
  */
 export const getRouteAPI = (route: string): string => `${API_URL}/${route}`;
+
+/**
+ * Constructs a full image route URL by appending the given filename to the base API URL.
+ *
+ * @param filename - The name of the image file to append to the base API URL.
+ * @returns The full image route URL as a string.
+ *
+ * @remarks
+ * This function is useful for constructing image URLs dynamically.
+ * For example, if the base API URL is "https://example.com/api/v1"
+ * and the filename is "/images/photo.jpg", the resulting URL will be:
+ * "https://example.com/images/photo.jpg".
+ *
+ * @example
+ * ```typescript
+ * const imageRoute = getRouteImage("/images/photo.jpg");
+ * console.log(imageRoute); // Outputs: "https://example.com/images/photo.jpg"
+ * ```
+ */
+export const getRouteImage = (filename: string): string =>
+  `${API_URL.replace("/api/v1", "")}${filename}`;
 
 /**
  * Retrieves the file name of the caller function from the stack trace.
@@ -350,4 +372,52 @@ export const checkLanguage = async (): Promise<LanguagesSupported> => {
     console.error(`./globalVariables/checkLanguage() => ${error}`);
   }
   return "en";
+};
+
+export const requestImagePermission = async () => {
+  const permissionResult =
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  return permissionResult.granted;
+};
+
+export const uploadImage = async () => {
+  const grant = await requestImagePermission();
+  if (!grant) return;
+
+  const pickerResult = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 1,
+    allowsMultipleSelection: false,
+  });
+
+  if (pickerResult.canceled) return;
+
+  console.log("Picker result:", pickerResult);
+  console.log("Assets:", pickerResult.assets);
+  pickerResult.assets.forEach((asset) => console.log(asset.uri));
+
+  const image = pickerResult.assets;
+
+  const formData = new FormData();
+  for (const img of image) {
+    formData.append("images", {
+      uri: img.uri,
+      name: img.fileName ?? "upload.jpg",
+      type: img.mimeType ?? "image/jpeg",
+    } as any);
+  }
+
+  try {
+    const res = await fetch(getRouteAPI("upload"), {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log("Subida exitosa:", data);
+    return data.files;
+  } catch (error) {
+    console.error("Error al subir imagen:", error);
+  }
 };

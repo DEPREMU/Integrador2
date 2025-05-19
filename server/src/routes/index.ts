@@ -1,5 +1,6 @@
 import express from "express";
 import { loginHandler } from "./login.js";
+import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
 
 /**
@@ -13,5 +14,6 @@ const router = express.Router();
 router.post("/login", loginHandler);
 router.post("/encrypt", encryptHandler);
 router.post("/decrypt", decryptHandler);
+router.post("/upload", upload.array("images"), handleReceiveImages);
 
 export default router;

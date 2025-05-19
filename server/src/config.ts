@@ -1,3 +1,9 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+export const __filename = fileURLToPath(import.meta.url);
+export const __dirname = path.dirname(__filename);
+
 /**
  * The base URL for the main server.
  * This URL is used to make requests to the backend server running locally.

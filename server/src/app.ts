@@ -10,7 +10,8 @@
 import cors from "cors";
 import router from "./routes/index.js";
 import express from "express";
-import { mainUrl } from "./config.js";
+import { mainUrl, __dirname } from "./config.js";
+import path from "path";
 
 /**
  * The main Express application instance.
@@ -26,6 +27,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Use express static middleware to serve images
+app.use("/images", express.static(path.join(__dirname, "..", "..", "images")));
 
 // Use json for response
 app.use(express.json());

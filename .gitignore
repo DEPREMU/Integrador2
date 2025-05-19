@@ -34,3 +34,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# API_URL
+src/utils/constants/API_URL.ts
