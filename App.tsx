@@ -3,7 +3,7 @@ import AppNavigator from "@navigation/AppNavigator";
 
 const App = () => (
   <AppProviders>
-    <AppNavigator />;
+    <AppNavigator />
   </AppProviders>
 );
 

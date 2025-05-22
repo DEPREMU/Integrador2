@@ -4,7 +4,7 @@
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "start": "npm run install && tsc && node dist/index.js",
+    "start": "tsc && node dist/index.js",
     "install": "if not exist node_modules npm install"
   },
   "keywords": [],

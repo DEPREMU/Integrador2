@@ -1,6 +1,6 @@
 import {
-  RootStackParamList,
   ScreensAvailable,
+  RootStackParamList,
 } from "@navigation/navigationTypes";
 import { log } from "@utils";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";

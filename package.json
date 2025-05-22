@@ -1,12 +1,12 @@
 {
-  "name": "integrador2",
+  "name": "meditime",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
     "backend": "cd server & npm start",
-    "expo": "npx expo start",
+    "expo": "npx expo start -c",
     "getLocalIP": "node ./getLocalApiUrl.js",
-    "install": "if not exist node_modules npm install",
+    "install": "if not exist node_modules npm install & cd server & npm install",
     "project": "concurrently \"npm run expo\" \"npm run backend\"",
     "start": "npm run getLocalIP & npm run install & npm run project"
   },
