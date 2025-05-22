@@ -18,6 +18,11 @@ export type RequestDecrypt = {
   dataToDecrypt: string;
 };
 
+export type RequestLogs = {
+  log: string;
+  timestamp: string;
+};
+
 export type DataLogin = {
   token: string;
   user: {

@@ -12,11 +12,20 @@ interface ModalContextProps {
   closeModal: () => void;
 }
 
-const ModalContext = createContext<ModalContextProps | undefined>(undefined);
-
 interface ModalProviderProps {
   children: ReactNode;
 }
+
+/**
+ * ModalContext provides a way to manage the state and behavior of a modal component.
+ *
+ * It allows components to open and close the modal, set its title, body, and buttons.
+ *
+ * @context
+ * @property {function} openModal - Function to open the modal with a specified title, body, and buttons.
+ * @property {function} closeModal - Function to close the modal and reset its state.
+ */
+const ModalContext = createContext<ModalContextProps | undefined>(undefined);
 
 /**
  * Provides a context for managing a modal's state and behavior.

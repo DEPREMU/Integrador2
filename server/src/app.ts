@@ -4,8 +4,8 @@
  *
  * @requires cors - Middleware for enabling Cross-Origin Resource Sharing (CORS).
  * @requires express - Web framework for building server-side applications.
- * @requires ./Routes - Custom router module for handling API routes.
- * @requires ./config - Configuration module containing application constants like `mainUrl` and `port`.
+ * @requires ./routes - Custom router module for handling API routes.
+ * @requires ./config - Configuration module containing application constants like `mainUrl` and `__dirname`.
  */
 import cors from "cors";
 import router from "./routes/index.js";

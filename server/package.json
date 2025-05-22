@@ -2,7 +2,7 @@
   "name": "src_server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "start": "npm run install && tsc && node dist/index.js",
     "install": "if not exist node_modules npm install"

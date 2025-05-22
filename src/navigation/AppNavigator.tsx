@@ -4,8 +4,8 @@ import LoginScreen from "@screens/auth/LoginScreen";
 import SigninScreen from "@screens/auth/SigninScreen";
 import { RootStackParamList } from "./navigationTypes";
 import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

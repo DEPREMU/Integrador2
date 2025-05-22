@@ -2,8 +2,9 @@ import {
   RootStackParamList,
   ScreensAvailable,
 } from "@navigation/navigationTypes";
-import { useNavigation, useNavigationState } from "@react-navigation/native";
+import { log } from "@utils";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation, useNavigationState } from "@react-navigation/native";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type BackgroundTask = () => Promise<void> | void;
@@ -15,6 +16,16 @@ interface BackgroundTaskContextType {
   getCurrentRouteName: () => ScreensAvailable;
 }
 
+/**
+ * BackgroundTaskContext provides a way to manage background tasks in a React application.
+ *
+ * It allows adding tasks to a queue and executing them sequentially, as well as
+ * updating the current screen in the navigation stack.
+ *
+ * @context
+ * @returns {BackgroundTaskContextType} The context value containing the `runTask`,
+ * `addTaskQueue`, `updateScreen`, and `getCurrentRouteName` methods.
+ */
 const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
   null
 );
@@ -41,7 +52,7 @@ const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
  * const { addTaskQueue } = useContext(BackgroundTaskContext);
  *
  * addTaskQueue(() => {
- *   console.log("Task 1 executed");
+ *   log("Task 1 executed");
  * });
  * ```
  *
@@ -60,7 +71,7 @@ const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
  *      "Content-Type": "application/json",
  *  },
  *  });
- *  console.log("Database updated");
+ *  log("Database updated");
  * };
  *
  * addTaskQueue(updateDB);
@@ -93,6 +104,7 @@ export const BackgroundTaskProvider: React.FC<{
   const addTaskQueue = (task: BackgroundTask) => {
     setTasksQueue((prev) => [...prev, task]);
   };
+
   /**
    * Runs a given task immediately.
    *
@@ -106,7 +118,7 @@ export const BackgroundTaskProvider: React.FC<{
    * ```tsx
    * const { runTask } = useContext(BackgroundTaskContext);
    * runTask(() => {
-   *  console.log("Task executed immediately");
+   *  log("Task executed immediately");
    * });
    * ```
    *
@@ -125,7 +137,7 @@ export const BackgroundTaskProvider: React.FC<{
    *     "Content-Type": "application/json",
    * },
    * });
-   * console.log("Database updated");
+   * log("Database updated");
    * };
    *
    * runTask(updateDB);
@@ -133,6 +145,7 @@ export const BackgroundTaskProvider: React.FC<{
    *
    */
   const runTask = (task: BackgroundTask) => task();
+
   /**
    * Updates the current screen in the navigation stack.
    *
@@ -170,7 +183,7 @@ export const BackgroundTaskProvider: React.FC<{
     } else if (currentRouteName === screen) {
       navigation.replace(screen);
     } else {
-      console.log("The screen given is not the current screen");
+      log("The screen given is not the current screen");
     }
   };
 
@@ -193,6 +206,14 @@ export const BackgroundTaskProvider: React.FC<{
   );
 };
 
+/**
+ * Custom hook to use the BackgroundTaskContext.
+ *
+ * @returns {BackgroundTaskContextType} The context value containing the `runTask`,
+ * `addTaskQueue`, `updateScreen`, and `getCurrentRouteName` methods.
+ *
+ * @throws {Error} If used outside of a BackgroundTaskProvider.
+ */
 export const useBackgroundTask = () => {
   const ctx = useContext(BackgroundTaskContext);
   if (!ctx)
