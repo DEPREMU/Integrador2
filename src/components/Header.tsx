@@ -1,20 +1,10 @@
-import { stylesHeaderComponent } from "@/styles/components/stylesHeaderComponent";
-import { APP_ICON, APP_NAME } from "@/utils";
-import Menu from "./Menu";
-import { FontAwesome } from "@expo/vector-icons";
+import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
+import { APP_ICON, APP_NAME, MENU_ICON } from "@utils";
+import Menu from "@components/Menu";
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  Image,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, Image, Pressable } from "react-native";
 
 interface HeaderComponentProps {
-  title?: string;
   onOptionSelect?: (option: string) => void;
 }
 
@@ -29,12 +19,11 @@ interface HeaderComponentProps {
  * @returns {JSX.Element} A styled header component with optional title and child elements.
  */
 const HeaderComponent: React.FC<HeaderComponentProps> = ({
-  title,
   onOptionSelect,
 }) => {
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState<boolean>(false);
 
-  const toggleMenu = () => setMenuVisible(!menuVisible);
+  const toggleMenu = () => setMenuVisible((p) => !p);
   const closeMenu = () => setMenuVisible(false);
 
   const handleSelect = (option: string) => {
@@ -44,16 +33,16 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({
   const styles = stylesHeaderComponent();
 
   return (
-    <View style={[styles.container]}>
-      <TouchableOpacity onPress={toggleMenu}>
-        <FontAwesome name="bars" size={23} color="#ecebea" />
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <Pressable onPress={toggleMenu}>
+        <Image source={MENU_ICON} style={styles.iconImage} />
+      </Pressable>
 
       <Menu visible={menuVisible} onClose={closeMenu} onSelect={handleSelect} />
 
       <Image source={APP_ICON} style={styles.iconImage} />
 
-      <Text style={[styles.title]}>{APP_NAME}</Text>
+      <Text style={styles.title}>{APP_NAME}</Text>
     </View>
   );
 };

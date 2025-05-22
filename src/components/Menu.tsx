@@ -1,11 +1,11 @@
 import React from "react";
 import {
   View,
-  Text,
-  TouchableOpacity,
   StyleSheet,
   GestureResponderEvent,
+  TouchableWithoutFeedback,
 } from "react-native";
+import ButtonComponent from "@components/Button";
 
 interface MenuProps {
   visible: boolean;
@@ -13,28 +13,35 @@ interface MenuProps {
   onSelect: (option: string) => void;
 }
 
-const Menu: React.FC<MenuProps> = ({
-  visible,
-  onClose,
-  onSelect,
-}) => {
+const Menu: React.FC<MenuProps> = ({ visible, onClose, onSelect }) => {
   if (!visible) return null;
 
-  const handlePress =
-    (option: string) => (event: GestureResponderEvent) => {
-      onSelect(option);
-      onClose();
-    };
+  const handlePress = (option: string) => (event: GestureResponderEvent) => {
+    onSelect(option);
+    onClose();
+  };
 
   return (
-    <View style={styles.menu}>
-      <TouchableOpacity onPress={handlePress("Perfil")} style={styles.menuItem}>
-        <Text style={styles.menuText}>Perfil</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={handlePress("Cerrar sesión")} style={styles.menuItem}>
-        <Text style={styles.menuText}>Cerrar sesión</Text>
-      </TouchableOpacity>
-    </View>
+    <TouchableWithoutFeedback onPress={onClose}>
+      <View style={StyleSheet.absoluteFill}>
+        <TouchableWithoutFeedback>
+          <View style={styles.menu}>
+            <ButtonComponent
+              handlePress={() => handlePress("Perfil")}
+              label="Perfil"
+              touchableOpacity
+              replaceStyles={styles}
+            />
+            <ButtonComponent
+              handlePress={() => handlePress("Cerrar sesión")}
+              replaceStyles={styles}
+              touchableOpacity
+              label="Cerrar"
+            />
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -43,8 +50,8 @@ export default Menu;
 const styles = StyleSheet.create({
   menu: {
     position: "absolute",
-    top: 55, 
-    left: 40, 
+    top: 55,
+    left: 40,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ccc",
@@ -57,11 +64,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  menuItem: {
+  button: {
     paddingVertical: 10,
     paddingHorizontal: 15,
   },
-  menuText: {
+  textButton: {
     fontSize: 16,
     color: "#333",
   },
