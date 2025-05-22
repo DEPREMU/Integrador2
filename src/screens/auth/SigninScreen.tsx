@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text, Button } from "react-native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/navigation/navigationTypes";
 import { useNavigation } from "@react-navigation/native";
+import { View, Text, Button } from "react-native";
+import { RootStackParamList } from "@navigation/navigationTypes";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type SigninScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

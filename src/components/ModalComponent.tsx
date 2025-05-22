@@ -5,9 +5,9 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import React, { useEffect } from "react";
-import { useResponsiveLayout } from "@/context/LayoutContext";
+import { useResponsiveLayout } from "@context/LayoutContext";
 import { Pressable, Text, View } from "react-native";
-import { useStylesModalComponent } from "@/styles/components/stylesModalComponent";
+import { useStylesModalComponent } from "@styles/components/stylesModalComponent";
 
 interface ModalProps {
   title: string;
@@ -19,6 +19,18 @@ interface ModalProps {
   setHideModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+/**
+ * ModalComponent is a reusable modal component that displays a title, body content, and buttons.
+ * It uses React Native Reanimated for smooth animations and transitions.
+ *
+ * @param {string} title - The title of the modal.
+ * @param {React.ReactNode} body - The body content of the modal.
+ * @param {React.ReactNode} buttons - The buttons to be displayed in the modal.
+ * @param {boolean} isOpen - A boolean indicating whether the modal is open or closed.
+ * @param {function} onClose - A function to be called when the modal is closed.
+ * @param {boolean} hideModal - A boolean indicating whether to hide the modal.
+ * @param {function} setHideModal - A function to set the hideModal state.
+ */
 const ModalComponent: React.FC<ModalProps> = ({
   title,
   body,
@@ -29,8 +41,7 @@ const ModalComponent: React.FC<ModalProps> = ({
   setHideModal,
 }) => {
   const position: SharedValue<number> = useSharedValue(0);
-  const styles = useStylesModalComponent();
-  const { height } = useResponsiveLayout();
+  const { styles, height } = useStylesModalComponent();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: position.value }],

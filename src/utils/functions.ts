@@ -1,4 +1,5 @@
 import {
+  RequestLogs,
   RequestEncrypt,
   RequestDecrypt,
   ResponseEncrypt,
@@ -50,7 +51,7 @@ export const isValidPassword = (password: string): boolean => {
  */
 export const fetchOptions = (
   method: "POST" | "GET",
-  body?: RequestEncrypt | RequestDecrypt
+  body?: RequestEncrypt | RequestDecrypt | RequestLogs
 ) => ({
   method,
   headers: {
@@ -75,7 +76,7 @@ export const fetchOptions = (
  * @example
  * ```typescript
  * const userRoute = getRouteAPI("users");
- * console.log(userRoute); // Outputs: "https://example.com/api/v1/users"
+ * log(userRoute); // Outputs: "https://example.com/api/v1/users"
  * ```
  */
 export const getRouteAPI = (route: string): string => `${API_URL}/${route}`;
@@ -95,7 +96,7 @@ export const getRouteAPI = (route: string): string => `${API_URL}/${route}`;
  * @example
  * ```typescript
  * const imageRoute = getRouteImage("/images/photo.jpg");
- * console.log(imageRoute); // Outputs: "https://example.com/images/photo.jpg"
+ * log(imageRoute); // Outputs: "https://example.com/images/photo.jpg"
  * ```
  */
 export const getRouteImage = (filename: string): string =>
@@ -115,7 +116,7 @@ export const getRouteImage = (filename: string): string =>
  * @example
  * ```typescript
  * const fileName = getFileName();
- * console.log(fileName); // Outputs the file name of the caller or "unknown".
+ * log(fileName); // Outputs the file name of the caller or "unknown".
  * ```
  */
 export const getFileName = (): string => {
@@ -186,7 +187,7 @@ export const saveDataSecure = async (
     if (result.error || !result.dataEncrypted) {
       const message =
         result.error?.message || "No encrypted data returned from API";
-      console.error(
+      logError(
         `saveDataSecure() => ${message} - ${result.error?.timestamp || ""}`
       );
       return callback?.(new Error(message));
@@ -195,7 +196,7 @@ export const saveDataSecure = async (
     localStorage.setItem(key, result.dataEncrypted);
     return callback?.();
   } catch (error) {
-    console.error(`saveDataSecure() => ${error}`);
+    logError(`saveDataSecure() => ${error}`);
     return callback?.(
       new Error(error instanceof Error ? error.message : String(error))
     );
@@ -233,7 +234,7 @@ export const loadDataSecure = async (
     const result = (await response.json()) as ResponseDecrypt;
 
     if (result.error || !result.dataDecrypted) {
-      console.error(
+      logError(
         `loadDataSecure() => ${result.error?.message} - ${result.error?.timestamp}`
       );
       return callback?.(
@@ -244,7 +245,7 @@ export const loadDataSecure = async (
 
     return result.dataDecrypted;
   } catch (error) {
-    console.error(`loadDataSecure() => ${error}`);
+    logError(`loadDataSecure() => ${error}`);
     return callback?.(
       null,
       new Error(error instanceof Error ? error.message : String(error))
@@ -269,7 +270,7 @@ export const removeDataSecure = async (
     if (Platform.OS === "web") localStorage.removeItem(key);
     else await SecureStore.deleteItemAsync(key);
   } catch (error) {
-    console.error(`removeDataSecure() => ${error}`);
+    logError(`removeDataSecure() => ${error}`);
     return callback?.(
       new Error(error instanceof Error ? error.message : String(error))
     );
@@ -333,7 +334,7 @@ export const removeData = async (
     if (Platform.OS === "web") localStorage.removeItem(key);
     else await AsyncStorage.removeItem(key);
   } catch (error) {
-    console.error(`removeData() => ${error}`);
+    logError(`removeData() => ${error}`);
     return callback?.(
       new Error(error instanceof Error ? error.message : String(error))
     );
@@ -369,11 +370,93 @@ export const checkLanguage = async (): Promise<LanguagesSupported> => {
       return language;
     }
   } catch (error) {
-    console.error(`./globalVariables/checkLanguage() => ${error}`);
+    logError(`./globalVariables/checkLanguage() => ${error}`);
   }
   return "en";
 };
 
+/**
+ * Logs an error message to the console or sends it to a server.
+ *
+ * @param args - The error message and additional data to log.
+ *
+ * @remarks
+ * - In development mode, logs to the console.
+ * - In preview mode, sends the log to a server endpoint.
+ * - In production mode, does nothing.
+ */
+export async function logError(...args: any[]): Promise<void> {
+  const env = process.env.NODE_ENV;
+  const isDev = env === "development" || __DEV__;
+  const isPreview = process.env.NODE_ENV === "preview";
+  const isProduction = env === "production";
+
+  if (isProduction && !isPreview && !isDev) return;
+
+  const date = new Date();
+
+  const firstMessage = `Error - ${date.toLocaleString()} ::`;
+
+  if (isDev) console.error(firstMessage, ...args);
+  else if (isPreview) {
+    const errorMessage = [firstMessage, ...args]
+      .filter(Boolean)
+      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : arg))
+      .join(" ");
+
+    await fetch(
+      getRouteAPI("logs"),
+      fetchOptions("POST", {
+        log: errorMessage,
+        timestamp: date.toISOString(),
+      })
+    );
+  }
+}
+
+/**
+ * Logs a message to the console or sends it to a server.
+ *
+ * @param args - The error message and additional data to log.
+ *
+ * @remarks
+ * - In development mode, logs to the console.
+ * - In preview mode, sends the log to a server endpoint.
+ * - In production mode, does nothing.
+ */
+export async function log(...args: any[]): Promise<void> {
+  const env = process.env.NODE_ENV;
+  const isDev = env === "development" || __DEV__;
+  const isPreview = process.env.NODE_ENV === "preview";
+  const isProduction = env === "production";
+  if (isProduction || (!isPreview && !isDev)) return;
+
+  const date = new Date();
+
+  const firstMessage = `Log - ${date.toLocaleString()}:`;
+
+  if (isDev) console.log(firstMessage, ...args);
+  else if (isPreview) {
+    const message = [firstMessage, ...args]
+      .filter(Boolean)
+      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : arg))
+      .join(" ");
+
+    await fetch(
+      getRouteAPI("logs"),
+      fetchOptions("POST", {
+        log: message,
+        timestamp: date.toISOString(),
+      })
+    );
+  }
+}
+
+/**
+ * Requests permission to access the media library.
+ *
+ * @returns `true` if permission is granted, otherwise `false`.
+ */
 export const requestImagePermission = async () => {
   const permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -381,43 +464,64 @@ export const requestImagePermission = async () => {
   return permissionResult.granted;
 };
 
-export const uploadImage = async () => {
+export const pickImage = async (pickMultipleImages: boolean) => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 1,
+    allowsMultipleSelection: pickMultipleImages,
+  });
+
+  return result;
+};
+
+/**
+ * Creates a FormData object from an array of image assets.
+ *
+ * @param images - An array of image assets to be included in the FormData.
+ * @returns A FormData object containing the images.
+ */
+const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
+  const formData = new FormData();
+  for (const image of images) {
+    const formValue = {
+      uri: image.uri,
+      name: image.fileName ?? "upload.jpg",
+      type: image.mimeType ?? "image/jpeg",
+    } as any;
+    formData.append("images", formValue);
+  }
+  return formData;
+};
+
+/**
+ * Uploads an image to the server.
+ *
+ * @returns The uploaded image data or `undefined` if the upload fails.
+ *
+ * @remarks
+ * - This function uses `expo-image-picker` to allow the user to select an image.
+ * - It constructs a `FormData` object and sends it to the server using a POST request.
+ * - If the upload is successful, it returns the uploaded image data.
+ */
+export const uploadImage = async (pickMultipleImages: boolean = false) => {
   const grant = await requestImagePermission();
   if (!grant) return;
 
-  const pickerResult = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 1,
-    allowsMultipleSelection: false,
-  });
-
+  const pickerResult = await pickImage(pickMultipleImages);
   if (pickerResult.canceled) return;
 
-  console.log("Picker result:", pickerResult);
-  console.log("Assets:", pickerResult.assets);
-  pickerResult.assets.forEach((asset) => console.log(asset.uri));
-
-  const image = pickerResult.assets;
-
-  const formData = new FormData();
-  for (const img of image) {
-    formData.append("images", {
-      uri: img.uri,
-      name: img.fileName ?? "upload.jpg",
-      type: img.mimeType ?? "image/jpeg",
-    } as any);
-  }
+  const formData = getFormData(pickerResult.assets);
 
   try {
-    const res = await fetch(getRouteAPI("upload"), {
+    const fetchOptions = {
       method: "POST",
       body: formData,
-    });
+    };
+    const res = await fetch(getRouteAPI("upload"), fetchOptions);
 
     const data = await res.json();
-    console.log("Subida exitosa:", data);
     return data.files;
   } catch (error) {
-    console.error("Error al subir imagen:", error);
+    logError("Error al subir imagen:", error);
   }
 };

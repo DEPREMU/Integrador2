@@ -19,6 +19,7 @@ import crypto from "crypto";
  */
 const SECRET_KEY =
   process.env.SECRET_KEY_TO_ENCRYPTION || "0123456789abcdef0123456789abcdef";
+
 /**
  * Initialization Vector (IV) used for encryption algorithms.
  *

@@ -21,8 +21,8 @@ export type typeLanguages = {
  *
  * Example usage:
  * ```typescript
- * console.log(languages.en.welcome); // Output: "Welcome"
- * console.log(languages.es.welcome); // Output: "Bienvenido"
+ * log(languages.en.welcome); // Output: "Welcome"
+ * log(languages.es.welcome); // Output: "Bienvenido"
  * ```
  *
  * Practical example:

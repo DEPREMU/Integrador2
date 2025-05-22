@@ -1,4 +1,16 @@
-export const colors = {
+export type Colors =
+  | "primary"
+  | "secondary"
+  | "accent"
+  | "background"
+  | "text"
+  | "border"
+  | "error"
+  | "warning"
+  | "success"
+  | "info";
+
+export const colors: Record<Colors, string> = {
   primary: "#3498DB",
   secondary: "#2ecc71",
   accent: "#e74c3c",

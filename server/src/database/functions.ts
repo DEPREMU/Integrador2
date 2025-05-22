@@ -1,9 +1,52 @@
-import {
-  getDatabase,
-  getCollection,
-  defaultDatabase,
-  defaultCollection,
-} from "./connection.js";
+import { Db } from "mongodb";
+import { defaultDatabase, defaultCollection, client } from "./connection.js";
+
+/**
+ * Asynchronously connects to the MongoDB client and returns the specified database instance.
+ *
+ * @param database - The name of the database to connect to. Defaults to `defaultDatabase` if not provided.
+ * @returns A promise that resolves to the MongoDB database instance.
+ * @throws Will throw an error if the connection to the database fails.
+ */
+export const getDatabase = async (database: string = defaultDatabase) => {
+  try {
+    await client.connect();
+    return client.db(database);
+  } catch (error) {
+    console.error("Error connecting to the database", error);
+    throw error;
+  }
+};
+
+/**
+ * Retrieves a MongoDB collection from the specified database. If the collection does not exist, it is created.
+ *
+ * @param collection - The name of the collection to retrieve. Defaults to `defaultCollection`.
+ * @param database - The database instance or the name of the database. Defaults to `defaultDatabase`.
+ * @returns A promise that resolves to the requested MongoDB collection.
+ * @throws Will throw an error if there is an issue retrieving or creating the collection.
+ */
+export const getCollection = async (
+  collection: string = defaultCollection,
+  database: string | Db = defaultDatabase
+) => {
+  try {
+    let db = database as Db;
+
+    if (typeof database === "string") db = await getDatabase(database);
+
+    const collections = await db
+      .listCollections({ name: collection })
+      .toArray();
+
+    if (collections.length === 0) await db.createCollection(collection);
+
+    return db.collection(collection);
+  } catch (error) {
+    console.error("Error getting the collection", error);
+    throw error;
+  }
+};
 
 /**
  * Finds documents in a specified MongoDB collection that match the given query.
@@ -20,8 +63,7 @@ export const findInCollection = async (
   database: string = defaultDatabase
 ) => {
   try {
-    const db = await getDatabase(database);
-    const coll = await getCollection(collection, db);
+    const coll = await getCollection(collection, database);
     const result = await coll.find(query).toArray();
     return result;
   } catch (error) {

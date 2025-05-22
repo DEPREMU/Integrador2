@@ -1,4 +1,4 @@
-import { useResponsiveLayout } from "@/context/LayoutContext";
+import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 
 export const useStylesButtonComponent = () => {

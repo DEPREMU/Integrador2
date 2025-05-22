@@ -1,8 +1,9 @@
 import {
   languages,
+  checkLanguage,
   typeLanguages,
   LanguagesSupported,
-} from "@/utils/translates";
+} from "@utils";
 import React, {
   useState,
   useEffect,
@@ -10,7 +11,6 @@ import React, {
   useContext,
   createContext,
 } from "react";
-import { checkLanguage } from "@utils";
 
 interface LanguageContextProps {
   language: LanguagesSupported;
@@ -18,14 +18,36 @@ interface LanguageContextProps {
   translations: typeLanguages;
 }
 
-const LanguageContext = createContext<LanguageContextProps | undefined>(
-  undefined
-);
-
 interface LanguageProviderProps {
   children: ReactNode;
 }
 
+/**
+ * LanguageContext provides the current language and translations for the application.
+ *
+ * It allows components to access and update the current language and provides
+ * translations based on the selected language.
+ *
+ * @context
+ * @returns {LanguageContextProps} The context value containing the current language,
+ * setLanguage function, and translations.
+ */
+const LanguageContext = createContext<LanguageContextProps | undefined>(
+  undefined
+);
+
+/**
+ * LanguageProvider component wraps the application and provides the LanguageContext.
+ *
+ * It initializes the current language and translations based on user preferences
+ * or default settings.
+ *
+ * @component
+ * @param {LanguageProviderProps} props - The props for the LanguageProvider.
+ * @param {ReactNode} props.children - The child components to be wrapped by the provider.
+ *
+ * @returns {JSX.Element} The LanguageProvider component with context value.
+ */
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
@@ -49,6 +71,14 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   );
 };
 
+/**
+ * Custom hook to use the LanguageContext.
+ *
+ * @returns {LanguageContextProps} The context value containing the current language,
+ * setLanguage function, and translations.
+ *
+ * @throws {Error} If used outside of a LanguageProvider.
+ */
 export const useLanguage = (): LanguageContextProps => {
   const context = useContext(LanguageContext);
   if (!context) {

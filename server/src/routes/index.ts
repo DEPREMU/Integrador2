@@ -1,5 +1,7 @@
 import express from "express";
+import { logsHandler } from "./logs.js";
 import { loginHandler } from "./login.js";
+import { RequestHandler } from "express";
 import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
 
@@ -10,10 +12,26 @@ import { decryptHandler, encryptHandler } from "./encryption.js";
  */
 const router = express.Router();
 
-// All routes are prefixed with /api/v1
-router.post("/login", loginHandler);
-router.post("/encrypt", encryptHandler);
-router.post("/decrypt", decryptHandler);
-router.post("/upload", upload.array("images"), handleReceiveImages);
+type RouteConfig = {
+  handler: RequestHandler;
+  middlewares?: RequestHandler[];
+};
+
+type Route = "/login" | "/encrypt" | "/decrypt" | "/upload" | "/logs";
+
+const routes: Record<Route, RouteConfig> = {
+  "/login": { handler: loginHandler },
+  "/encrypt": { handler: encryptHandler },
+  "/decrypt": { handler: decryptHandler },
+  "/logs": { handler: logsHandler },
+  "/upload": {
+    handler: handleReceiveImages,
+    middlewares: [upload.array("images")],
+  },
+};
+
+Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {
+  router.post(path, ...middlewares, handler);
+});
 
 export default router;

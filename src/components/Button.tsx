@@ -2,10 +2,11 @@ import React from "react";
 import { Pressable, Text } from "react-native";
 import { useStylesButtonComponent } from "@styles/components/stylesButtonComponent";
 
+type StylesButtonComponent = "button" | "textButton";
 interface ButtonComponentProps {
   label?: string;
-  customStyles?: Record<"button" | "textButton", any>;
-  replaceStyles?: Record<"button" | "textButton", any>;
+  customStyles?: Record<StylesButtonComponent, any>;
+  replaceStyles?: Record<StylesButtonComponent, any>;
   Children?: React.FC<any>;
   touchableOpacity?: boolean;
   handlePress: () => any;

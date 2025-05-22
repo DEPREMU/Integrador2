@@ -1,10 +1,9 @@
-import { useResponsiveLayout } from "@/context/LayoutContext";
+import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 
 export const useStylesModalComponent = () => {
   const { height } = useResponsiveLayout();
-
-  return StyleSheet.create({
+  const styles = StyleSheet.create({
     overlay: {
       flex: 1,
       width: "100%",
@@ -45,4 +44,6 @@ export const useStylesModalComponent = () => {
       gap: 10,
     },
   });
+
+  return { styles, height };
 };
