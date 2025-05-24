@@ -1,14 +1,22 @@
 {
   "name": "meditime",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "main": "index.ts",
+  "author": "DEPREMU",
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "listUnknownPackages": false
+      }
+    }
+  },
   "scripts": {
     "backend": "cd server & npm start",
-    "expo": "npx expo start -c",
+    "app": "npx expo start -c",
     "getLocalIP": "node ./getLocalApiUrl.js",
-    "install": "if not exist node_modules npm install & cd server & npm install",
-    "project": "concurrently \"npm run expo\" \"npm run backend\"",
-    "start": "npm run getLocalIP & npm run install & npm run project"
+    "install-all": "npm install & cd server & npm install",
+    "project": "concurrently \"npm run app\" \"npm run backend\"",
+    "start": "npm run getLocalIP & npm run install-all & npm run project"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -36,7 +44,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-web": "^0.20.0",
-    "expo-image-picker": "~16.1.4"
+    "expo-image-picker": "~16.1.4",
+    "expo-dev-client": "~5.1.8"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
