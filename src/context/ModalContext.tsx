@@ -10,6 +10,12 @@ import ModalComponent from "@components/ModalComponent";
 interface ModalContextProps {
   openModal: (title: string, body: ReactNode, buttons: ReactNode) => void;
   closeModal: () => void;
+  setCustomStyles: React.Dispatch<
+    React.SetStateAction<
+      | Record<"body" | "title" | "buttons" | "overlay" | "modal", any>
+      | undefined
+    >
+  >;
 }
 
 interface ModalProviderProps {
@@ -50,6 +56,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [buttons, setButtons] = useState<ReactNode>(null);
   const [hideModal, setHideModal] = useState<boolean>(true);
+  const [customStyles, setCustomStyles] = useState<
+    Record<"overlay" | "modal" | "title" | "body" | "buttons", any> | undefined
+  >(undefined);
 
   const clearIdTimeout = () => {
     if (!idTimeout.current) return;
@@ -102,7 +111,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   };
 
   return (
-    <ModalContext.Provider value={{ openModal, closeModal }}>
+    <ModalContext.Provider value={{ openModal, closeModal, setCustomStyles }}>
       <ModalComponent
         onClose={closeModal}
         title={title}
@@ -111,6 +120,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
         isOpen={isOpen}
         hideModal={hideModal}
         setHideModal={setHideModal}
+        customStyles={customStyles}
       />
       {children}
     </ModalContext.Provider>

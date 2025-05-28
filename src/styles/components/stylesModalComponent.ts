@@ -2,7 +2,7 @@ import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 
 export const useStylesModalComponent = () => {
-  const { height } = useResponsiveLayout();
+  const { height, width } = useResponsiveLayout();
   const styles = StyleSheet.create({
     overlay: {
       flex: 1,
@@ -45,5 +45,5 @@ export const useStylesModalComponent = () => {
     },
   });
 
-  return { styles, height };
+  return { styles, height, width };
 };
