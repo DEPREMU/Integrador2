@@ -4,6 +4,7 @@ import React, {
   ReactNode,
   useContext,
   createContext,
+  useEffect,
 } from "react";
 import ModalComponent from "@components/ModalComponent";
 
@@ -60,6 +61,12 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     Record<"overlay" | "modal" | "title" | "body" | "buttons", any> | undefined
   >(undefined);
 
+  /**
+   * Clears the timeout stored in `idTimeout.current` if it exists.
+   *
+   * This function is used to prevent memory leaks and ensure that the timeout
+   * does not execute after the modal has been closed or reset.
+   */
   const clearIdTimeout = () => {
     if (!idTimeout.current) return;
 
@@ -83,12 +90,16 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     modalBody: ReactNode,
     modalButtons: ReactNode
   ) => {
-    clearIdTimeout();
+    setIsOpen((prev) => {
+      if (prev) return prev; // If modal is already open, do not change state
 
-    setTitle(modalTitle);
-    setBody(modalBody);
-    setButtons(modalButtons);
-    setIsOpen(true);
+      clearIdTimeout();
+
+      setTitle(modalTitle);
+      setBody(modalBody);
+      setButtons(modalButtons);
+      return true;
+    });
   };
 
   /**

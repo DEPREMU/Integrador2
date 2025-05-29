@@ -12,7 +12,8 @@
   },
   "scripts": {
     "backend": "cd server & npm start",
-    "app": "npx expo start -c",
+    "app": "npx expo start -c -g",
+    "build:android": "npm eas build --platform android --profile preview",
     "getLocalIP": "node ./getLocalApiUrl.js",
     "install-all": "npm install & cd server & npm install",
     "project": "concurrently \"npm run app\" \"npm run backend\"",
