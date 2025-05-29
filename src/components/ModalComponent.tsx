@@ -4,9 +4,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import React, { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useStylesModalComponent } from "@styles/components/stylesModalComponent";
+import React, { useEffect, useRef } from "react";
 
 interface ModalProps {
   title: string;
@@ -45,6 +45,7 @@ const ModalComponent: React.FC<ModalProps> = ({
   customStyles,
 }) => {
   const position: SharedValue<number> = useSharedValue(0);
+  const idTimeout = useRef<NodeJS.Timeout | null>(null);
   const { styles, height } = useStylesModalComponent();
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -58,9 +59,13 @@ const ModalComponent: React.FC<ModalProps> = ({
       setHideModal(false);
       position.value = withTiming(0, options);
     } else {
-      setTimeout(() => setHideModal(true), 750);
+      idTimeout.current = setTimeout(() => setHideModal(true), 750);
       position.value = withTiming(height + 200, options);
     }
+
+    return () => {
+      if (idTimeout.current) clearTimeout(idTimeout.current);
+    };
   }, [isOpen]);
 
   return (
