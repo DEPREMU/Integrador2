@@ -1,6 +1,13 @@
 export type LanguagesSupported = "en" | "es";
 
-export const languagesSupported: LanguagesSupported[] = ["en", "es"];
+export const languagesNames: Record<LanguagesSupported, string> = {
+  en: "English",
+  es: "Español",
+};
+
+export const languagesSupported: LanguagesSupported[] = [
+  ...Object.keys(languagesNames),
+] as LanguagesSupported[];
 
 /**
  * Represents the structure of language translations.
