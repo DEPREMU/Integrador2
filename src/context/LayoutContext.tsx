@@ -54,13 +54,12 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const { width, height } = dimensions;
   const isPlatformWeb = Platform.OS === "web";
   const isPortrait: boolean = height >= width;
-  const isMobile: boolean = Platform.OS === "ios" || Platform.OS === "android";
   const isLandscape: boolean = width > height;
 
   const isWeb: boolean = isPlatformWeb && width > 768;
-  const isPhone: boolean = isMobile && width <= 768 && height <= 1600;
-  const isTablet: boolean = isMobile && width > 768 && height <= 1600;
-  const isLargeTablet: boolean = isMobile && width > 1024 && height <= 2048;
+  const isPhone: boolean = width <= 768 && height <= 1600;
+  const isTablet: boolean = width > 768 && height <= 1600;
+  const isLargeTablet: boolean = width > 1024 && height <= 2048;
 
   const layoutData = {
     isWeb,
