@@ -6,20 +6,13 @@ interface LayoutProviderProps {
 }
 
 /**
- * Context providing layout and device information for responsive design.
+ * LayoutContext provides information about the current layout of the application,
+ * including device type and dimensions.
  *
- * @property {boolean} isTablet - Indicates if the device is a tablet.
- * @property {boolean} isLargeTablet - Indicates if the device is a large tablet.
- * @property {boolean} isPhone - Indicates if the device is a phone.
- * @property {boolean} isWeb - Indicates if the device is a web browser.
- * @property {number} width - The current width of the viewport.
- * @property {number} height - The current height of the viewport.
- * @property {boolean} isLandscape - Indicates if the device is in landscape orientation.
- * @property {boolean} isPortrait - Indicates if the device is in portrait orientation.
- * @property {boolean} isPhonePortrait - Indicates if the device is a phone in portrait orientation.
- * @property {boolean} isPhoneLandscape - Indicates if the device is a phone in landscape orientation.
- * @property {boolean} isTabletPortrait - Indicates if the device is a tablet in portrait orientation.
- * @property {boolean} isTabletLandscape - Indicates if the device is a tablet in landscape orientation.
+ * It allows components to access responsive layout data for better UI adaptation.
+ *
+ * @context
+ * @returns {LayoutContextProps} The context value containing layout information.
  */
 const LayoutContext = createContext({
   isTablet: false,
@@ -28,24 +21,23 @@ const LayoutContext = createContext({
   isWeb: false,
   width: 0,
   height: 0,
-  isLandscape: false,
-  isPortrait: false,
-  isPhonePortrait: false,
-  isPhoneLandscape: false,
-  isTabletPortrait: false,
-  isTabletLandscape: false,
 });
 
 /**
- * Provides layout-related context values to its children, such as device type (phone, tablet, web),
- * orientation (portrait, landscape), and screen dimensions.
+ * Provides layout-related context values to its children, such as device type and screen dimensions.
  *
- * This provider listens for window dimension changes and updates the context accordingly.
- * It distinguishes between web, phone, tablet, and large tablet devices, and provides
- * additional booleans for orientation-specific states (e.g., isPhonePortrait).
+ * @param {LayoutProviderProps} props - The props for the LayoutProvider component.
+ * @param {React.ReactNode} props.children - The child components that will have access to the layout context.
  *
- * @param {LayoutProviderProps} props - The props for the provider, including children components.
- * @returns {JSX.Element} The provider wrapping its children with layout context values.
+ * @const {ScaledSize} dimensions - The current window dimensions, updated on screen size changes.
+ * @const {(dimensions: ScaledSize) => void} setDimensions - Setter function to update the window dimensions state.
+ * @const {number} width - The current width of the window.
+ * @const {number} height - The current height of the window.
+ * @const {boolean} isWeb - Indicates if the platform is web.
+ * @const {boolean} isPhone - Indicates if the device is considered a phone (width <= 768 and height <= 1600).
+ * @const {boolean} isTablet - Indicates if the device is considered a tablet (width > 768 and height <= 1600).
+ * @const {boolean} isLargeTablet - Indicates if the device is considered a large tablet (width > 1024 and height <= 2048).
+ * @const {object} layoutData - The object containing all layout-related values provided to the context.
  */
 export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const [dimensions, setDimensions] = useState(Dimensions.get("window"));
@@ -61,35 +53,25 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
 
   const { width, height } = dimensions;
   const isPlatformWeb = Platform.OS === "web";
+  const isPortrait: boolean = height >= width;
+  const isMobile: boolean = Platform.OS === "ios" || Platform.OS === "android";
+  const isLandscape: boolean = width > height;
 
-  const isPortrait = height >= width;
-  const isLandscape = width > height;
-  const isWeb = isPlatformWeb && width > 768;
-  const isPhone = !isPlatformWeb && Math.min(width, height) <= 768;
-  const isTablet =
-    !isPlatformWeb && !isPhone && Math.min(width, height) <= 1024;
-  const isLargeTablet =
-    !isPlatformWeb &&
-    Math.min(width, height) > 1024 &&
-    Math.max(width, height) <= 2048;
-  const isPhonePortrait = isPhone && isPortrait;
-  const isPhoneLandscape = isPhone && isLandscape;
-  const isTabletPortrait = isTablet && isPortrait;
-  const isTabletLandscape = isTablet && isLandscape;
+  const isWeb: boolean = isPlatformWeb && width > 768;
+  const isPhone: boolean = isMobile && width <= 768 && height <= 1600;
+  const isTablet: boolean = isMobile && width > 768 && height <= 1600;
+  const isLargeTablet: boolean = isMobile && width > 1024 && height <= 2048;
 
   const layoutData = {
-    isTablet,
-    isLargeTablet,
-    isPhone,
     isWeb,
-    width,
-    height,
-    isLandscape,
+    isPhone,
     isPortrait,
-    isPhonePortrait,
-    isPhoneLandscape,
-    isTabletPortrait,
-    isTabletLandscape,
+    isLargeTablet,
+    isPlatformWeb,
+    isLandscape,
+    isTablet,
+    height,
+    width,
   };
 
   return (
