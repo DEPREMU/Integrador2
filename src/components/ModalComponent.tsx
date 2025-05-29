@@ -5,7 +5,6 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import React, { useEffect } from "react";
-import { useResponsiveLayout } from "@context/LayoutContext";
 import { Pressable, Text, View } from "react-native";
 import { useStylesModalComponent } from "@styles/components/stylesModalComponent";
 
@@ -17,6 +16,10 @@ interface ModalProps {
   onClose: () => void;
   hideModal: boolean;
   setHideModal: React.Dispatch<React.SetStateAction<boolean>>;
+  customStyles?: Record<
+    "overlay" | "modal" | "title" | "body" | "buttons",
+    object | undefined
+  >;
 }
 
 /**
@@ -39,6 +42,7 @@ const ModalComponent: React.FC<ModalProps> = ({
   onClose,
   hideModal,
   setHideModal,
+  customStyles,
 }) => {
   const position: SharedValue<number> = useSharedValue(0);
   const { styles, height } = useStylesModalComponent();
@@ -54,9 +58,7 @@ const ModalComponent: React.FC<ModalProps> = ({
       setHideModal(false);
       position.value = withTiming(0, options);
     } else {
-      setTimeout(() => {
-        setHideModal(true);
-      }, 750);
+      setTimeout(() => setHideModal(true), 750);
       position.value = withTiming(height + 200, options);
     }
   }, [isOpen]);
@@ -67,13 +69,23 @@ const ModalComponent: React.FC<ModalProps> = ({
         styles.overlay,
         animatedStyle,
         { display: hideModal ? "none" : "flex" },
+        customStyles?.overlay,
       ]}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.modal}>
-          <Text style={styles.title}>{title}</Text>
-          {body !== null && <View style={styles.body}>{body}</View>}
-          {buttons !== null && <View style={styles.buttons}>{buttons}</View>}
+      <Pressable
+        style={[styles.overlay, customStyles?.overlay]}
+        onPress={onClose}
+      >
+        <Pressable style={[styles.modal, customStyles?.modal]}>
+          <Text style={[styles.title, customStyles?.title]}>{title}</Text>
+          {body !== null && (
+            <View style={[styles.body, customStyles?.body]}>{body}</View>
+          )}
+          {buttons !== null && (
+            <View style={[styles.buttons, customStyles?.buttons]}>
+              {buttons}
+            </View>
+          )}
         </Pressable>
       </Pressable>
     </Animated.View>

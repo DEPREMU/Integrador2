@@ -4,11 +4,10 @@
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "start": "tsc && node dist/index.js",
-    "install": "if not exist node_modules npm install"
+    "start": "tsc && node dist/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "DEPREMU",
   "license": "ISC",
   "type": "module",
   "dependencies": {
