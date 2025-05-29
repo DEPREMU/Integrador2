@@ -1,9 +1,3 @@
-import {
-  languages,
-  checkLanguage,
-  typeLanguages,
-  LanguagesSupported,
-} from "@utils";
 import React, {
   useState,
   useEffect,
@@ -11,6 +5,14 @@ import React, {
   useContext,
   createContext,
 } from "react";
+import {
+  saveData,
+  languages,
+  KEYS_STORAGE,
+  typeLanguages,
+  checkLanguage,
+  LanguagesSupported,
+} from "@utils";
 
 interface LanguageContextProps {
   language: LanguagesSupported;
@@ -61,6 +63,17 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
     loadLanguage();
   }, []);
+
+  useEffect(() => {
+    const saveNewLanguage = async () => {
+      const oldLanguage = await checkLanguage();
+      if (oldLanguage === language) return;
+
+      await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, language);
+    };
+
+    saveNewLanguage();
+  }, [language]);
 
   const translations = languages[language || "en"];
 
