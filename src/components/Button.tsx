@@ -10,6 +10,7 @@ interface ButtonComponentProps {
   Children?: React.FC<any>;
   touchableOpacity?: boolean;
   handlePress: () => any;
+  labelStyles?: object;
 }
 
 /**
