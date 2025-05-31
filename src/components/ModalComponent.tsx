@@ -46,7 +46,7 @@ const ModalComponent: React.FC<ModalProps> = ({
 }) => {
   const position: SharedValue<number> = useSharedValue(0);
   const idTimeout = useRef<NodeJS.Timeout | null>(null);
-  const { styles, height } = useStylesModalComponent();
+  const { styles } = useStylesModalComponent();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: position.value }],
@@ -60,7 +60,7 @@ const ModalComponent: React.FC<ModalProps> = ({
       position.value = withTiming(0, options);
     } else {
       idTimeout.current = setTimeout(() => setHideModal(true), 750);
-      position.value = withTiming(height + 200, options);
+      position.value = withTiming(1000, options);
     }
 
     return () => {
