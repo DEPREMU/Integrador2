@@ -4,33 +4,21 @@ import Menu from "@components/Menu";
 import React, { useState } from "react";
 import { View, Text, Image, Pressable } from "react-native";
 
-interface HeaderComponentProps {
-  onOptionSelect?: (option: string) => void;
-}
-
 /**
- * A reusable header component for mobile applications.
+ * HeaderComponent renders a header bar with a menu toggle button, app icon, and app name.
+ * It manages the visibility of the Menu component internally.
  *
- * @param {HeaderComponentProps} props - The properties for the header component.
- * @param {string} props.title - The main title text to display in the header. Optional.
- * @param {React.FC} props.Children - A React component to render next to the title (e.g., icon, button). Optional.
- * @param {object} props.customStyles - Optional custom styles for container and title.
+ * @returns {JSX.Element} The header component UI.
  *
- * @returns {JSX.Element} A styled header component with optional title and child elements.
+ * @example
+ * <HeaderComponent />
  */
-const HeaderComponent: React.FC<HeaderComponentProps> = ({
-  onOptionSelect,
-}) => {
+const HeaderComponent: React.FC = () => {
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
-
-  const toggleMenu = () => setMenuVisible((p) => !p);
-  const closeMenu = () => setMenuVisible(false);
-
-  const handleSelect = (option: string) => {
-    onOptionSelect?.(option);
-  };
-
   const styles = stylesHeaderComponent();
+
+  const toggleMenu = () => setMenuVisible((prev) => !prev);
+  const closeMenu = () => setMenuVisible(false);
 
   return (
     <View style={styles.container}>
@@ -38,7 +26,7 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({
         <Image source={MENU_ICON} style={styles.iconImage} />
       </Pressable>
 
-      <Menu visible={menuVisible} onClose={closeMenu} onSelect={handleSelect} />
+      <Menu visible={menuVisible} onClose={closeMenu} />
 
       <Image source={APP_ICON} style={styles.iconImage} />
 

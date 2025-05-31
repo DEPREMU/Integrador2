@@ -1,75 +1,85 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { stylesCarouselComponent } from "@styles/components/stylesCarouselComponent";
+import React, { useEffect, useState, useRef } from "react";
+import { Text, View } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
+  runOnJS,
 } from "react-native-reanimated";
-import { useResponsiveLayout } from "@/context/LayoutContext";
+import { stylesCarouselComponent } from "@/styles/components/stylesCarouselComponent";
 
 interface CarouselProps {
+  /**
+   * Array of text items to display in the carousel.
+   */
   items: string[];
+
+  /**
+   * Time interval in milliseconds for automatic slide change.
+   * @default 4000
+   */
   interval?: number;
 }
 
+/**
+ * Carousel component that displays a list of text items with opacity and scale animations.
+ * Automatically cycles through slides based on the specified interval.
+ *
+ * @param {CarouselProps} props - Component props.
+ * @param {string[]} props.items - List of text items to display.
+ * @param {number} [props.interval=4000] - Interval in milliseconds for automatic slide change.
+ * @returns {JSX.Element} The animated carousel component.
+ *
+ * @example
+ * <CarouselComponent items={['Slide 1', 'Slide 2']} interval={3000} />
+ */
 const CarouselComponent: React.FC<CarouselProps> = ({
   items,
   interval = 4000,
 }) => {
-  const { width, styles } = stylesCarouselComponent();
-  const [index, setIndex] = useState<number>(0);
+  const { styles, width } = stylesCarouselComponent();
 
-  // Un sharedValue por item
-  const positions = items.map((_, i) => useSharedValue(i === 0 ? 0 : width));
+  const [index, setIndex] = useState(0);
 
-  const animateToIndex = (newIndex: number, direction: "left" | "right") => {
-    const fromIndex = index;
+  // Shared values for opacity and scale of each slide
+  // First slide visible (opacity=1, scale=1), others hidden (opacity=0, scale=0.8)
+  const opacityRef = useRef(
+    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0))
+  );
+  const scaleRef = useRef(
+    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0.8))
+  );
 
-    // Actualiza posición del item actual (lo empuja fuera)
-    positions[fromIndex].value = withSpring(
-      direction === "left" ? -width : width,
-      {
-        damping: 15,
-        stiffness: 120,
-      }
-    );
-
-    // Trae el nuevo item al centro (0)
-    positions[newIndex].value = withSpring(0, {
-      damping: 15,
-      stiffness: 120,
+  useEffect(() => {
+    opacityRef.current.forEach((opacity, i) => {
+      opacity.value = withTiming(i === index ? 1 : 0, { duration: 500 });
     });
-
-    setIndex(newIndex);
-  };
+    scaleRef.current.forEach((scale, i) => {
+      scale.value = withTiming(i === index ? 1 : 0.8, { duration: 500 });
+    });
+  }, [index]);
 
   const handleNext = () => {
     const next = index === items.length - 1 ? 0 : index + 1;
-    animateToIndex(next, "right");
-  };
-
-  const handlePrev = () => {
-    const prev = index === 0 ? items.length - 1 : index - 1;
-    animateToIndex(prev, "left");
+    runOnJS(setIndex)(next);
   };
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      handleNext();
-    }, interval);
-
+    const timer = setInterval(handleNext, interval);
     return () => clearInterval(timer);
-  }, [index]);
+  }, [index, interval]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.carouselContainer}>
+      <View style={[styles.carouselContainer, { width }]}>
         {items.map((item, i) => {
           const animatedStyle = useAnimatedStyle(() => ({
-            transform: [{ translateX: positions[i].value }],
+            opacity: opacityRef.current[i].value,
+            transform: [{ scale: scaleRef.current[i].value }],
             position: "absolute",
             width,
+            justifyContent: "center",
+            alignItems: "center",
           }));
 
           return (
@@ -78,15 +88,6 @@ const CarouselComponent: React.FC<CarouselProps> = ({
             </Animated.View>
           );
         })}
-      </View>
-
-      <View style={styles.arrows}>
-        <Pressable onPress={handlePrev} style={styles.arrowButton}>
-          <Text style={styles.arrowText}>←</Text>
-        </Pressable>
-        <Pressable onPress={handleNext} style={styles.arrowButton}>
-          <Text style={styles.arrowText}>→</Text>
-        </Pressable>
       </View>
     </View>
   );

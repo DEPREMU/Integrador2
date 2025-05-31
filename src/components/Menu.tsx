@@ -1,75 +1,126 @@
-import React from "react";
-import {
-  View,
-  StyleSheet,
-  GestureResponderEvent,
-  TouchableWithoutFeedback,
-} from "react-native";
+import React, { useState } from "react";
+import { View, TouchableWithoutFeedback } from "react-native";
 import ButtonComponent from "@components/Button";
+import { stylesMenuComponent } from "@/styles/components/stylesMenuComponent";
+import {
+  languagesNames,
+  LanguagesSupported,
+  languagesSupported,
+} from "@/utils";
+import { useLanguage } from "@context/LanguageContext";
 
 interface MenuProps {
+  /**
+   * Controls the visibility of the menu.
+   */
   visible: boolean;
+
+  /**
+   * Callback function invoked to close the menu.
+   */
   onClose: () => void;
-  onSelect: (option: string) => void;
 }
 
-const Menu: React.FC<MenuProps> = ({ visible, onClose, onSelect }) => {
-  if (!visible) return null;
+/**
+ * Menu component that displays a simple menu with buttons.
+ *
+ * Features:
+ * - Shows two main options: "Login" and "Lenguajes".
+ * - When "Lenguajes" is pressed, it shows two language options: "Español" and "Inglés".
+ * - Clicking outside the menu closes it and resets the language selector view.
+ * - Selecting any option closes the menu.
+ *
+ * @param {MenuProps} props - Props for the Menu component.
+ * @param {boolean} props.visible - Whether the menu is visible.
+ * @param {() => void} props.onClose - Function to call to close the menu.
+ * @returns {JSX.Element | null} The rendered menu or null if not visible.
+ *
+ * @example
+ * <Menu visible={true} onClose={() => console.log("Menu closed")} />
+ */
+const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const { language, setLanguage, translations } = useLanguage();
 
-  const handlePress = (option: string) => (event: GestureResponderEvent) => {
-    onSelect(option);
+  if (!visible) return null;
+  const styles = stylesMenuComponent();
+
+  const handleClose = () => {
+    setShowLanguageSelector(false);
+    onClose();
+  };
+
+  /**
+   * Handles pressing a menu option.
+   * Shows language selector if "Lenguaje" is pressed, otherwise closes menu.
+   *
+   * @param {string} option - The selected menu option.
+   */
+  const handlePress = (option: string) => {
+    if (option === "Lenguaje") {
+      setShowLanguageSelector(true);
+    } else {
+      setShowLanguageSelector(false);
+      onClose();
+    }
+  };
+
+  const selectLanguage = (language: LanguagesSupported) => {
+    console.log("Idioma seleccionado:", language);
+    setShowLanguageSelector(false);
+    setLanguage(language);
     onClose();
   };
 
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={StyleSheet.absoluteFill}>
-        <TouchableWithoutFeedback>
-          <View style={styles.menu}>
+    <>
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View style={styles.overlay} />
+      </TouchableWithoutFeedback>
+
+      <View style={styles.menu}>
+        {!showLanguageSelector ? (
+          <>
             <ButtonComponent
-              handlePress={() => handlePress("Perfil")}
-              label="Perfil"
+              handlePress={() => handlePress("Login")}
+              label={translations.login}
               touchableOpacity
-              replaceStyles={styles}
+              replaceStyles={{
+                button: styles.button,
+                textButton: styles.textButton,
+              }}
             />
             <ButtonComponent
-              handlePress={() => handlePress("Cerrar sesión")}
-              replaceStyles={styles}
+              handlePress={() => handlePress("Lenguaje")}
+              label={translations.languages}
               touchableOpacity
-              label="Cerrar"
+              replaceStyles={{
+                button: styles.button,
+                textButton: styles.textButton,
+              }}
             />
-          </View>
-        </TouchableWithoutFeedback>
+          </>
+        ) : (
+          <>
+            {Object.entries(languagesNames).map(([lang, langName]) => {
+              if (lang === language) return null;
+              return (
+                <ButtonComponent
+                  handlePress={() => selectLanguage(lang as LanguagesSupported)}
+                  label={langName}
+                  touchableOpacity
+                  replaceStyles={{
+                    button: styles.button,
+                    textButton: styles.textButton,
+                  }}
+                />
+              );
+            })}
+          </>
+        )}
       </View>
-    </TouchableWithoutFeedback>
+    </>
   );
 };
 
 export default Menu;
-
-const styles = StyleSheet.create({
-  menu: {
-    position: "absolute",
-    top: 55,
-    left: 40,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    paddingVertical: 5,
-    width: 150,
-    zIndex: 1000,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  textButton: {
-    fontSize: 16,
-    color: "#333",
-  },
-});

@@ -1,6 +1,16 @@
 import { useResponsiveLayout } from "@/context/LayoutContext";
 import { StyleSheet } from "react-native";
 
+/**
+ * Generates styles for the Header component.
+ * Uses responsive layout context to adapt styles if needed.
+ *
+ * @returns {import('react-native').NamedStyles<any>} The styles object for the Header component.
+ *
+ * @example
+ * const styles = stylesHeaderComponent();
+ * <View style={styles.container}>...</View>
+ */
 export const stylesHeaderComponent = () => {
   const { isPhone, isWeb } = useResponsiveLayout();
 
@@ -15,6 +25,7 @@ export const stylesHeaderComponent = () => {
       borderBottomWidth: 1,
       borderColor: "#ddd",
       width: "100%",
+      zIndex: 1,
     },
     title: {
       fontSize: 20,

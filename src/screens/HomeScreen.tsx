@@ -1,40 +1,46 @@
 import React from "react";
-import ButtonComponent from "@components/Button";
+import { View, Image } from "react-native";
 import HeaderComponent from "@components/Header";
 import CarouselComponent from "@components/Carousel";
+import Card from "@components/Card";
+import { PAST_IMA, SLOGAN_MSGS } from "@utils";
+import stylesHomeScreen from "@styles/screens/stylesHomeScreen";
 import { useNavigation } from "@react-navigation/native";
-import { stylesLoginScreen } from "@styles/screens/stylesLoginScreen";
-import { RootStackParamList } from "@navigation/navigationTypes";
-import { View, Text, Button } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@navigation/navigationTypes";
+import { useLanguage } from "@/context/LanguageContext";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Home"
 >;
 
-const messages = [
-  "Your meds, on time. Simple.",
-  "Where health meets punctuality.",
-  "Right dose. Right time. Every time.",
-];
-
-
-
+/**
+ * HomeScreen component that displays the main screen of the app.
+ * It includes a header, carousel with messages, an informational card,
+ * and an image related to the product.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered home screen.
+ *
+ * @example
+ * <HomeScreen />
+ */
 const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const styles = stylesLoginScreen();
+  const { stylesHomeScreen: styles } = stylesHomeScreen();
+  const { translations } = useLanguage();
+  
 
   return (
     <View style={styles.viewContainer}>
       <HeaderComponent />
-      <CarouselComponent items={messages} />
-
-      <ButtonComponent
-        label="Press here"
-        touchableOpacity
-        handlePress={() => navigation.replace("Home")}
+      <CarouselComponent items={SLOGAN_MSGS} />
+      <Card
+        title="Capsy"
+        description= {translations.capsysDescription}
       />
+      <Image source={PAST_IMA} style={styles.image} />
     </View>
   );
 };
