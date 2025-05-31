@@ -6,7 +6,7 @@ import {
   languagesNames,
   LanguagesSupported,
   languagesSupported,
-} from "@/utils";
+} from "@utils";
 import { useLanguage } from "@context/LanguageContext";
 
 interface MenuProps {
@@ -25,8 +25,8 @@ interface MenuProps {
  * Menu component that displays a simple menu with buttons.
  *
  * Features:
- * - Shows two main options: "Login" and "Lenguajes".
- * - When "Lenguajes" is pressed, it shows two language options: "Español" and "Inglés".
+ * - Shows two main options: "Login" and "Languages".
+ * - When "Languages" is pressed, it shows two language options: "Español" and "English".
  * - Clicking outside the menu closes it and resets the language selector view.
  * - Selecting any option closes the menu.
  *
@@ -52,12 +52,12 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
 
   /**
    * Handles pressing a menu option.
-   * Shows language selector if "Lenguaje" is pressed, otherwise closes menu.
+   * Shows language selector if "Language" is pressed, otherwise closes menu.
    *
    * @param {string} option - The selected menu option.
    */
   const handlePress = (option: string) => {
-    if (option === "Lenguaje") {
+    if (option === "Language") {
       setShowLanguageSelector(true);
     } else {
       setShowLanguageSelector(false);
@@ -91,7 +91,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
               }}
             />
             <ButtonComponent
-              handlePress={() => handlePress("Lenguaje")}
+              handlePress={() => handlePress("Language")}
               label={translations.languages}
               touchableOpacity
               replaceStyles={{

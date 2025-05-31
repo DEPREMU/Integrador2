@@ -2,29 +2,30 @@ import { useResponsiveLayout } from "@/context/LayoutContext";
 import { StyleSheet } from "react-native";
 
 /**
- * Hook que devuelve estilos responsivos para el carrusel,
- * usando el ancho dinámico del dispositivo para que las animaciones funcionen correctamente.
+ * Hook that returns responsive styles for the carousel,
+ * using the device's dynamic width to ensure animations work correctly.
  */
+
 export const stylesCarouselComponent = () => {
   const { width } = useResponsiveLayout();
 
   const styles = StyleSheet.create({
     container: {
       height: 180,
-      width: "100%", // Contenedor padre ocupa todo el ancho disponible
+      width: "100%", 
       justifyContent: "center",
       alignItems: "center",
     },
     carouselContainer: {
-      width, // Ancho dinámico para que coincida con el valor usado en animaciones
+      width, 
       height: 180,
-      overflow: "hidden", // Oculta slides fuera de la vista
+      overflow: "hidden", 
       justifyContent: "center",
       alignItems: "center",
     },
     slide: {
-      width, // Cada slide ocupa el ancho completo de la pantalla
-      position: "absolute", // Para posicionar slides uno encima de otro
+      width, 
+      position: "absolute", 
       justifyContent: "center",
       alignItems: "center",
       zIndex: 10,
