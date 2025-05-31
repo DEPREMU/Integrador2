@@ -21,6 +21,8 @@ module.exports = function (api) {
           },
         },
       ],
+      // Agrega este plugin AL FINAL para react-native-reanimated
+      "react-native-reanimated/plugin",
     ],
   };
 };
