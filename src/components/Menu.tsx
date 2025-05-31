@@ -2,12 +2,9 @@ import React, { useState } from "react";
 import { View, TouchableWithoutFeedback } from "react-native";
 import ButtonComponent from "@components/Button";
 import { stylesMenuComponent } from "@/styles/components/stylesMenuComponent";
-import {
-  languagesNames,
-  LanguagesSupported,
-  languagesSupported,
-} from "@utils";
+import { languagesNames, LanguagesSupported, languagesSupported } from "@utils";
 import { useLanguage } from "@context/LanguageContext";
+import { log } from "@utils";
 
 interface MenuProps {
   /**
@@ -36,7 +33,7 @@ interface MenuProps {
  * @returns {JSX.Element | null} The rendered menu or null if not visible.
  *
  * @example
- * <Menu visible={true} onClose={() => console.log("Menu closed")} />
+ * <Menu visible={true} onClose={() => log("Menu closed")} />
  */
 const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -66,7 +63,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   };
 
   const selectLanguage = (language: LanguagesSupported) => {
-    console.log("Idioma seleccionado:", language);
+    log("Idioma seleccionado:", language);
     setShowLanguageSelector(false);
     setLanguage(language);
     onClose();
