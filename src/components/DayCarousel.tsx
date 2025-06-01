@@ -16,9 +16,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useModal } from '@/context/ModalContext';
-import { stylesDayCarousel } from '@styles/components/stylesDayCarousel';
-import { useLanguage } from "@/context/LanguageContext";
+import { useModal } from '../context/ModalContext';
+import { stylesDayCarousel } from '../styles/components/stylesDayCarousel';
+import { useLanguage } from "../context/LanguageContext";
 
 const DayCarousel = () => {
   const styles = stylesDayCarousel();
@@ -49,7 +49,8 @@ const DayCarousel = () => {
         paddingVertical: 36,
         paddingHorizontal: 32,
         alignItems: 'center',
-        elevation: 16,
+        elevation: 50, // Aumenta la elevación
+        zIndex: 1000,  // Asegura que esté por encima de las cards
         shadowColor: '#00a69d',
         shadowOffset: { width: 0, height: 12 },
         shadowOpacity: 0.25,
@@ -76,7 +77,10 @@ const DayCarousel = () => {
         width: '100%',
         marginTop: 12,
       },
-      overlay: {},
+      overlay: {
+        zIndex: 999, // Asegura que el overlay esté debajo del modal pero encima de las cards
+        elevation: 49,
+      },
     });
   }, [isSmallScreen]);
 

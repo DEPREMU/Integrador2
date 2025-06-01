@@ -1,6 +1,6 @@
 /**
- * PatientScreen displays the patient header, patient information,
- * an "Add medication" button, and the DayCarousel component.
+ * PatientScreen displays the header, patient information,
+ * an "Add medication" button, the menu, and the DayCarousel component.
  * The button is styled responsively and placed above the carousel.
  *
  * @component
@@ -8,13 +8,12 @@
  */
 
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
-import HeaderComponent from '../components/HeaderComponent';
-import PatientHeader from '../components/PatientHeader';
+import { Text, View } from 'react-native';
+import HeaderComponent from '../components/Header';
 import Button from '../components/Button';
 import DayCarousel from '../components/DayCarousel';
 import { stylesPatientScreen } from '../styles/screens/stylesPatientScreen';  
-import { useLanguage } from "@/context/LanguageContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const PatientScreen = () => {
   const styles = stylesPatientScreen();
@@ -23,7 +22,6 @@ const PatientScreen = () => {
   return (
     <View style={styles.container}>
       <HeaderComponent />
-      <PatientHeader />
       <View style={styles.patientInfo}>
         <Text style={styles.patientName}>{translations.patientName}</Text>
         <Text style={styles.patientDescription}>{translations.patientDescription}</Text>

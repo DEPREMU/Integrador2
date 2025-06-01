@@ -30,11 +30,13 @@ export type typeLanguages = {
   friday: string;
   saturday: string;
   sunday: string;
-  // Header and Menu (add these if used in Header/Menu components)
+  // Header and Menu
   headerTitle?: string;
   menuHome?: string;
   menuProfile?: string;
   menuLogout?: string;
+  login: string;
+  languages: string;
 };
 
 /**
@@ -55,10 +57,9 @@ export type typeLanguages = {
  * @example
  * const screen: React.FC = () => {
  * const { translations } = useLanguage();
-
+ *
  * return <Text>{translations.welcome}</Text>;
  * };
-
  */
 export const languages: Record<LanguagesSupported, typeLanguages> = {
   en: {
@@ -80,6 +81,8 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     menuHome: "Home",
     menuProfile: "Profile",
     menuLogout: "Logout",
+    login: "Login",
+    languages: "Languages",
   },
   es: {
     welcome: "Bienvenido",
@@ -100,5 +103,7 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     menuHome: "Inicio",
     menuProfile: "Perfil",
     menuLogout: "Cerrar sesión",
+    login: "Iniciar sesión",
+    languages: "Idiomas",
   },
 };

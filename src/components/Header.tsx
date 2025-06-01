@@ -1,6 +1,6 @@
-import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
-import { APP_ICON, APP_NAME, MENU_ICON } from "@utils";
-import Menu from "@components/Menu";
+import { stylesHeaderComponent } from "../styles/components/stylesHeaderComponent";
+import { APP_ICON, APP_NAME, MENU_ICON } from "../utils";
+import Menu from "./Menu";
 import React, { useState } from "react";
 import { View, Text, Image, Pressable } from "react-native";
 
