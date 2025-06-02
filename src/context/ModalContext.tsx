@@ -9,6 +9,7 @@ import React, {
 import ModalComponent from "@components/ModalComponent";
 
 interface ModalContextProps {
+  isOpen: boolean;
   openModal: (title: string, body: ReactNode, buttons: ReactNode) => void;
   closeModal: () => void;
   setCustomStyles: React.Dispatch<
@@ -122,7 +123,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   };
 
   return (
-    <ModalContext.Provider value={{ openModal, closeModal, setCustomStyles }}>
+    <ModalContext.Provider value={{isOpen, openModal, closeModal, setCustomStyles }}>
       <ModalComponent
         onClose={closeModal}
         title={title}

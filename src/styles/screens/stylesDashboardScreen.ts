@@ -20,7 +20,6 @@ const stylesDashboardScreen = () => {
   const userImgSize = isPhone ? 100 : isTablet ? 100 : 100;
 
   const stylesDashboardScreen = StyleSheet.create({
-  
     container: {
       flex: 1,
       backgroundColor: "#ecebea",
@@ -79,13 +78,6 @@ const stylesDashboardScreen = () => {
       alignItems: "center",
       backgroundColor: "#21aae1",
     },
-    addText: {
-      fontSize: 32,
-      color: "#fff",
-    },    button: {
-      justifyContent: "center",
-      alignItems: "center",
-    },
     pressed: {
       opacity: 0.7,
     },
@@ -95,9 +87,17 @@ const stylesDashboardScreen = () => {
       width: "100%",
       height: "100%",
     },
-    textButton: {
+    closeButton: {
+      backgroundColor: "#21aae1", // por ejemplo, rojo para “Cerrar”
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 8,
+      marginLeft: 8,
+    },
+    closeText: {
+      color: "#fff",
       fontSize: 16,
-      color: "#000",
+      fontWeight: "600",
     },
   });
 

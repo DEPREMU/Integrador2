@@ -6,6 +6,7 @@ import { RootStackParamList } from "./navigationTypes";
 import { NavigationContainer } from "@react-navigation/native";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import DashboardScreen from "@/screens/auth/DashboardScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -26,6 +27,11 @@ const AppNavigator: React.FC = () => (
         <Stack.Screen
           name="Home"
           component={HomeScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Dashboard"
+          component={DashboardScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

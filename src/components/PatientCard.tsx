@@ -10,6 +10,27 @@ interface PatientCardProps {
   style?: ViewStyle;
 }
 
+/**
+ * PatientCard is a reusable component that displays a patient's basic information,
+ * including their name, optional photo, and a list of pills or tags.
+ * The card can be pressed to trigger a callback function.
+ *
+ * @param {string} name - The patient's name to display.
+ * @param {string} [photoUrl] - Optional URL for the patient's photo.
+ * @param {string[]} pills - List of pills or tags associated with the patient.
+ * @param {function} onPress - Callback function to execute when the card is pressed.
+ * @param {ViewStyle} [style] - Optional custom style for the card container.
+ *
+ * @returns {JSX.Element} The rendered PatientCard component.
+ *
+ * @example
+ * <PatientCard
+ *   name="Jane Doe"
+ *   photoUrl="https://example.com/photo.jpg"
+ *   pills={["Aspirin", "Ibuprofen"]}
+ *   onPress={() => console.log("Card pressed")}
+ * />
+ */
 export default function PatientCard({ name, photoUrl, pills, onPress, style }: PatientCardProps) {
   const styles = useStylesPatientCard();
 
