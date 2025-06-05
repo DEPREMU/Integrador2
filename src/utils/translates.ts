@@ -23,6 +23,25 @@ export type typeLanguages = {
   close: string;
   addPatientForm: string;
   addPatient: string;
+  capsysDescription: string; patientName: string;
+  patientDescription: string;
+  addMedication: string;
+  noMedications: string;
+  close: string;
+  more: string;
+  // Days of the week
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+  // Header and Menu
+  headerTitle: string;
+  menuHome: string;
+  menuProfile: string;
+  menuLogout: string;
 };
 
 /**
@@ -59,6 +78,23 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     addPatient: "Add Patient",
     close: "Close",
     addPatientForm: "Here would be the form to add a patient",
+      patientName: "Patient Name",
+    patientDescription: "Patient Description",
+    addMedication: "Add medication",
+    noMedications: "No medications",
+    close: "Close",
+    more: "more",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    sunday: "Sunday",
+    headerTitle: "Header",
+    menuHome: "Home",
+    menuProfile: "Profile",
+    menuLogout: "Logout",
   },
   es: {
     welcome: "Bienvenido",
@@ -70,5 +106,23 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     addPatient: "Agregar Paciente",
     close: "Cerrar",
     addPatientForm: "Aquí estaría el formulario para agregar un paciente",
+      patientName: "Nombre del paciente",
+    patientDescription: "Descripción del paciente",
+    addMedication: "Agregar medicamento",
+    noMedications: "Sin medicamentos",
+    close: "Cerrar",
+    more: "más",
+    monday: "Lunes",
+    tuesday: "Martes",
+    wednesday: "Miércoles",
+    thursday: "Jueves",
+    friday: "Viernes",
+    saturday: "Sábado",
+    sunday: "Domingo",
+    headerTitle: "Encabezado",
+    menuHome: "Inicio",
+    menuProfile: "Perfil",
+    menuLogout: "Cerrar sesión",
   },
 };
+
