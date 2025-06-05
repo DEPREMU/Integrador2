@@ -7,7 +7,7 @@ interface ButtonComponentProps {
   label?: string;
   customStyles?: Record<StylesButtonComponent, any>;
   replaceStyles?: Record<StylesButtonComponent, any>;
-  children?: React.ReactNode;
+  Children?: React.FC<any>;
   touchableOpacity?: boolean;
   handlePress: () => any;
 }
@@ -29,7 +29,7 @@ interface ButtonComponentProps {
  */
 const ButtonComponent: React.FC<ButtonComponentProps> = ({
   label,
-  children,
+  Children,
   touchableOpacity,
   handlePress,
   replaceStyles,
@@ -58,7 +58,7 @@ const ButtonComponent: React.FC<ButtonComponentProps> = ({
           {label}
         </Text>
       )}
-      {children}
+      {Children !== undefined && <Children />}
     </Pressable>
   );
 };

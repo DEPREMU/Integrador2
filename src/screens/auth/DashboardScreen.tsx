@@ -1,75 +1,58 @@
-import React, { useState, useEffect, } from 'react';
-import { View, Text, } from 'react-native';
+import React from 'react';
+import { View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import ModalComponent from '@components/ModalComponent';
-import { useModal } from '@context/ModalContext';
 import { RootStackParamList } from '@navigation/navigationTypes';
 import stylesDashboardScreen from '@styles/screens/stylesDashboardScreen';
 import HeaderComponent from "@components/Header";
 import { useLanguage } from "@/context/LanguageContext";
-import ButtonComponent from '@components/Button';
+import { useModal } from '@context/ModalContext';
 import PatientCarousel, { Patient } from '@components/PatientCarousel';
 
+type DashboardNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 /**
- * DashboardScreen component displays a horizontal list of patients and an add-patient button.
- * It manages modal visibility for adding new patients and handles navigation.
+ * DashboardScreen component displays the main dashboard UI, including:
+ * - A header
+ * - A greeting message (localized)
+ * - A placeholder for the user image
+ * - A horizontal carousel of patient cards and an add-patient button
+ * 
+ * It uses context for language translations and modal management.
  *
  * @component
- * @returns {JSX.Element} The Dashboard screen UI.
+ * @returns {JSX.Element} The rendered dashboard screen.
+ *
+ * @example
+ * <DashboardScreen />
  */
-export default function DashboardScreen() {
+const DashboardScreen = () => {
     const navigation = useNavigation<DashboardNavProp>();
-    const { isOpen, openModal, closeModal } = useModal();
-    const [hideModal, setHideModal] = useState(true);
     const { stylesDashboardScreen: styles } = stylesDashboardScreen();
     const { translations } = useLanguage();
-
-
-    useEffect(() => {
-        if (isOpen) setHideModal(false);
-    }, [isOpen]);
+    const { openModal, closeModal } = useModal();
 
     return (
         <View style={styles.container}>
             <HeaderComponent />
             <Text style={styles.greeting}>{translations.greeting}</Text>
-            <View style={styles.userImagePlaceholder}>
-                {/* 
-        */}
-            </View>
+            <View style={styles.userImagePlaceholder} />
             <PatientCarousel
                 data={data}
                 styles={styles}
                 translations={{
-                    AddPatient: translations.AddPatient,
-                    AddPatientForm: translations.AddPatientForm,
-                    CloseModal: translations.CloseModal,
+                    addPatient: translations.addPatient,
+                    addPatientForm: translations.addPatientForm,
+                    close: translations.close,
                 }}
                 openModal={openModal}
                 closeModal={closeModal}
             />
-
-            < ModalComponent
-                title={translations.AddPatient}
-                body={< Text > {translations.AddPatientForm}</Text >}
-                buttons={
-                    <ButtonComponent
-                        label={translations.CloseModal}
-                        handlePress={closeModal}
-                    />
-                }
-
-                isOpen={isOpen}
-                onClose={closeModal}
-                hideModal={hideModal}
-                setHideModal={setHideModal}
-            />
-
-        </View >
+        </View>
     );
-}
+};
+
+export default DashboardScreen;
 
 const data: Patient[] = [
     { id: '1', name: 'Juan Pérez', photo: 'https://via.placeholder.com/80', pills: ['A', 'B', 'C'] },
@@ -80,4 +63,3 @@ const data: Patient[] = [
     { id: 'add', name: '', photo: '', pills: [] },
 ];
 
-type DashboardNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;

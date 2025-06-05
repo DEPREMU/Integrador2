@@ -88,7 +88,7 @@ const stylesDashboardScreen = () => {
       height: "100%",
     },
     closeButton: {
-      backgroundColor: "#21aae1", // por ejemplo, rojo para “Cerrar”
+      backgroundColor: "#21aae1",
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 8,

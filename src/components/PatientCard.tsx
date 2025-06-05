@@ -31,8 +31,8 @@ interface PatientCardProps {
  *   onPress={() => console.log("Card pressed")}
  * />
  */
-export default function PatientCard({ name, photoUrl, pills, onPress, style }: PatientCardProps) {
-  const styles = useStylesPatientCard();
+const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, onPress, style }) => {
+ const styles = useStylesPatientCard();
 
   return (
     <Pressable style={[styles.card, style]} onPress={onPress}>
@@ -50,3 +50,5 @@ export default function PatientCard({ name, photoUrl, pills, onPress, style }: P
     </Pressable>
   );
 }
+
+export default PatientCard;

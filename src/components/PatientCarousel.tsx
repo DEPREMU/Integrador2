@@ -40,9 +40,9 @@ interface PatientCarouselProps {
   data: Patient[];
   styles: any;
   translations: {
-    AddPatient: string;
-    AddPatientForm: string;
-    CloseModal: string;
+    addPatient: string;
+    addPatientForm: string;
+    close: string;
   };
   openModal: (
     title: string,
@@ -51,7 +51,6 @@ interface PatientCarouselProps {
   ) => void;
   closeModal: () => void;
 }
-
 
 /**
  * PatientCarousel component displays a horizontal list of PatientCards and an add-patient button.
@@ -97,25 +96,27 @@ export default function PatientCarousel({
               touchableOpacity
               handlePress={() =>
                 openModal(
-                  translations.AddPatient,
-                  <Text>{translations.AddPatientForm}</Text>,
+                  translations.addPatient,
+                  <Text>{translations.addPatientForm}</Text>,
                   <ButtonComponent
-                    label={translations.CloseModal}
+                    label={translations.close}
                     handlePress={closeModal}
                     customStyles={{
-                      button:styles.closeButton,
+                      button: styles.closeButton,
                       textButton: styles.closeText
                     }}
                   />
                 )
               }
               customStyles={{ button: styles.addButton, textButton: {} }}
-            >
-              <Image
-                source={ADD_ICON}
-                style={{ width: 32, height: 32, tintColor: '#fff' }}
-              />
-            </ButtonComponent>
+              Children={
+                () => <Image
+                  source={ADD_ICON}
+                  style={{ width: 32, height: 32, tintColor: '#fff' }}
+                />
+              }
+            />
+
           </View>
         ) : (
           <PatientCard

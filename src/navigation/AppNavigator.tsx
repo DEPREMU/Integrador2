@@ -13,7 +13,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator: React.FC = () => (
   <NavigationContainer>
     <BackgroundTaskProvider>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Dashboard">
         <Stack.Screen
           name="Login"
           component={LoginScreen}
