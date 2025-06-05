@@ -1,9 +1,6 @@
-import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 
 export const useStylesButtonComponent = () => {
-  const {} = useResponsiveLayout();
-
   return StyleSheet.create({
     button: {
       backgroundColor: "#007BFF",
