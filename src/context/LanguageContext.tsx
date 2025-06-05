@@ -75,8 +75,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     saveNewLanguage();
   }, [language]);
 
-  // Usa el objeto languages importado
-  const translations = languages[language];
+  const translations = languages[language || "en"];
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, translations }}>

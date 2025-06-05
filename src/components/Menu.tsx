@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { View, TouchableWithoutFeedback } from "react-native";
-import ButtonComponent from "./Button";
-import { stylesMenuComponent } from "../styles/components/stylesMenuComponent";
-import { languagesNames, LanguagesSupported, languagesSupported } from "../utils";
-import { useLanguage } from "../context/LanguageContext";
-import { log } from "../utils";
+import ButtonComponent from "@components/Button";
+import { stylesMenuComponent } from "@/styles/components/stylesMenuComponent";
+import { languagesNames, LanguagesSupported, languagesSupported } from "@utils";
+import { useLanguage } from "@context/LanguageContext";
+import { log } from "@utils";
 
 interface MenuProps {
   /**

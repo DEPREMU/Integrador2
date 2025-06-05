@@ -16,7 +16,9 @@ export const languagesSupported: LanguagesSupported[] = [
  */
 export type typeLanguages = {
   welcome: string;
-  patientName: string;
+  login: string;
+  languages: string;
+  capsysDescription: string; patientName: string;
   patientDescription: string;
   addMedication: string;
   noMedications: string;
@@ -31,12 +33,10 @@ export type typeLanguages = {
   saturday: string;
   sunday: string;
   // Header and Menu
-  headerTitle?: string;
-  menuHome?: string;
-  menuProfile?: string;
-  menuLogout?: string;
-  login: string;
-  languages: string;
+  headerTitle: string;
+  menuHome: string;
+  menuProfile: string;
+  menuLogout: string;
 };
 
 /**
@@ -57,14 +57,19 @@ export type typeLanguages = {
  * @example
  * const screen: React.FC = () => {
  * const { translations } = useLanguage();
- *
+
  * return <Text>{translations.welcome}</Text>;
  * };
+
  */
 export const languages: Record<LanguagesSupported, typeLanguages> = {
   en: {
     welcome: "Welcome",
-    patientName: "Patient Name",
+    login: "Login",
+    languages: "Languages",
+    capsysDescription:
+      "The smart pillbox is a connected device designed to facilitate daily medication management. It syncs with our mobile app to send automatic reminders, personalized alerts, and real-time notifications. Thanks to its functional design and integrated technology, it allows caregivers and users to maintain precise and error-free control over schedules, doses, and administration, improving treatment adherence and peace of mind",
+      patientName: "Patient Name",
     patientDescription: "Patient Description",
     addMedication: "Add medication",
     noMedications: "No medications",
@@ -81,12 +86,14 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     menuHome: "Home",
     menuProfile: "Profile",
     menuLogout: "Logout",
-    login: "Login",
-    languages: "Languages",
   },
   es: {
     welcome: "Bienvenido",
-    patientName: "Nombre del paciente",
+    login: "Iniciar sesión",
+    languages: "Lenguajes",
+    capsysDescription:
+      "El pastillero inteligente es un dispositivo conectado diseñado para facilitar la gestión diaria de medicamentos. Se sincroniza con nuestra app móvil para enviar recordatorios automáticos, alertas personalizadas y notificaciones en tiempo real. Gracias a su diseño funcional y tecnología integrada, permite a cuidadores y usuarios llevar un control preciso y sin errores sobre horarios, dosis y administración, mejorando la adherencia al tratamiento y la tranquilidad en el cuidado",
+      patientName: "Nombre del paciente",
     patientDescription: "Descripción del paciente",
     addMedication: "Agregar medicamento",
     noMedications: "Sin medicamentos",
@@ -103,7 +110,6 @@ export const languages: Record<LanguagesSupported, typeLanguages> = {
     menuHome: "Inicio",
     menuProfile: "Perfil",
     menuLogout: "Cerrar sesión",
-    login: "Iniciar sesión",
-    languages: "Idiomas",
   },
 };
+

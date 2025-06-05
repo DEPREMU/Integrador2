@@ -1,3 +1,11 @@
+import React from 'react';
+import { Text, View } from 'react-native';
+import HeaderComponent from '@components/Header';
+import Button from '@components/Button';
+import DayCarousel from '@components/DayCarousel';
+import { stylesPatientScreen } from '@styles/screens/stylesPatientScreen';  
+import { useLanguage } from "@context/LanguageContext";
+
 /**
  * PatientScreen displays the header, patient information,
  * an "Add medication" button, the menu, and the DayCarousel component.
@@ -6,16 +14,7 @@
  * @component
  * @returns {JSX.Element}
  */
-
-import React from 'react';
-import { Text, View } from 'react-native';
-import HeaderComponent from '../components/Header';
-import Button from '../components/Button';
-import DayCarousel from '../components/DayCarousel';
-import { stylesPatientScreen } from '../styles/screens/stylesPatientScreen';  
-import { useLanguage } from "../context/LanguageContext";
-
-const PatientScreen = () => {
+const PatientScreen: React.FC = () => {
   const styles = stylesPatientScreen();
   const { translations } = useLanguage();
 
