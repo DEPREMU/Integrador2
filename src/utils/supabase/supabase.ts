@@ -1,8 +1,8 @@
+import Constants from "expo-constants";
 import { createClient } from "@supabase/supabase-js";
-import { env } from "./env.js";
 
-const supabaseUrl = env.SUPABASE_URL;
-const supabaseKey = env.SUPABASE_KEY;
+const supabaseUrl = Constants?.expoConfig?.extra?.SUPABASE_URL;
+const supabaseKey = Constants?.expoConfig?.extra?.SUPABASE_KEY;
 
 /**
  * Initializes and exports a Supabase client instance.

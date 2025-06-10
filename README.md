@@ -332,7 +332,7 @@ const canLogin = (username: string, password: string): boolean => {
  * @param {number} b - The second number.
  * @returns {number} The sum of the two numbers.
  * @example
- * console.log(add(2, 3)); // Outputs: 5
+ * log(add(2, 3)); // Outputs: 5
  *
  */
 const add = (a: number, b: number): number => a + b;
@@ -479,7 +479,7 @@ const nombreDeUsuario: string = "Nico";
  * @param {number} b - El segundo numero.
  * @returns {number} La suma de los dos números.
  * @example
- * console.log(sumar(2, 3)); // Salida: 5
+ * log(sumar(2, 3)); // Salida: 5
  *
  */
 const sumar = (numero1: number, numero2: number): number => numero1 + numero2;
@@ -495,7 +495,7 @@ const username: string = "Nico";
  * @param {number} num2 - The second number.
  * @returns {number} The sum of the two numbers.
  * @example
- * console.log(add(2, 3)); // Outputs: 5
+ * log(add(2, 3)); // Outputs: 5
  *
  */
 const add = (num1: number, num2: number): number => num1 + num2;

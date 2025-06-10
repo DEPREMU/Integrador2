@@ -1,5 +1,5 @@
 import { useResponsiveLayout } from "@/context/LayoutContext";
-import { StyleSheet } from "react-native";
+import { StatusBar, StyleSheet } from "react-native";
 
 /**
  * Generates styles for the Header component.
@@ -12,7 +12,7 @@ import { StyleSheet } from "react-native";
  * <View style={styles.container}>...</View>
  */
 export const stylesHeaderComponent = () => {
-  const { isPhone, isWeb } = useResponsiveLayout();
+  const { isPhone, isWeb, height, width } = useResponsiveLayout();
 
   return StyleSheet.create({
     container: {
@@ -25,6 +25,8 @@ export const stylesHeaderComponent = () => {
       borderBottomWidth: 1,
       borderColor: "#ddd",
       width: "100%",
+      height: "auto",
+      maxHeight: isPhone ? 80 : 100,
       zIndex: 1,
     },
     title: {

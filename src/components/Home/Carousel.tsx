@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Text, View } from "react-native";
 import Animated, {
+  runOnJS,
+  withTiming,
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  runOnJS,
 } from "react-native-reanimated";
-import { stylesCarouselComponent } from "@/styles/components/stylesCarouselComponent";
+import { Text, View } from "react-native";
+import { stylesCarouselComponent } from "@styles/components/stylesCarouselComponent";
+import React, { useEffect, useState, useRef } from "react";
 
 interface CarouselProps {
   /**
@@ -38,8 +38,7 @@ const CarouselComponent: React.FC<CarouselProps> = ({
   interval = 4000,
 }) => {
   const { styles, width } = stylesCarouselComponent();
-
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState<number>(0);
 
   // Shared values for opacity and scale of each slide
   // First slide visible (opacity=1, scale=1), others hidden (opacity=0, scale=0.8)

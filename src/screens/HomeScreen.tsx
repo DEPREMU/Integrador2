@@ -1,19 +1,14 @@
 import React from "react";
+import CardComponent from "@components/Home/Card";
 import { View, Image } from "react-native";
-import HeaderComponent from "@components/Header";
-import CarouselComponent from "@components/Carousel";
-import Card from "@components/Card";
-import { PAST_IMA, SLOGAN_MSGS } from "@utils";
+import { useLanguage } from "@context/LanguageContext";
+import HeaderComponent from "@components/common/Header";
 import stylesHomeScreen from "@styles/screens/stylesHomeScreen";
 import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import CarouselComponent from "@components/Home/Carousel";
 import { RootStackParamList } from "@navigation/navigationTypes";
-import { useLanguage } from "@/context/LanguageContext";
-
-type HomeScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "Home"
->;
+import { PAST_IMA, SLOGAN_MSGS } from "@utils";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 /**
  * HomeScreen component that displays the main screen of the app.
@@ -26,19 +21,17 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
  * @example
  * <HomeScreen />
  */
-const HomeScreen = () => {
-  const navigation = useNavigation<HomeScreenNavigationProp>();
+const HomeScreen: React.FC = () => {
   const { stylesHomeScreen: styles } = stylesHomeScreen();
   const { translations } = useLanguage();
-  
 
   return (
     <View style={styles.viewContainer}>
       <HeaderComponent />
       <CarouselComponent items={SLOGAN_MSGS} />
-      <Card
+      <CardComponent
         title="Capsy"
-        description= {translations.capsysDescription}
+        description={translations.capsysDescription}
       />
       <Image source={PAST_IMA} style={styles.image} />
     </View>

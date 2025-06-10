@@ -1,13 +1,11 @@
 import React from "react";
-import PatientScreen from "./src/screens/PatientScreen";
-import { LanguageProvider } from "./src/context/LanguageContext";
+import AppProviders from "@context/AppProviders";
+import AppNavigator from "@navigation/AppNavigator";
 
-const App = () => {
-  return (
-    <LanguageProvider>
-      <PatientScreen />
-    </LanguageProvider>
-  );
-};
+const App = () => (
+  <AppProviders>
+    <AppNavigator />
+  </AppProviders>
+);
 
 export default App;

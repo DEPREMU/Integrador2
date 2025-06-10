@@ -13,15 +13,15 @@
     "paths": {
       "@/*": ["src/*"],
       "@utils": ["src/utils/"],
-      "@components/*": ["src/components/*"],
-      "@assets/*": ["./assets/*"],
-      "@screens/*": ["src/screens/*"],
+      "@types": ["src/types/"],
       "@hooks/*": ["src/hooks/*"],
-      "@navigation/*": ["src/navigation/*"],
-      "@constants/*": ["src/constants/*"],
-      "@context/*": ["src/context/*"],
+      "@assets/*": ["./assets/*"],
       "@styles/*": ["src/styles/*"],
-      "@types/*": ["src/types/*"]
+      "@screens/*": ["src/screens/*"],
+      "@context/*": ["src/context/*"],
+      "@constants/*": ["src/constants/*"],
+      "@navigation/*": ["src/navigation/*"],
+      "@components/*": ["src/components/*"]
     }
   }
 }

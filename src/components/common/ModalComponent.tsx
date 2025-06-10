@@ -3,23 +3,22 @@ import Animated, {
   SharedValue,
   useSharedValue,
   useAnimatedStyle,
+  WithTimingConfig,
 } from "react-native-reanimated";
+import { StylesModal } from "@context/ModalContext";
 import { Pressable, Text, View } from "react-native";
 import { useStylesModalComponent } from "@styles/components/stylesModalComponent";
 import React, { useEffect, useRef } from "react";
 
 interface ModalProps {
   title: string;
-  body: React.ReactNode;
+  body: React.ReactNode | string;
   buttons: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
   hideModal: boolean;
   setHideModal: React.Dispatch<React.SetStateAction<boolean>>;
-  customStyles?: Record<
-    "overlay" | "modal" | "title" | "body" | "buttons",
-    object | undefined
-  >;
+  customStyles?: Record<StylesModal, object | undefined>;
 }
 
 /**
@@ -35,10 +34,10 @@ interface ModalProps {
  * @param {function} setHideModal - A function to set the hideModal state.
  */
 const ModalComponent: React.FC<ModalProps> = ({
-  title,
   body,
-  buttons,
+  title,
   isOpen,
+  buttons,
   onClose,
   hideModal,
   setHideModal,
@@ -53,7 +52,7 @@ const ModalComponent: React.FC<ModalProps> = ({
   }));
 
   useEffect(() => {
-    const options = { duration: 500 };
+    const options: WithTimingConfig = { duration: 500 };
 
     if (isOpen) {
       setHideModal(false);
@@ -72,9 +71,9 @@ const ModalComponent: React.FC<ModalProps> = ({
     <Animated.View
       style={[
         styles.overlay,
-        animatedStyle,
         { display: hideModal ? "none" : "flex" },
         customStyles?.overlay,
+        animatedStyle,
       ]}
     >
       <Pressable
@@ -83,8 +82,13 @@ const ModalComponent: React.FC<ModalProps> = ({
       >
         <Pressable style={[styles.modal, customStyles?.modal]}>
           <Text style={[styles.title, customStyles?.title]}>{title}</Text>
-          {body !== null && (
+          {body !== null && typeof body !== "string" && (
             <View style={[styles.body, customStyles?.body]}>{body}</View>
+          )}
+          {body !== null && typeof body === "string" && (
+            <Text style={[styles.messageText, customStyles?.messageText]}>
+              {body}
+            </Text>
           )}
           {buttons !== null && (
             <View style={[styles.buttons, customStyles?.buttons]}>

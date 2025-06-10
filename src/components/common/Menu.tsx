@@ -1,10 +1,13 @@
-import React, { useState } from "react";
-import { View, TouchableWithoutFeedback } from "react-native";
-import ButtonComponent from "@components/Button";
-import { stylesMenuComponent } from "@/styles/components/stylesMenuComponent";
-import { languagesNames, LanguagesSupported, languagesSupported } from "@utils";
-import { useLanguage } from "@context/LanguageContext";
 import { log } from "@utils";
+import { View } from "react-native";
+import { useLanguage } from "@context/LanguageContext";
+import ButtonComponent from "@components/common/Button";
+import React, { useState } from "react";
+import { stylesMenuComponent } from "@styles/components/stylesMenuComponent";
+import { languagesNames, LanguagesSupported } from "@utils";
+import { RootStackParamList } from "@/navigation/navigationTypes";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 
 interface MenuProps {
   /**
@@ -17,6 +20,11 @@ interface MenuProps {
    */
   onClose: () => void;
 }
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Home"
+>;
 
 /**
  * Menu component that displays a simple menu with buttons.
@@ -36,47 +44,35 @@ interface MenuProps {
  * <Menu visible={true} onClose={() => log("Menu closed")} />
  */
 const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const { language, setLanguage, translations } = useLanguage();
-
   if (!visible) return null;
+
   const styles = stylesMenuComponent();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
 
-  const handleClose = () => {
-    setShowLanguageSelector(false);
-    onClose();
-  };
+  const { language, setLanguage, translations } = useLanguage();
+  const [showLanguageSelector, setShowLanguageSelector] =
+    useState<boolean>(false);
 
-  /**
-   * Handles pressing a menu option.
-   * Shows language selector if "Language" is pressed, otherwise closes menu.
-   *
-   * @param {string} option - The selected menu option.
-   */
   const handlePress = (option: string) => {
     if (option === "Language") {
       setShowLanguageSelector(true);
-    } else {
+    } else if (option === "Login") {
+      navigation.replace("Login");
       setShowLanguageSelector(false);
-      onClose();
     }
   };
 
   const selectLanguage = (language: LanguagesSupported) => {
-    log("Idioma seleccionado:", language);
-    setShowLanguageSelector(false);
-    setLanguage(language);
+    log("Language selected:", language);
     onClose();
+    setLanguage(language);
+    setShowLanguageSelector(false);
   };
 
   return (
     <>
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.overlay} />
-      </TouchableWithoutFeedback>
-
       <View style={styles.menu}>
-        {!showLanguageSelector ? (
+        {!showLanguageSelector && (
           <>
             <ButtonComponent
               handlePress={() => handlePress("Login")}
@@ -97,12 +93,14 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
               }}
             />
           </>
-        ) : (
+        )}
+        {showLanguageSelector && (
           <>
             {Object.entries(languagesNames).map(([lang, langName]) => {
               if (lang === language) return null;
               return (
                 <ButtonComponent
+                  key={lang}
                   handlePress={() => selectLanguage(lang as LanguagesSupported)}
                   label={langName}
                   touchableOpacity

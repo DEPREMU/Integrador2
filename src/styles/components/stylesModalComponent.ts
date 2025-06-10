@@ -1,58 +1,65 @@
-import { StyleSheet, Dimensions } from "react-native";
+import { useResponsiveLayout } from "@context/LayoutContext";
+import { StatusBar, StyleSheet } from "react-native";
 
 export const useStylesModalComponent = () => {
-  const { width } = Dimensions.get("window");
-  const isMobile = width <= 600;
+  const { height, width, isPhone } = useResponsiveLayout();
+
   const styles = StyleSheet.create({
     overlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
       flex: 1,
-      backgroundColor: "transparent",
+      width: "100%",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
       justifyContent: "center",
       alignItems: "center",
+      position: "absolute",
       zIndex: 1000,
+      left: 0,
+      top: 0,
+      height: height + (StatusBar?.currentHeight || 0),
+      cursor: "auto",
     },
     modal: {
       backgroundColor: "#fff",
-      borderRadius: 18,
-      width: isMobile ? "80%" : "50%",
-      maxWidth: isMobile ? 220 : 420,
-      minWidth: 120,
-      paddingVertical: isMobile ? 8 : 24,
-      paddingHorizontal: isMobile ? 4 : 16,
-      alignItems: "center",
-      justifyContent: "center",
-      elevation: 10,
+      cursor: "auto",
+      borderRadius: 8,
+      width: "90%",
+      maxWidth: isPhone ? "90%" : 500,
+      padding: 20,
+      elevation: 5,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.18,
-      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      gap: isPhone ? 10 : 20,
     },
     title: {
-      marginBottom: 10,
-      fontWeight: "700",
-      fontSize: Math.max(Math.min(width * 0.045, 18), 13),
-      color: "#222",
+      fontWeight: "bold",
+      fontSize: isPhone ? 18 : 24,
+      borderRadius: 8,
+      padding: isPhone ? 10 : 0,
       textAlign: "center",
-      letterSpacing: 0.2,
     },
     body: {
-      marginBottom: 10,
-      width: "100%",
-      alignItems: "center",
+      paddingHorizontal: isPhone ? 10 : 20,
+      borderRadius: 8,
     },
     buttons: {
       flexDirection: "row",
-      justifyContent: "center",
+      justifyContent: "flex-end",
+      paddingVertical: isPhone ? 10 : 0,
+      alignItems: "center",
+      paddingHorizontal: isPhone ? 10 : 20,
       gap: 10,
-      width: "100%",
-      marginTop: 6,
+      borderRadius: 8,
+    },
+    messageText: {
+      paddingHorizontal: isPhone ? 10 : 20,
+      borderRadius: 8,
+      padding: isPhone ? 10 : 0,
+      fontSize: isPhone ? 14 : 18,
+      textAlign: "center",
     },
   });
 
-  return { styles, width };
+  return { styles, height, width };
 };

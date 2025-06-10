@@ -1,8 +1,9 @@
-import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
-import { APP_ICON, APP_NAME, MENU_ICON } from "@utils";
-import Menu from "@components/Menu";
+import Menu from "@components/common/Menu";
+import burger from "@components/common/Burger";
 import React, { useState } from "react";
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Image } from "react-native";
+import { APP_ICON, APP_NAME } from "@utils";
+import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
 
 /**
  * HeaderComponent renders a header bar with a menu toggle button, app icon, and app name.
@@ -15,20 +16,23 @@ import { View, Text, Image, Pressable } from "react-native";
  */
 const HeaderComponent: React.FC = () => {
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
+
   const styles = stylesHeaderComponent();
 
-  const toggleMenu = () => setMenuVisible((prev) => !prev);
   const closeMenu = () => setMenuVisible(false);
+
+  const { burgerComponent, toggleMenu } = burger(
+    () => setMenuVisible((prev) => !prev),
+    closeMenu
+  );
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={toggleMenu}>
-        <Image source={MENU_ICON} style={styles.iconImage} />
-      </Pressable>
+      {burgerComponent}
 
-      <Menu visible={menuVisible} onClose={closeMenu} />
+      <Menu visible={menuVisible} onClose={toggleMenu} />
 
-      <Image source={APP_ICON} style={styles.iconImage} />
+      <Image source={APP_ICON}  style={styles.iconImage} />
 
       <Text style={styles.title}>{APP_NAME}</Text>
     </View>

@@ -1,176 +1,205 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Platform,
-} from "react-native";
-import ButtonComponent from "@components/Button";
+import Animated, {
+  withTiming,
+  SharedValue,
+  withSequence,
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
+import ButtonComponent from "@components/common/Button";
+import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
+import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { APP_ICON, PASS_ICON } from "@/utils";
-import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
 import { isValidEmail, isValidPassword } from "@utils";
+import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Text, Image, Keyboard, Platform, TextInput } from "react-native";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Login"
 >;
 
+type ShakeInput = {
+  shake: SharedValue<number>;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+};
+
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { styles } = stylesLoginScreen();
+  const { translations } = useLanguage();
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [language, setLanguage] = useState<"en" | "es">("es"); // Language state
+  const [validations, setValidations] = useState<
+    Record<"isEmailValid" | "isPasswordValid", boolean>
+  >({
+    isEmailValid: true,
+    isPasswordValid: true,
+  });
 
-  const { styles } = stylesLoginScreen();
+  const shakeInputs: ShakeInput[] = Array.from({ length: 2 }).map(() => {
+    const shake = useSharedValue(0);
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ translateX: shake.value }],
+      borderWidth: 2,
+      borderColor: "#ff0000",
+    }));
+    return { shake, animatedStyle };
+  });
 
-  // Object with all translations
-  // This object contains translations for both English and Spanish languages.
-  const translations = {
-    en: {
-      welcome: "Welcome to MediTime",
-      emailPlaceholder: "Email",
-      passwordPlaceholder: "Password",
-      loginButton: "Log In",
-      forgotPassword: "Forgot your password?",
-      createAccount: "Create new account",
-      errorEmpty: "Please fill in all fields",
-      errorEmail: "Enter a valid email",
-      languageButton: "ES",
-    },
-    es: {
-      welcome: "Bienvenido a MediTime",
-      emailPlaceholder: "Correo electrónico",
-      passwordPlaceholder: "Contraseña",
-      loginButton: "Iniciar Sesión",
-      forgotPassword: "¿Olvidaste tu contraseña?",
-      createAccount: "Crear nueva cuenta",
-      errorEmpty: "Por favor complete todos los campos",
-      errorEmail: "Ingrese un email válido",
-      languageButton: "EN",
-    },
+  const triggerShake = (which: "password" | "email") => {
+    const valueToMove = 5;
+    const duration = 50;
+
+    (which === "email" ? shakeInputs[0] : shakeInputs[1]).shake.value =
+      withSequence(
+        withTiming(-valueToMove, { duration }),
+        withTiming(valueToMove, { duration: duration * 2 }),
+        withTiming(-valueToMove, { duration: duration * 2 }),
+        withTiming(valueToMove, { duration: duration * 2 }),
+        withTiming(0, { duration })
+      );
   };
 
-  // Obtain the current translations based on the selected language
-  // This will allow us to dynamically change the text displayed in the UI.
-  const translation = translations[language];
-
-  /**
-   * Handles the login button press.
-   * Validates input fields and navigates to Home if valid.
-   * Sets error messages if validation fails.
-   * @function
-   */
   const handleLogin = () => {
-    if (!isValidEmail(email)) {
-      setError(translation.errorEmpty);
-      return;
-    }
-    if (!isValidPassword(password)) {
-      setError(translation.errorEmail);
-      return;
-    }
+    if (!email || !password) return setError(translations.errorEmpty);
+    if (!isValidEmail(email)) return setError(translations.errorEmail);
+    if (!isValidPassword(password)) return setError(translations.errorPassword);
 
-    setError("");
+    setError(null);
     navigation.replace("Home");
   };
 
-  /**
-   * Dismisses the keyboard when called.
-   * @function
-   */
-  const dismissKeyboard = () => Keyboard.dismiss();
+  const handlerBlurInputEmail = () => {
+    if (isValidEmail(email)) return;
+
+    setValidations((prev) => ({
+      ...prev,
+      isEmailValid: false,
+    }));
+    triggerShake("email");
+  };
+
+  const handlerBlurInputPassword = () => {
+    if (isValidPassword(password)) return;
+
+    setValidations((prev) => ({
+      ...prev,
+      isPasswordValid: false,
+    }));
+    triggerShake("password");
+  };
+
+  useEffect(() => {
+    log(JSON.stringify(validations, null, 2));
+  }, [validations]);
 
   return (
-    /**
-     * Main render of the LoginScreen component. Handles keyboard dismiss, layout, and all UI elements.
-     */
-    <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={{ fontWeight: "bold" }}>
-            {translation.languageButton}
-          </Text>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <Image source={APP_ICON} style={styles.logo} />
 
-          <Image source={APP_ICON} style={styles.logo} />
+        <Text style={styles.title}>{translations.welcome}</Text>
 
-          <Text style={styles.title}>{translation.welcome}</Text>
+        {/* Email space */}
+        <Animated.View
+          style={[
+            styles.inputContainer,
+            !validations.isEmailValid && shakeInputs[0].animatedStyle,
+          ]}
+        >
+          <TextInput
+            style={[styles.input]}
+            placeholder={translations.emailPlaceholder}
+            placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            onFocus={() => {
+              if (Platform.OS !== "android") return;
+              Keyboard.emit("keyboardDidShow");
+            }}
+            onBlur={handlerBlurInputEmail}
+          />
+        </Animated.View>
 
-          {/* Email space */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder={translation.emailPlaceholder}
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => {
-                if (Platform.OS === "android") {
-                  Keyboard.emit("keyboardDidShow");
-                }
-              }}
-            />
-          </View>
-
-          {/* Password space */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder={translation.passwordPlaceholder}
-              placeholderTextColor="#999"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => {
-                if (Platform.OS === "android") {
-                  Keyboard.emit("keyboardDidShow");
-                }
-              }}
-            />
-            <TouchableOpacity
-              style={styles.showPasswordButton}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Image source={PASS_ICON} style={{ width: 20, height: 20 }} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Error message */}
-          {error !== null && <Text style={styles.errorText}>{error}</Text>}
-
-          {/* Login button using personalized component */}
+        {/* Password space */}
+        <Animated.View
+          style={[
+            styles.inputContainer,
+            !validations.isPasswordValid && shakeInputs[1].animatedStyle,
+          ]}
+        >
+          <TextInput
+            style={styles.input}
+            placeholder={translations.passwordPlaceholder}
+            placeholderTextColor="#999"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => {
+              if (Platform.OS !== "android") return;
+              Keyboard.emit("keyboardDidShow");
+            }}
+            onBlur={handlerBlurInputPassword}
+          />
           <ButtonComponent
-            label={translation.loginButton}
+            replaceStyles={{
+              button: styles.showPasswordButton,
+              textButton: {},
+            }}
+            forceReplaceStyles
+            handlePress={() => setShowPassword((prev) => !prev)}
+            children={
+              <Image
+                source={SHOW_PASSWORD_ICON}
+                style={{ width: 20, height: 20 }}
+              />
+            }
+          />
+        </Animated.View>
+
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+        <ButtonComponent
+          label={translations.loginButton}
+          touchableOpacity
+          handlePress={handleLogin}
+          customStyles={{
+            button: styles.loginButton,
+            textButton: styles.buttonText,
+          }}
+        />
+
+        <View style={styles.linksContainer}>
+          <ButtonComponent
+            label={translations.forgotPassword}
             touchableOpacity
-            handlePress={handleLogin}
-            customStyles={{
-              button: styles.loginButton,
-              textButton: styles.buttonText,
+            handlePress={() => setShowPassword((prev) => !prev)}
+            replaceStyles={{
+              button: {},
+              textButton: styles.linkText,
             }}
           />
-
-          {/* Additional links */}
-          <View style={styles.linksContainer}>
-            <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
-              <Text style={styles.linkText}>{translation.forgotPassword}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-              <Text style={styles.linkText}>{translation.createAccount}</Text>
-            </TouchableOpacity>
-          </View>
+          <ButtonComponent
+            label={translations.createAccount}
+            touchableOpacity
+            handlePress={() => navigation.replace("SignUp")}
+            replaceStyles={{
+              button: {},
+              textButton: styles.linkText,
+            }}
+            forceReplaceStyles
+          />
         </View>
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
 };
 

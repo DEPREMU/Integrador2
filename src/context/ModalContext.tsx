@@ -4,18 +4,22 @@ import React, {
   ReactNode,
   useContext,
   createContext,
-  useEffect,
 } from "react";
-import ModalComponent from "@components/ModalComponent";
+import ModalComponent from "@components/common/ModalComponent";
+
+export type StylesModal =
+  | "body"
+  | "title"
+  | "buttons"
+  | "overlay"
+  | "modal"
+  | "messageText";
 
 interface ModalContextProps {
   openModal: (title: string, body: ReactNode, buttons: ReactNode) => void;
   closeModal: () => void;
   setCustomStyles: React.Dispatch<
-    React.SetStateAction<
-      | Record<"body" | "title" | "buttons" | "overlay" | "modal", any>
-      | undefined
-    >
+    React.SetStateAction<Record<StylesModal, any> | undefined>
   >;
 }
 
@@ -52,13 +56,13 @@ const ModalContext = createContext<ModalContextProps | undefined>(undefined);
  */
 export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const idTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [body, setBody] = useState<ReactNode>(null);
+  const [body, setBody] = useState<ReactNode | string>(null);
   const [title, setTitle] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [buttons, setButtons] = useState<ReactNode>(null);
   const [hideModal, setHideModal] = useState<boolean>(true);
   const [customStyles, setCustomStyles] = useState<
-    Record<"overlay" | "modal" | "title" | "body" | "buttons", any> | undefined
+    Record<StylesModal, any> | undefined
   >(undefined);
 
   /**
@@ -87,11 +91,11 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
    */
   const openModal = (
     modalTitle: string,
-    modalBody: ReactNode,
+    modalBody: ReactNode | string,
     modalButtons: ReactNode
   ) => {
     setIsOpen((prev) => {
-      if (prev) return prev; // If modal is already open, do not change state
+      if (prev) return prev;
 
       clearIdTimeout();
 

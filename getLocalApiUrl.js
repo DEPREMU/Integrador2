@@ -13,9 +13,7 @@ const getLocalIPAddress = () => {
     }
   }
 
-  if (candidates.length === 0) {
-    return "127.0.0.1"; // fallback
-  }
+  if (candidates.length === 0) return "127.0.0.1"; // fallback
 
   // Wi-Fi:
   const preferred = candidates.find((c) => /wi-?fi|wlan/i.test(c.name));

@@ -66,9 +66,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   useEffect(() => {
     const saveNewLanguage = async () => {
-      const oldLanguage = await checkLanguage();
-      if (oldLanguage === language) return;
-
       await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, language);
     };
 

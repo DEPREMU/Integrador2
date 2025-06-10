@@ -1,11 +1,9 @@
 export type ScreensAvailable =
   | "Login"
-  | "Signin"
+  | "SignUp"
   | "Home"
+  | "Dashboard"
   | "Patient"
-  | "ForgotPassword"
-  | "SignUp" 
-  | "Dashboard";
-
+  | "HowToCode";
 
 export type RootStackParamList = Record<ScreensAvailable, undefined>;

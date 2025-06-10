@@ -6,10 +6,10 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type SigninScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Signin"
+  "SignUp"
 >;
 
-export default function SigninScreen() {
+const SignUpScreen: React.FC = () => {
   const navigation = useNavigation<SigninScreenNavigationProp>();
 
   return (
@@ -18,4 +18,6 @@ export default function SigninScreen() {
       <Button title="Ir a Home" onPress={() => navigation.replace("Home")} />
     </View>
   );
-}
+};
+
+export default SignUpScreen;

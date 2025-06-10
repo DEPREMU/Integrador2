@@ -23,6 +23,8 @@ export type RequestLogs = {
   timestamp: string;
 };
 
+export type RequestBody = RequestEncrypt | RequestDecrypt | RequestLogs;
+
 export type DataLogin = {
   token: string;
   user: {

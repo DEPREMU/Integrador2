@@ -1,6 +1,6 @@
-import { stylesCardComponent } from "@styles/components/stylesCardComponent";
 import React from "react";
-import { View, Text, Image, ImageSourcePropType } from "react-native";
+import { View, Text } from "react-native";
+import { stylesCardComponent } from "@styles/components/stylesCardComponent";
 
 interface CardProps {
   /**
@@ -30,7 +30,7 @@ interface CardProps {
  *   description="This is a sample card description."
  * />
  */
-const Card: React.FC<CardProps> = ({ title, description }) => {
+const CardComponent: React.FC<CardProps> = ({ title, description }) => {
   const styles = stylesCardComponent();
 
   return (
@@ -43,4 +43,4 @@ const Card: React.FC<CardProps> = ({ title, description }) => {
   );
 };
 
-export default Card;
+export default CardComponent;

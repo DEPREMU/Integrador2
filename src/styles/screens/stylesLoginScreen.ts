@@ -6,14 +6,8 @@ import { StyleSheet } from "react-native";
  * @returns {{ styles: object, height: number, width: number }}
  */
 const stylesLoginScreen = () => {
-  /**
-   * @type {{ width: number, height: number }}
-   */
   const { width, height } = useResponsiveLayout();
 
-  /**
-   * @type {object}
-   */
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -27,7 +21,7 @@ const stylesLoginScreen = () => {
     },
     content: {
       width: "90%",
-      maxWidth: 400,
+      maxWidth: 500,
       backgroundColor: "#f0f4f7",
       borderRadius: 15,
       padding: 25,
@@ -57,8 +51,7 @@ const stylesLoginScreen = () => {
       backgroundColor: "#fff",
       borderRadius: 10,
       marginBottom: 15,
-      paddingHorizontal: 15,
-      width: "100%",
+      width: "90%",
       height: 50,
     },
     icon: {
@@ -68,6 +61,7 @@ const stylesLoginScreen = () => {
       flex: 1,
       color: "#333",
       height: "100%",
+      paddingHorizontal: 15,
     },
 
     showPasswordButton: {
@@ -76,6 +70,8 @@ const stylesLoginScreen = () => {
       justifyContent: "center",
       alignItems: "center",
       padding: 0,
+      position: "absolute",
+      right: 10,
       marginLeft: 5,
       zIndex: 2,
     },
@@ -86,7 +82,7 @@ const stylesLoginScreen = () => {
       justifyContent: "center",
       alignItems: "center",
       marginTop: 25,
-      width: "100%",
+      width: "90%",
     },
     buttonText: {
       color: "white",
@@ -111,11 +107,18 @@ const stylesLoginScreen = () => {
       marginTop: 15,
       width: "100%",
     },
+    inputPassword: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#fff",
+      borderRadius: 10,
+      marginBottom: 0,
+      paddingHorizontal: 0,
+      width: "100%",
+      height: 50,
+    },
   });
 
-  /**
-   * @returns {{ styles: object, height: number, width: number }}
-   */
   return { styles, height, width };
 };
 

@@ -17,11 +17,10 @@ module.exports = function (api) {
             "@constants": "./src/constants",
             "@context": "./src/context",
             "@styles": "./src/styles",
-            "@types": "./src/types",
+            "@types": "./src/types/index.ts",
           },
         },
       ],
-      // Agrega este plugin AL FINAL para react-native-reanimated
       "react-native-reanimated/plugin",
     ],
   };

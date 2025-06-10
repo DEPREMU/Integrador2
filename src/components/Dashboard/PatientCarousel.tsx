@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, FlatList, Image, Text, } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import PatientCard from '@components/PatientCard';
-import ButtonComponent from '@components/Button';
-import { RootStackParamList } from '@navigation/navigationTypes';
-import { ADD_ICON } from '@/utils';
+import React from "react";
+import PatientCard from "@components/Dashboard/PatientCard";
+import { ADD_ICON } from "@utils";
+import ButtonComponent from "@components/common/Button";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "@navigation/navigationTypes";
+import { View, FlatList, Image } from "react-native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 /**
  * Patient type definition.
@@ -22,7 +22,7 @@ export type Patient = {
   pills: string[];
 };
 
-type NavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+type NavProp = NativeStackNavigationProp<RootStackParamList, "Dashboard">;
 
 /**
  * Props for the PatientCarousel component.
@@ -73,13 +73,13 @@ interface PatientCarouselProps {
  *   closeModal={closeModal}
  * />
  */
-export default function PatientCarousel({
+const PatientCarousel: React.FC<PatientCarouselProps> = ({
   data,
   styles,
-  translations,
   openModal,
   closeModal,
-}: PatientCarouselProps) {
+  translations,
+}) => {
   const navigation = useNavigation<NavProp>();
 
   return (
@@ -89,45 +89,50 @@ export default function PatientCarousel({
       showsHorizontalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
-      renderItem={({ item }) =>
-        item.id === 'add' ? (
-          <View style={styles.addCard}>
-            <ButtonComponent
-              touchableOpacity
-              handlePress={() =>
-                openModal(
-                  translations.addPatient,
-                  <Text>{translations.addPatientForm}</Text>,
-                  <ButtonComponent
-                    label={translations.close}
-                    handlePress={closeModal}
-                    customStyles={{
-                      button: styles.closeButton,
-                      textButton: styles.closeText
-                    }}
+      renderItem={({ item }) => {
+        if (item.id === "add" && data.length === 1) {
+          return (
+            <View style={styles.addCard}>
+              <ButtonComponent
+                touchableOpacity
+                handlePress={() =>
+                  openModal(
+                    translations.addPatient,
+                    translations.addPatientForm,
+                    <ButtonComponent
+                      label={translations.close}
+                      handlePress={closeModal}
+                      customStyles={{
+                        button: styles.closeButton,
+                        textButton: styles.closeText,
+                      }}
+                    />
+                  )
+                }
+                customStyles={{ button: styles.addButton, textButton: {} }}
+                children={
+                  <Image
+                    source={ADD_ICON}
+                    style={{ width: 32, height: 32, tintColor: "#fff" }}
                   />
-                )
-              }
-              customStyles={{ button: styles.addButton, textButton: {} }}
-              Children={
-                () => <Image
-                  source={ADD_ICON}
-                  style={{ width: 32, height: 32, tintColor: '#fff' }}
-                />
-              }
-            />
+                }
+              />
+            </View>
+          );
+        }
 
-          </View>
-        ) : (
+        return (
           <PatientCard
             name={item.name}
             photoUrl={item.photo}
             pills={item.pills}
-            onPress={() => navigation.replace('Login')}
+            onPress={() => navigation.replace("Login")}
             style={{ marginRight: 15 }}
           />
-        )
-      }
+        );
+      }}
     />
   );
-}
+};
+
+export default PatientCarousel;

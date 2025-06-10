@@ -1,4 +1,11 @@
 {
   "cSpell.language": "en,es-ES,es-MX",
-  "cSpell.words": ["meditime", "Pressable", "supabase", "SUPABASE"]
+  "cSpell.words": [
+    "Capsy",
+    "capsys",
+    "meditime",
+    "Pressable",
+    "supabase",
+    "SUPABASE"
+  ]
 }

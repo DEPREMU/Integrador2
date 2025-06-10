@@ -1,10 +1,10 @@
-import React from 'react';
-import { Text, View } from 'react-native';
-import HeaderComponent from '@components/Header';
-import Button from '@components/Button';
-import DayCarousel from '@components/DayCarousel';
-import { stylesPatientScreen } from '@styles/screens/stylesPatientScreen';  
+import React from "react";
+import Button from "@components/common/Button";
+import DayCarousel from "@components/PatientScreen/DayCarousel";
+import { Text, View } from "react-native";
+import HeaderComponent from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
+import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
 
 /**
  * PatientScreen displays the header, patient information,
@@ -23,7 +23,9 @@ const PatientScreen: React.FC = () => {
       <HeaderComponent />
       <View style={styles.patientInfo}>
         <Text style={styles.patientName}>{translations.patientName}</Text>
-        <Text style={styles.patientDescription}>{translations.patientDescription}</Text>
+        <Text style={styles.patientDescription}>
+          {translations.patientDescription}
+        </Text>
       </View>
       <View style={styles.buttonContainer}>
         <Button
@@ -42,4 +44,3 @@ const PatientScreen: React.FC = () => {
 };
 
 export default PatientScreen;
-

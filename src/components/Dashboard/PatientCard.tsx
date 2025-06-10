@@ -1,6 +1,6 @@
 import React from 'react';
+import { useStylesPatientCard } from '@styles/components/stylesPatientCard';
 import { View, Text, Image, Pressable, ViewStyle } from 'react-native';
-import { useStylesPatientCard } from '@/styles/components/stylesPatientCard';
 
 interface PatientCardProps {
   name: string;

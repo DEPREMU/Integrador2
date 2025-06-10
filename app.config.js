@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export default {
   expo: {
     name: "MediTime",
@@ -11,6 +13,8 @@ export default {
       eas: {
         projectId: "a8d93e97-dd8d-4d17-b4fe-7bcb33a1c989",
       },
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_KEY: process.env.SUPABASE_KEY,
     },
     splash: {
       image: "./assets/icon.png",
