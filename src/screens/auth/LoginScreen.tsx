@@ -14,24 +14,26 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { APP_ICON, PASS_ICON } from "@/utils";
-import stylesLoginScreen from "@/styles/components/stylesLoginScreen";
+import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
+import { isValidEmail, isValidPassword } from "@utils";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Login"
 >;
 
-export default function LoginScreen() {
+const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [language, setLanguage] = useState<"en" | "es">("es"); // Estado para el idioma
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<"en" | "es">("es"); // Language state
 
   const { styles } = stylesLoginScreen();
 
-  // Objeto con todas las traducciones
+  // Object with all translations
+  // This object contains translations for both English and Spanish languages.
   const translations = {
     en: {
       welcome: "Welcome to MediTime",
@@ -57,13 +59,9 @@ export default function LoginScreen() {
     },
   };
 
-  // Función para cambiar idioma
-  const toggleLanguage = () => {
-    setLanguage((prev) => (prev === "es" ? "en" : "es"));
-  };
-
-  // Obtener las traducciones actuales
-  const t = translations[language];
+  // Obtain the current translations based on the selected language
+  // This will allow us to dynamically change the text displayed in the UI.
+  const translation = translations[language];
 
   /**
    * Handles the login button press.
@@ -72,12 +70,12 @@ export default function LoginScreen() {
    * @function
    */
   const handleLogin = () => {
-    if (!email.trim() || !password.trim()) {
-      setError(t.errorEmpty);
+    if (!isValidEmail(email)) {
+      setError(translation.errorEmpty);
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError(t.errorEmail);
+    if (!isValidPassword(password)) {
+      setError(translation.errorEmail);
       return;
     }
 
@@ -98,32 +96,19 @@ export default function LoginScreen() {
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <View style={styles.container}>
         <View style={styles.content}>
-          {/* Botón para cambiar idioma */}
-          <TouchableOpacity
-            onPress={toggleLanguage}
-            style={[
-              {
-                position: "absolute",
-                top: 20,
-                right: 20,
-                padding: 10,
-                backgroundColor: "#e0e0e0",
-                borderRadius: 5,
-              },
-            ]}
-          >
-            <Text style={{ fontWeight: "bold" }}>{t.languageButton}</Text>
-          </TouchableOpacity>
+          <Text style={{ fontWeight: "bold" }}>
+            {translation.languageButton}
+          </Text>
 
           <Image source={APP_ICON} style={styles.logo} />
 
-          <Text style={styles.title}>{t.welcome}</Text>
+          <Text style={styles.title}>{translation.welcome}</Text>
 
-          {/* Campo Email */}
+          {/* Email space */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder={t.emailPlaceholder}
+              placeholder={translation.emailPlaceholder}
               placeholderTextColor="#999"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -137,11 +122,11 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Campo Contraseña */}
+          {/* Password space */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder={t.passwordPlaceholder}
+              placeholder={translation.passwordPlaceholder}
               placeholderTextColor="#999"
               secureTextEntry={!showPassword}
               value={password}
@@ -160,12 +145,12 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Mensaje de error */}
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {/* Error message */}
+          {error !== null && <Text style={styles.errorText}>{error}</Text>}
 
-          {/* Botón de Login usando tu componente personalizado */}
+          {/* Login button using personalized component */}
           <ButtonComponent
-            label={t.loginButton}
+            label={translation.loginButton}
             touchableOpacity
             handlePress={handleLogin}
             customStyles={{
@@ -174,19 +159,19 @@ export default function LoginScreen() {
             }}
           />
 
-          {/* Enlaces adicionales */}
+          {/* Additional links */}
           <View style={styles.linksContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("ForgotPassword")}
-            >
-              <Text style={styles.linkText}>{t.forgotPassword}</Text>
+            <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
+              <Text style={styles.linkText}>{translation.forgotPassword}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-              <Text style={styles.linkText}>{t.createAccount}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+              <Text style={styles.linkText}>{translation.createAccount}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
     </TouchableWithoutFeedback>
   );
-}
+};
+
+export default LoginScreen;

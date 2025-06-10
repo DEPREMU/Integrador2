@@ -6,13 +6,14 @@ import { RootStackParamList } from "./navigationTypes";
 import { NavigationContainer } from "@react-navigation/native";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import  PatientScreen  from "@screens/PatientScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator: React.FC = () => (
   <NavigationContainer>
     <BackgroundTaskProvider>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
           name="Login"
           component={LoginScreen}
@@ -26,6 +27,11 @@ const AppNavigator: React.FC = () => (
         <Stack.Screen
           name="Home"
           component={HomeScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Patient"
+          component={PatientScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

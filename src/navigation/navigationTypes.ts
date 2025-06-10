@@ -2,13 +2,8 @@ export type ScreensAvailable =
   | "Login"
   | "Signin"
   | "Home"
+  | "Patient"
   | "ForgotPassword"
-  | "Register";
+  | "SignUp";
 
-export type RootStackParamList = {
-  Login: undefined;
-  Signin: undefined;
-  Home: undefined;
-  ForgotPassword: undefined; // Add this
-  Register: undefined; // Add this
-};
+export type RootStackParamList = Record<ScreensAvailable, undefined>;
