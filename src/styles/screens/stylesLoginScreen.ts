@@ -89,6 +89,10 @@ const stylesLoginScreen = () => {
       fontSize: 16,
       fontWeight: "600",
     },
+    inputError: {
+      borderWidth: 2,
+      borderColor: "#ff0000",
+    },
     linksContainer: {
       marginTop: 20,
       width: "100%",

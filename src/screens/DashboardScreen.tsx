@@ -77,4 +77,10 @@ const data: Patient[] = [
     photo: "https://via.placeholder.com/80",
     pills: ["D", "E", "F"],
   },
+  {
+    id: "add",
+    name: "Add Patient",
+    photo: "",
+    pills: [],
+  },
 ];

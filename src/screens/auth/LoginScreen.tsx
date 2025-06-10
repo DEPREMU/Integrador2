@@ -13,7 +13,7 @@ import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { isValidEmail, isValidPassword } from "@utils";
 import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, Keyboard, Platform, TextInput } from "react-native";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -46,8 +46,6 @@ const LoginScreen: React.FC = () => {
     const shake = useSharedValue(0);
     const animatedStyle = useAnimatedStyle(() => ({
       transform: [{ translateX: shake.value }],
-      borderWidth: 2,
-      borderColor: "#ff0000",
     }));
     return { shake, animatedStyle };
   });
@@ -67,6 +65,8 @@ const LoginScreen: React.FC = () => {
   };
 
   const handleLogin = () => {
+    handlerBlurInputEmail();
+    handlerBlurInputPassword();
     if (!email || !password) return setError(translations.errorEmpty);
     if (!isValidEmail(email)) return setError(translations.errorEmail);
     if (!isValidPassword(password)) return setError(translations.errorPassword);
@@ -76,7 +76,13 @@ const LoginScreen: React.FC = () => {
   };
 
   const handlerBlurInputEmail = () => {
-    if (isValidEmail(email)) return;
+    if (isValidEmail(email)) {
+      setValidations((prev) => ({
+        ...prev,
+        isEmailValid: true,
+      }));
+      return;
+    }
 
     setValidations((prev) => ({
       ...prev,
@@ -86,7 +92,13 @@ const LoginScreen: React.FC = () => {
   };
 
   const handlerBlurInputPassword = () => {
-    if (isValidPassword(password)) return;
+    if (isValidPassword(password)) {
+      setValidations((prev) => ({
+        ...prev,
+        isPasswordValid: true,
+      }));
+      return;
+    }
 
     setValidations((prev) => ({
       ...prev,
@@ -96,8 +108,8 @@ const LoginScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    log(JSON.stringify(validations, null, 2));
-  }, [validations]);
+    log(JSON.stringify(validations, null, 2), email, password);
+  }, [validations, email, password]);
 
   return (
     <View style={styles.container}>
@@ -110,11 +122,12 @@ const LoginScreen: React.FC = () => {
         <Animated.View
           style={[
             styles.inputContainer,
-            !validations.isEmailValid && shakeInputs[0].animatedStyle,
+            validations.isEmailValid ? null : shakeInputs[0].animatedStyle,
+            validations.isEmailValid ? null : styles.inputError,
           ]}
         >
           <TextInput
-            style={[styles.input]}
+            style={styles.input}
             placeholder={translations.emailPlaceholder}
             placeholderTextColor="#999"
             keyboardType="email-address"
@@ -133,7 +146,8 @@ const LoginScreen: React.FC = () => {
         <Animated.View
           style={[
             styles.inputContainer,
-            !validations.isPasswordValid && shakeInputs[1].animatedStyle,
+            validations.isPasswordValid ? null : shakeInputs[1].animatedStyle,
+            validations.isPasswordValid ? null : styles.inputError,
           ]}
         >
           <TextInput

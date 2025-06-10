@@ -90,7 +90,7 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
       renderItem={({ item }) => {
-        if (item.id === "add" && data.length === 1) {
+        if (item.id === "add")
           return (
             <View style={styles.addCard}>
               <ButtonComponent
@@ -119,7 +119,6 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
               />
             </View>
           );
-        }
 
         return (
           <PatientCard

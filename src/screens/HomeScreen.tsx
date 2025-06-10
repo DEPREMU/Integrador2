@@ -4,11 +4,8 @@ import { View, Image } from "react-native";
 import { useLanguage } from "@context/LanguageContext";
 import HeaderComponent from "@components/common/Header";
 import stylesHomeScreen from "@styles/screens/stylesHomeScreen";
-import { useNavigation } from "@react-navigation/native";
 import CarouselComponent from "@components/Home/Carousel";
-import { RootStackParamList } from "@navigation/navigationTypes";
 import { PAST_IMA, SLOGAN_MSGS } from "@utils";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 /**
  * HomeScreen component that displays the main screen of the app.

@@ -51,7 +51,7 @@ const screens: Screens = {
 const AppNavigator: React.FC = () => (
   <NavigationContainer>
     <BackgroundTaskProvider>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Dashboard">
         {Object.entries(screens).map(([name, { component, options }]) => (
           <Stack.Screen
             key={name}
