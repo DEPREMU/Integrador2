@@ -53,7 +53,7 @@ const DayCarousel: React.FC = () => {
     });
 
     setDays(fetchedDays);
-  }, []);
+  }, [translations]);
 
   useEffect(() => setCustomStyles(customStyles), [customStyles]);
 
@@ -110,22 +110,20 @@ const DayCarousel: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <ButtonComponent
-        label={translations.addMedication}
-        handlePress={handlePrev}
+      <Pressable
+        onPress={handlePrev}
         disabled={startIndex === 0}
-        customStyles={{
-          button: styles.arrowButton,
-          textButton: {},
-        }}
-        children={
-          <Ionicons
-            name="add"
-            size={24}
-            color={startIndex === 0 ? "#ccc" : "#00a69d"}
-          />
-        }
-      />
+        style={[
+          styles.arrowButton,
+          { backgroundColor: "transparent", elevation: 0, shadowOpacity: 0 },
+        ]}
+      >
+        <Ionicons
+          name="chevron-back"
+          size={32}
+          color={startIndex === 0 ? "#ccc" : "#00a69d"}
+        />
+      </Pressable>
       <View style={styles.cardsRow}>
         {visibleDays.map((day, index) => (
           <ButtonComponent
@@ -167,22 +165,20 @@ const DayCarousel: React.FC = () => {
           />
         ))}
       </View>
-      <ButtonComponent
-        label={translations.addMedication}
-        handlePress={handleNext}
+      <Pressable
+        onPress={handleNext}
         disabled={startIndex >= days.length - cardsToShow}
-        customStyles={{
-          button: styles.arrowButton,
-          textButton: {},
-        }}
-        children={
-          <Ionicons
-            name="add"
-            size={24}
-            color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
-          />
-        }
-      />
+        style={[
+          styles.arrowButton,
+          { backgroundColor: "transparent", elevation: 0, shadowOpacity: 0 },
+        ]}
+      >
+        <Ionicons
+          name="chevron-forward"
+          size={32}
+          color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
+        />
+      </Pressable>
     </View>
   );
 };
