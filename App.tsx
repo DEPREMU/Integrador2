@@ -1,10 +1,10 @@
 import React from "react";
 import AppProviders from "@context/AppProviders";
-import AppNavigator from "@navigation/AppNavigator";
+import MedicationScheduler from "./src/screens/ScheduleScreen";
 
 const App = () => (
   <AppProviders>
-    <AppNavigator />
+    <MedicationScheduler />
   </AppProviders>
 );
 

@@ -10,6 +10,7 @@ import SigninScreen from "@/screens/auth/SignUpScreen";
 import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
+import ScheduleScreen from "@screens/ScheduleScreen";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
@@ -46,6 +47,7 @@ const screens: Screens = {
   Patient: { component: PatientScreen },
   Dashboard: { component: DashboardScreen },
   HowToCode: { component: HowToCodeExample },
+  Schedule: { component: ScheduleScreen },
 };
 
 const AppNavigator: React.FC = () => (
