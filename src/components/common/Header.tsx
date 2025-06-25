@@ -1,6 +1,6 @@
 import Menu from "@components/common/Menu";
-import burger from "@components/common/Burger";
-import React, { useState } from "react";
+import React from "react";
+import burger from "@hooks/components/Burger";
 import { View, Text, Image } from "react-native";
 import { APP_ICON, APP_NAME } from "@utils";
 import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
@@ -15,16 +15,9 @@ import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent"
  * <HeaderComponent />
  */
 const HeaderComponent: React.FC = () => {
-  const [menuVisible, setMenuVisible] = useState<boolean>(false);
-
   const styles = stylesHeaderComponent();
 
-  const closeMenu = () => setMenuVisible(false);
-
-  const { burgerComponent, toggleMenu } = burger(
-    () => setMenuVisible((prev) => !prev),
-    closeMenu
-  );
+  const { burgerComponent, toggleMenu, isOpen: menuVisible } = burger();
 
   return (
     <View style={styles.container}>
@@ -32,7 +25,7 @@ const HeaderComponent: React.FC = () => {
 
       <Menu visible={menuVisible} onClose={toggleMenu} />
 
-      <Image source={APP_ICON}  style={styles.iconImage} />
+      <Image source={APP_ICON} style={styles.iconImage} />
 
       <Text style={styles.title}>{APP_NAME}</Text>
     </View>

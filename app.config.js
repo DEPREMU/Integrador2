@@ -29,6 +29,7 @@ export default {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#000000",
       },
+      jsEngine: "hermes",
       package: "com.integrador2.app",
       permissions: [
         "INTERNET",

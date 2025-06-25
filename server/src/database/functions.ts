@@ -1,4 +1,6 @@
-import { Db } from "mongodb";
+import fs from "fs";
+import { Db, ObjectId } from "mongodb";
+import { CollectionName, MedicationApi } from "../types/index.js";
 import { defaultDatabase, defaultCollection, client } from "./connection.js";
 
 /**
@@ -27,7 +29,7 @@ export const getDatabase = async (database: string = defaultDatabase) => {
  * @throws Will throw an error if there is an issue retrieving or creating the collection.
  */
 export const getCollection = async (
-  collection: string = defaultCollection,
+  collection: CollectionName = defaultCollection,
   database: string | Db = defaultDatabase
 ) => {
   try {
@@ -58,7 +60,7 @@ export const getCollection = async (
  * @throws Will throw an error if the database or collection cannot be accessed, or if the query fails.
  */
 export const findInCollection = async (
-  collection: string = defaultCollection,
+  collection: CollectionName = defaultCollection,
   query: { [key: string]: any },
   database: string = defaultDatabase
 ) => {
@@ -83,7 +85,7 @@ export const findInCollection = async (
 export const getUserData = async (
   uuid: string,
   db: string = defaultDatabase,
-  collection: string = defaultCollection
+  collection: CollectionName = defaultCollection
 ) => {
   const database = await getDatabase(db);
   const coll = await getCollection(collection, database);
@@ -91,3 +93,63 @@ export const getUserData = async (
   const result = await coll.findOne({ uuid });
   return result;
 };
+
+export const createCollections = async () => {
+  const db = await getDatabase();
+
+  const collections = await db.listCollections().toArray();
+  const existing = collections.map((col) => col.name);
+
+  const requiredCollections: CollectionName[] = [
+    "users",
+    "medicationsApi",
+    "medicationsUser",
+    "imagePaths",
+    "userConfig",
+  ];
+
+  for (const name of requiredCollections) {
+    if (!existing.includes(name)) {
+      await db.createCollection(name);
+      console.log(`🗂️ Created collection: ${name}`);
+    } else {
+      console.log(`✔️ Collection exists: ${name}`);
+    }
+  }
+};
+
+export const getObjectId = (id: string) => new ObjectId(id);
+
+const insertMedicationsFromJSON = async () => {
+  const db = await getDatabase();
+  const coll = await getCollection("medicationsApi", db);
+  const medicationsAdded = (await coll.find({}).toArray()) as MedicationApi[];
+  const data = fs.readFileSync("./src/database/medicationsApi.json", "utf-8");
+
+  const medications = (JSON.parse(data) as MedicationApi[]).filter(
+    (med) => !medicationsAdded.some((added) => added.name === med.name)
+  );
+  fs.writeFileSync(
+    "./src/database/names.json",
+    JSON.stringify(
+      JSON.parse(data).map((m: MedicationApi) => m.name),
+      null,
+      2
+    ),
+    "utf-8"
+  );
+  if (medications.length === 0) {
+    console.log("No new medications to insert");
+    return;
+  }
+  coll
+    .insertMany(medications)
+    .then((data) => {
+      console.log("Medications inserted successfully", data.insertedCount);
+    })
+    .catch((error) => {
+      console.error("Error inserting medications:", error);
+    });
+};
+
+insertMedicationsFromJSON();

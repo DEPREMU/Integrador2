@@ -1,6 +1,7 @@
 import { logError } from "./debug";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
+import * as Notifications from "expo-notifications";
 
 /**
  * Requests permission to access the media library.
@@ -53,7 +54,10 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
  * - It constructs a `FormData` object and sends it to the server using a POST request.
  * - If the upload is successful, it returns the uploaded image data.
  */
-export const uploadImage = async (pickMultipleImages: boolean = false) => {
+export const uploadImage = async (
+  userId: string,
+  pickMultipleImages: boolean = false
+) => {
   const grant = await requestImagePermission();
   if (!grant) return;
 
@@ -61,13 +65,14 @@ export const uploadImage = async (pickMultipleImages: boolean = false) => {
   if (pickerResult.canceled) return;
 
   const formData = getFormData(pickerResult.assets);
+  formData.append("userId", userId);
 
   try {
     const fetchOptions = {
       method: "POST",
       body: formData,
     };
-    const res = await fetch(getRouteAPI("upload"), fetchOptions);
+    const res = await fetch(getRouteAPI("/upload"), fetchOptions);
 
     const data = await res.json();
     return data.files;
@@ -158,4 +163,13 @@ export const interpolateMessage = (message: string, values: string[]) => {
     const value = values[parseInt(index, 10)];
     return value !== undefined ? value : match;
   });
+};
+
+export const hasPushNotifications = async (): Promise<boolean> => {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== Notifications.PermissionStatus.GRANTED) {
+    const { status: newStatus } = await Notifications.requestPermissionsAsync();
+    return newStatus === Notifications.PermissionStatus.GRANTED;
+  }
+  return status === Notifications.PermissionStatus.GRANTED;
 };

@@ -26,6 +26,60 @@ interface ButtonComponentProps {
 }
 
 /**
+ * Compares two ButtonComponentProps objects for equality.
+ * Used to prevent unnecessary re-renders of the ButtonComponent.
+ *
+ * @param {ButtonComponentProps} prev - The previous props.
+ * @param {ButtonComponentProps} next - The next props.
+ * @returns {boolean} True if the props are equal, false otherwise.
+ */
+const areEqual = (
+  prev: ButtonComponentProps,
+  next: ButtonComponentProps
+): boolean => {
+  return (
+    prev.disabled === next.disabled &&
+    prev.label === next.label &&
+    prev.forceReplaceStyles === next.forceReplaceStyles &&
+    prev.touchableOpacity === next.touchableOpacity &&
+    prev.touchableOpacityIntensity === next.touchableOpacityIntensity &&
+    prev.handlerFocus === next.handlerFocus &&
+    prev.handlerHoverIn === next.handlerHoverIn &&
+    prev.handlerHoverOut === next.handlerHoverOut &&
+    prev.handlePress === next.handlePress &&
+    prev.Children === next.Children &&
+    prev.children === next.children &&
+    shallowEqual(prev.replaceStyles, next.replaceStyles) &&
+    shallowEqual(prev.customStyles, next.customStyles)
+  );
+};
+
+/**
+ * Performs a shallow comparison of two objects.
+ * Returns true if they have the same keys and values, false otherwise.
+ *
+ * @param {Record<string, any>} obj1 - The first object to compare.
+ * @param {Record<string, any>} obj2 - The second object to compare.
+ * @returns {boolean} True if the objects are shallowly equal, false otherwise.
+ */
+const shallowEqual = (
+  obj1?: Record<string, any>,
+  obj2?: Record<string, any>
+): boolean => {
+  if (obj1 === obj2) return true;
+  if (!obj1 || !obj2) return false;
+
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  if (keys1.length !== keys2.length) return false;
+
+  for (let key of keys1) {
+    if (obj1[key] !== obj2[key]) return false;
+  }
+  return true;
+};
+
+/**
  * ButtonComponent is a customizable button component that supports various styles and behaviors.
  *
  * @param {object} props - The properties for the ButtonComponent.
@@ -99,4 +153,6 @@ const ButtonComponent: React.FC<ButtonComponentProps> = ({
   );
 };
 
-export default ButtonComponent;
+const Button = React.memo(ButtonComponent, areEqual);
+
+export default Button;

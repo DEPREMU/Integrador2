@@ -1,9 +1,11 @@
 import express from "express";
 import { logsHandler } from "./logs.js";
-import { loginHandler } from "./login.js";
+import { loginHandler, signUpHandler } from "./auth.js";
 import { RequestHandler } from "express";
 import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
+import { RoutesAPI } from "../types/TypesAPI.js";
+import { updateUserDataHandler } from "./updateUserData.js";
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -17,9 +19,9 @@ type RouteConfig = {
   middlewares?: RequestHandler[];
 };
 
-type Route = "/login" | "/encrypt" | "/decrypt" | "/upload" | "/logs";
 
-const routes: Record<Route, RouteConfig> = {
+
+const routes: Record<RoutesAPI, RouteConfig> = {
   "/login": { handler: loginHandler },
   "/encrypt": { handler: encryptHandler },
   "/decrypt": { handler: decryptHandler },
@@ -28,6 +30,8 @@ const routes: Record<Route, RouteConfig> = {
     handler: handleReceiveImages,
     middlewares: [upload.array("images")],
   },
+  "/signup": { handler: signUpHandler },
+  "/updateUserData": { handler: updateUserDataHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

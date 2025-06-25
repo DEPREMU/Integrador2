@@ -17,6 +17,7 @@ module.exports = function (api) {
             "@constants": "./src/constants",
             "@context": "./src/context",
             "@styles": "./src/styles",
+            "@typesAPI": "./server/src/types/",
             "@types": "./src/types/index.ts",
           },
         },

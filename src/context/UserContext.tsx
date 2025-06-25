@@ -5,12 +5,26 @@ import {
   loadDataSecure,
   saveDataSecure,
   removeDataSecure,
+  getRouteAPI,
+  fetchOptions,
+  checkLanguage,
+  hasPushNotifications,
+  log,
 } from "@utils";
-import { UserSession, UserData } from "@types";
+import { UserSession } from "@types";
 import React, { createContext, useState, useEffect } from "react";
+import {
+  User,
+  ResponseLogin,
+  TypeBodyLogin,
+  TypeBodySignup,
+  TypeBodyUpdateUserData,
+  ResponseUpdateUserData,
+} from "@typesAPI";
 
 type UserContextType = {
   userSession: UserSession | null;
+  userData: User | null;
   isLoggedIn: boolean;
   loading: boolean;
   login: <T = void>(
@@ -24,10 +38,9 @@ type UserContextType = {
     password: string,
     callback?: (err?: Error) => T
   ) => Promise<T>;
-  logout: () => Promise<void>;
+  logout: (callback?: (message: string) => void) => Promise<void>;
   setUserSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
   refreshToken: (refreshToken: string) => Promise<void>;
-  userData: UserData | null;
 };
 
 interface UserProviderProps {
@@ -104,26 +117,69 @@ const clearSession = async (): Promise<void> => {
 };
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession();
 
-      setLoading(() => {
-        if (!session || !session?.access_token || !session?.user?.id)
-          return false;
-
-        setIsLoggedIn(true);
-        setUserSession(session);
+      if (!session || !session?.access_token || !session?.user?.id)
         return false;
-      });
+
+      setIsLoggedIn(true);
+      setUserSession(session);
+      return false;
+    };
+    const getUserData = async () => {
+      if (!userSession || !userSession.user?.id) {
+        setUserData(null);
+        return;
+      }
+
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
+
+      const { data, error }: ResponseLogin = await fetch(
+        getRouteAPI("/login"),
+        fetchOptions<TypeBodyLogin>("POST", {
+          uuid: userSession.user.id,
+          language,
+          pushNotifications,
+        })
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error fetching user data", error.message);
+          setLoading(false);
+          return {
+            data: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        });
+
+      if (error) {
+        logError("Error fetching user data", error.message);
+        setUserData(null);
+      } else {
+        setUserData(data?.user || null);
+        setLoading(false);
+      }
     };
 
-    checkSession();
+    checkSession()
+      .then(getUserData)
+      .catch((error) => {
+        logError("Error checking session", error.message);
+        setLoading(false);
+      });
   }, []);
 
   const refreshToken = async (refresh_token: string) => {
@@ -145,12 +201,56 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     password: string,
     callback: (err?: Error) => T = (_) => null as T
   ) => {
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) return callback?.(new Error(error.message));
+
+    const [language, pushNotifications] = await Promise.all([
+      checkLanguage(),
+      hasPushNotifications(),
+    ]);
+
+    const userData = (await fetch(
+      getRouteAPI("/signup"),
+      fetchOptions<TypeBodySignup>("POST", {
+        userId: data.session?.user?.id || "",
+        role: "caregiver",
+        userConfig: {
+          userId: data.session?.user?.id || "",
+          language,
+          pushNotifications,
+        },
+        createdAt: new Date().toISOString(),
+        imageId: "",
+        description: "",
+        name: "",
+        phone: "",
+      })
+    )
+      .then((res) => {
+        log("User signed up successfully", res);
+        return res.json();
+      })
+      .catch((err) => {
+        logError("Error during sign up", err.message);
+        return {
+          data: null,
+          error: {
+            message: err.message,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      })) as ResponseLogin;
+
+    if (userData.error) {
+      logError("Error during sign up", userData.error.message);
+      return callback?.(new Error(userData.error.message));
+    }
+    setUserData(userData.data?.user || null);
+
     return callback?.();
   };
 
@@ -173,18 +273,47 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       return callback?.(null, new Error("No session data received"));
 
     await saveSession(session, rememberMe);
+    const [language, pushNotifications] = await Promise.all([
+      checkLanguage(),
+      hasPushNotifications(),
+    ]);
+    const userData = (await fetch(
+      getRouteAPI("/login"),
+      fetchOptions<TypeBodyLogin>("POST", {
+        uuid: session?.user?.id,
+        language,
+        pushNotifications,
+      })
+    )
+      .then((res) => res.json())
+      .catch((error) => {
+        logError("Error fetching user data on login", error.message);
+        return {
+          data: null,
+          error: {
+            message: error.message,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      })) as ResponseLogin;
+
     setIsLoggedIn(true);
     setUserSession(session);
+
+    setUserData(userData.data?.user || null);
     return callback?.(session);
   };
 
-  const logout = async () => {
-    if (!userSession || !isLoggedIn) return;
+  const logout = async (callback?: (message: string) => void) => {
+    if (!userSession || !isLoggedIn)
+      return callback?.("No user session to log out");
 
-    await supabase.auth.signOut();
-    await clearSession();
+    await Promise.all([supabase.auth.signOut(), clearSession()]);
+    setUserData(null);
     setIsLoggedIn(false);
     setUserSession(null);
+    log("User logged out successfully");
+    callback?.("User logged out successfully");
   };
 
   const contextValue = {
@@ -198,6 +327,58 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     logout,
     login,
   };
+
+  useEffect(() => {
+    log("UserContext initialized", {
+      userSession,
+      userData,
+      isLoggedIn,
+    });
+    if (!userSession || !userData || !isLoggedIn) return;
+    const updateUserData = async () => {
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
+
+      const { success, user, error } = (await fetch(
+        getRouteAPI("/updateUserData"),
+        fetchOptions<TypeBodyUpdateUserData>("POST", {
+          userId: userSession.user.id,
+          userData: {
+            userId: userSession.user.id,
+            role: userData.role || "caregiver",
+            name: userData.name || "",
+            phone: userData.phone || "",
+            imageId: userData.imageId || "",
+            createdAt: new Date().toISOString(),
+            description: userData.description || "",
+            caregiverId: userData?.caregiverId || undefined,
+            patientUserIds: userData?.patientUserIds || [],
+            medicationIds: userData?.medicationIds || [],
+          },
+        })
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error updating user data", error.message);
+          return {
+            data: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        })) as ResponseUpdateUserData;
+
+      if (error || !success) {
+        logError("Error updating user data", error?.message ?? "Unknown error");
+      } else if (success) {
+        setUserData(user ?? null);
+      }
+    };
+    if (userSession?.user?.id === userData?.userId) updateUserData();
+  }, [userSession, userData]);
 
   return (
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>

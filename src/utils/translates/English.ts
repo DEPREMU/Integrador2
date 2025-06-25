@@ -49,4 +49,9 @@ export const en:typeLanguages = {
   errorEmpty: "Please fill in all fields",
   errorEmail: "Enter a valid email",
   errorPassword: "Password must be at least 8 characters long and contain both letters and numbers",
+  hasAccount: "Already have an account? Log in",
+  errorNoSession: "No session data received",
+  errorNoSessionMessage: "Please try logging in again or contact support if the issue persists.",
+  successLogout: "Logged out successfully",
+  successLogoutMessage: "You have successfully logged out. See you later!",
 };

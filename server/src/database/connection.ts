@@ -1,10 +1,11 @@
 import { env } from "../env.js";
 import { MongoClient } from "mongodb";
+import { CollectionName } from "../types/index.js";
 
 const uri = env.MONGO_URI;
 
-export const defaultDatabase = "MediTimeDB";
-export const defaultCollection = "MediTimeDB";
+export const defaultDatabase = "MediTime";
+export const defaultCollection: CollectionName = "users";
 /**
  * MongoDB client instance used to interact with the database.
  *

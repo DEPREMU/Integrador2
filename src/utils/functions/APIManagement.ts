@@ -1,5 +1,6 @@
-import { RequestBody } from "server/src/TypesAPI";
 import { API_URL } from "../constants/API_URL";
+import { RequestBody, RoutesAPI } from "@typesAPI";
+import { stringifyData } from "./appManagement";
 
 /**
  * Generates an options object for a fetch request.
@@ -9,14 +10,18 @@ import { API_URL } from "../constants/API_URL";
  *               If provided, it will be stringified and included in the request.
  * @returns An object containing the HTTP method, headers, and optionally the stringified body.
  */
-export const fetchOptions = (method: "POST" | "GET", body?: RequestBody) => ({
+export const fetchOptions = <T = RequestBody>(
+  method: "POST" | "GET",
+  body?: T
+) => ({
   method,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  body: body ? JSON.stringify(body) : undefined,
+  body: stringifyData(body) ?? undefined,
 });
+
 
 /**
  * Constructs a full API route URL by appending the given route to the base API URL.
@@ -36,7 +41,7 @@ export const fetchOptions = (method: "POST" | "GET", body?: RequestBody) => ({
  * log(userRoute); // Outputs: "https://example.com/api/v1/users"
  * ```
  */
-export const getRouteAPI = (route: string): string => `${API_URL}/${route}`;
+export const getRouteAPI = (route: RoutesAPI): string => `${API_URL}${route}`;
 
 /**
  * Constructs a full image route URL by appending the given filename to the base API URL.

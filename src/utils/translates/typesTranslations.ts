@@ -54,4 +54,9 @@ export type typeLanguages = {
   errorEmpty: string;
   errorEmail: string;
   errorPassword: string;
+  hasAccount: string;
+  errorNoSession: string;
+  errorNoSessionMessage: string;
+  successLogout: string;
+  successLogoutMessage: string;
 };

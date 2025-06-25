@@ -8,6 +8,8 @@ import { languagesNames, LanguagesSupported } from "@utils";
 import { RootStackParamList } from "@/navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
+import { useUserContext } from "@/context/UserContext";
+import { useModal } from "@/context/ModalContext";
 
 interface MenuProps {
   /**
@@ -48,6 +50,8 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
 
   const styles = stylesMenuComponent();
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const { isLoggedIn, logout } = useUserContext();
+  const { openModal, closeModal } = useModal();
 
   const { language, setLanguage, translations } = useLanguage();
   const [showLanguageSelector, setShowLanguageSelector] =
@@ -69,20 +73,47 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
     setShowLanguageSelector(false);
   };
 
+  const handlePressLogout = async () => {
+    await logout((message) => {
+      log(message);
+      openModal(
+        translations.successLogout,
+        translations.successLogoutMessage,
+        <ButtonComponent
+          label={translations.close}
+          handlePress={closeModal}
+        />
+      );
+    });
+  };
+
   return (
     <>
       <View style={styles.menu}>
         {!showLanguageSelector && (
           <>
-            <ButtonComponent
-              handlePress={() => handlePress("Login")}
-              label={translations.login}
-              touchableOpacity
-              replaceStyles={{
-                button: styles.button,
-                textButton: styles.textButton,
-              }}
-            />
+            {!isLoggedIn && (
+              <ButtonComponent
+                handlePress={() => handlePress("Login")}
+                label={translations.login}
+                touchableOpacity
+                replaceStyles={{
+                  button: styles.button,
+                  textButton: styles.textButton,
+                }}
+              />
+            )}
+            {isLoggedIn && (
+              <ButtonComponent
+                handlePress={handlePressLogout}
+                label={translations.logOut}
+                touchableOpacity
+                replaceStyles={{
+                  button: styles.button,
+                  textButton: styles.textButton,
+                }}
+              />
+            )}
             <ButtonComponent
               handlePress={() => handlePress("Language")}
               label={translations.languages}

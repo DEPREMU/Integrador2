@@ -30,7 +30,7 @@ export async function logError(...args: any[]): Promise<void> {
       .join(" ");
 
     await fetch(
-      getRouteAPI("logs"),
+      getRouteAPI("/logs"),
       fetchOptions("POST", {
         log: errorMessage,
         timestamp: date.toISOString(),
@@ -68,7 +68,7 @@ export async function log(...args: any[]): Promise<void> {
       .join(" ");
 
     await fetch(
-      getRouteAPI("logs"),
+      getRouteAPI("/logs"),
       fetchOptions("POST", {
         log: message,
         timestamp: date.toISOString(),

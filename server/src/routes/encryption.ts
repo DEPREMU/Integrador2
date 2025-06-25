@@ -4,7 +4,7 @@ import {
   RequestEncrypt,
   ResponseDecrypt,
   ResponseEncrypt,
-} from "../TypesAPI";
+} from "../types/TypesAPI";
 import crypto from "crypto";
 
 /**

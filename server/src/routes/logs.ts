@@ -1,4 +1,4 @@
-import { RequestLogs } from "../TypesAPI";
+import { RequestLogs } from "../types/TypesAPI";
 import { getCollection } from "../database/functions.js";
 import { Request, Response } from "express";
 

@@ -48,4 +48,9 @@ export const es = {
   errorEmail: "Ingrese un email válido",
   errorPassword:
     "La contraseña debe tener al menos 8 caracteres y contener letras y números",
+  hasAccount: "¿Ya tienes una cuenta? Inicia sesión",
+  errorNoSession: "No se recibieron datos de sesión",
+  errorNoSessionMessage: "Por favor, intenta iniciar sesión nuevamente o contacta al soporte si el problema persiste.",
+  successLogout: "Sesión cerrada exitosamente",
+  successLogoutMessage: "Has cerrado sesión correctamente. ¡Hasta luego!",
 };

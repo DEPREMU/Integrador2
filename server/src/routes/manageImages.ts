@@ -3,6 +3,8 @@ import path from "path";
 import { Request, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
 import { __dirname, __filename } from "../config.js";
+import { getCollection, getDatabase } from "../database/functions.js";
+import { ImagePath } from "../types/Database.js";
 
 const IMAGES_DIR = path.join(__dirname, "..", "..", "images");
 
@@ -81,6 +83,7 @@ export const upload = multer({
  */
 export const handleReceiveImages = async (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];
+  const body = req.body as { userId: string };
 
   if (!files || files.length === 0) {
     res.status(400).json({ message: "No images uploaded." });
@@ -89,7 +92,19 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
   const fileInfos = files.map((file) => ({
     filename: file.filename,
     path: `/images/${file.filename}`,
+    userId: body.userId,
   }));
+  const db = await getDatabase();
+  await Promise.all([
+    db.collection<ImagePath>("imagePaths").insertMany(fileInfos),
+    db
+      .collection("users")
+      .updateOne(
+        { userId: body.userId },
+        { $set: { imageId: fileInfos[0].filename } }
+      ),
+  ]);
+
   res
     .status(201)
     .json({ message: "Images uploaded successfully.", files: fileInfos });
