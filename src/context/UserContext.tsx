@@ -41,6 +41,7 @@ type UserContextType = {
   logout: (callback?: (message: string) => void) => Promise<void>;
   setUserSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
   refreshToken: (refreshToken: string) => Promise<void>;
+  setUserData: React.Dispatch<React.SetStateAction<User | null>>;
 };
 
 interface UserProviderProps {
@@ -316,18 +317,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     callback?.("User logged out successfully");
   };
 
-  const contextValue = {
-    signUp,
-    loading,
-    isLoggedIn,
-    userSession,
-    setUserSession,
-    refreshToken,
-    userData,
-    logout,
-    login,
-  };
-
   useEffect(() => {
     log("UserContext initialized", {
       userSession,
@@ -379,6 +368,19 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     };
     if (userSession?.user?.id === userData?.userId) updateUserData();
   }, [userSession, userData]);
+
+  const contextValue = {
+    signUp,
+    loading,
+    isLoggedIn,
+    userSession,
+    setUserData,
+    setUserSession,
+    refreshToken,
+    userData,
+    logout,
+    login,
+  };
 
   return (
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
