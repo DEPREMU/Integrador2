@@ -10,10 +10,12 @@ export type CollectionName =
 
 // types.ts
 
+export type RoleType = "caregiver" | "patient" | "both";
+
 export interface User {
   _id?: ObjectId;
   userId: string;
-  role: "caregiver" | "patient";
+  role: RoleType;
   name: string;
   patientUserIds?: ObjectId[];
   imageId: string;
