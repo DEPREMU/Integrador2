@@ -12,7 +12,7 @@ export type CollectionName =
 
 export type RoleType = "caregiver" | "patient" | "both";
 
-export interface User {
+export type User = {
   _id?: ObjectId;
   userId: string;
   role: RoleType;
@@ -24,7 +24,7 @@ export interface User {
   caregiverId?: ObjectId;
   medicationIds?: ObjectId[];
   description: string;
-}
+};
 
 export interface MedicationApi {
   _id?: ObjectId;

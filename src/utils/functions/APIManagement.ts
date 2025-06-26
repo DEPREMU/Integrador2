@@ -37,7 +37,7 @@ export const fetchOptions = <T = RequestBody>(
  *
  * @example
  * ```typescript
- * const userRoute = getRouteAPI("users");
+ * const userRoute = getRouteAPI("/users");
  * log(userRoute); // Outputs: "https://example.com/api/v1/users"
  * ```
  */

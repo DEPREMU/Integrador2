@@ -2,6 +2,7 @@ import { logError } from "./debug";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
 import * as Notifications from "expo-notifications";
+import { ResponseUploadImage } from "@typesAPI";
 
 /**
  * Requests permission to access the media library.
@@ -72,12 +73,22 @@ export const uploadImage = async (
       method: "POST",
       body: formData,
     };
-    const res = await fetch(getRouteAPI("/upload"), fetchOptions);
+    const data: ResponseUploadImage = await fetch(
+      getRouteAPI("/upload"),
+      fetchOptions
+    ).then((r) => r.json());
 
-    const data = await res.json();
-    return data.files;
+    return { files: data.files, success: data.success };
   } catch (error) {
-    logError("Error al subir imagen:", error);
+    logError("Error uploading image:", error);
+    return {
+      files: [],
+      success: false,
+      error: {
+        message: "Error uploading image",
+        timestamp: new Date().toISOString(),
+      },
+    };
   }
 };
 

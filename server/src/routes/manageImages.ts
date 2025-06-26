@@ -86,6 +86,7 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
   const body = req.body as { userId: string };
 
   if (!files || files.length === 0) {
+    console.error("No images uploaded:", files, "\nBody:", body);
     res.status(400).json({ message: "No images uploaded." });
     return;
   }
@@ -101,11 +102,14 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
       .collection("users")
       .updateOne(
         { userId: body.userId },
-        { $set: { imageId: fileInfos[0].filename } }
+        { $set: { imageId: fileInfos[0].path } }
       ),
   ]);
 
-  res
-    .status(201)
-    .json({ message: "Images uploaded successfully.", files: fileInfos });
+  console.log("Images uploaded successfully:", fileInfos);
+  res.status(201).json({
+    success: true,
+    message: "Images uploaded successfully.",
+    files: fileInfos,
+  });
 };

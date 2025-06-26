@@ -2,11 +2,11 @@ import {
   User,
   UserConfig,
   TypeBodyLogin,
-  ResponseLogin,
+  ResponseAuth,
   TypeBodySignup,
 } from "../types/index.js";
 import { Request, Response } from "express";
-import { getDatabase, getObjectId } from "../database/functions.js";
+import { getDatabase } from "../database/functions.js";
 
 /**
  * Handles the login request by validating the request body and returning a response.
@@ -27,11 +27,12 @@ import { getDatabase, getObjectId } from "../database/functions.js";
  */
 export const loginHandler = async (
   req: Request<{}, {}, TypeBodyLogin>,
-  res: Response<ResponseLogin>
+  res: Response<ResponseAuth>
 ) => {
   const body: TypeBodyLogin | null = req.body;
 
   if (!body) {
+    console.error("No body given:", body);
     res.json({
       data: null,
       error: { message: "Missing body", timestamp: new Date().toISOString() },
@@ -39,6 +40,7 @@ export const loginHandler = async (
     return;
   }
   if (!body.uuid) {
+    console.error("No uuid given:", body);
     res.json({
       data: null,
       error: {
@@ -73,7 +75,15 @@ export const loginHandler = async (
       userId: user.userId,
     }),
   ]);
-  if (!existingUser) {
+  if (!existingUser && !existingUserConfig) {
+    console.error(
+      "No user found for userId:",
+      body.uuid,
+      "\nexistingUser:",
+      existingUser,
+      "\nexistingUserConfig",
+      existingUserConfig
+    );
     res.json({
       data: null,
       error: {
@@ -83,11 +93,12 @@ export const loginHandler = async (
     });
     return;
   }
+
   res.json({
     data: {
       message: "User exists",
-      user: (existingUser as User) || user,
-      userConfig: (existingUserConfig as UserConfig) || userConfig,
+      user: existingUser || user,
+      userConfig: existingUserConfig || userConfig,
     },
     error: null,
   });
@@ -107,19 +118,21 @@ export const loginHandler = async (
  */
 export const signUpHandler = async (
   req: Request<{}, {}, TypeBodySignup>,
-  res: Response<ResponseLogin>
+  res: Response<ResponseAuth>
 ) => {
   try {
     const body: TypeBodySignup | null = req.body;
 
     if (!body) {
+      console.error("No body given:", body);
       res.json({
         data: null,
         error: { message: "Missing body", timestamp: new Date().toISOString() },
       });
       return;
     }
-    if (!body.userId) {
+    if (!body?.userId) {
+      console.error("No userId given:", body);
       res.json({
         data: null,
         error: {
@@ -131,16 +144,6 @@ export const signUpHandler = async (
     }
 
     const { userId } = body;
-    if (!userId) {
-      res.json({
-        data: null,
-        error: {
-          message: "Missing user ID in body",
-          timestamp: new Date().toISOString(),
-        },
-      });
-      return;
-    }
 
     const user: User = {
       userId,
@@ -162,6 +165,7 @@ export const signUpHandler = async (
       .findOne<User>({ userId: user.userId });
 
     if (existingUser) {
+      console.error("User already exists:", body);
       res.json({
         data: null,
         error: {
@@ -171,10 +175,31 @@ export const signUpHandler = async (
       });
       return;
     }
-    await Promise.all([
-      db.collection("users").insertOne(user),
-      db.collection("userConfig").insertOne(userConfig),
+    const inserted = await Promise.all([
+      db
+        .collection<User>("users")
+        .insertOne(user)
+        .then((r) => r.insertedId),
+      db
+        .collection<UserConfig>("userConfig")
+        .insertOne(userConfig)
+        .then((r) => r.insertedId),
     ]);
+    if (inserted.some((s) => !s || s === null)) {
+      console.warn(
+        "One column or two were not uploaded successfully:",
+        inserted
+      );
+      res.json({
+        data: {
+          message: "One column or two were not uploaded successfully",
+          user,
+          userConfig,
+        },
+        error: null,
+      });
+      return;
+    }
     res.json({
       data: {
         message: "User created successfully",

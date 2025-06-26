@@ -41,7 +41,7 @@ export type DataLogin = {
   userConfig?: UserConfig;
 };
 
-export type ResponseLogin = {
+export type ResponseAuth = {
   data: DataLogin | null;
   error: { message: string; timestamp: string } | null;
 };
@@ -70,4 +70,10 @@ export type ResponseUpdateUserData = {
   success: boolean;
   error?: { message: string; timestamp: string };
   user?: User;
+}
+
+export type ResponseUploadImage = {
+  files: string[];
+  success: boolean;
+  error?: { message: string; timestamp: string };
 }
