@@ -5,19 +5,20 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { Switch } from "react-native-paper";
+import { ActivityIndicator, Switch } from "react-native-paper";
 import { useModal } from "@context/ModalContext";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
 import { useUserContext } from "@context/UserContext";
+import { TextInput, Text } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { isValidEmail, isValidPassword } from "@utils";
 import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Image, Keyboard, Platform, TextInput } from "react-native";
+import { View, Image, Keyboard, Platform } from "react-native";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,6 +40,7 @@ const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState<string>("");
+  const [loggingIn, setLoggingIn] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [validations, setValidations] = useState<
@@ -57,9 +59,12 @@ const LoginScreen: React.FC = () => {
   });
 
   const handlePressLogin = useCallback(() => {
+    setLoggingIn(true);
+    if (loggingIn) return;
     login(email, password, rememberMe, (session, err) => {
       if (err) {
         setError(err.message);
+        setLoggingIn(false);
         return log(err.message, email, password);
       }
       if (!session) {
@@ -71,9 +76,11 @@ const LoginScreen: React.FC = () => {
             handlePress={closeModal}
           />
         );
+        setLoggingIn(false);
         return log(translations.errorNoSession, email, password);
       }
 
+      setLoggingIn(false);
       openModal(
         //Label
         translations.successSignUp,
@@ -83,7 +90,16 @@ const LoginScreen: React.FC = () => {
         <ButtonComponent label={translations.close} handlePress={closeModal} />
       );
     });
-  }, [email, password, rememberMe, translations, openModal, closeModal, login]);
+  }, [
+    email,
+    password,
+    rememberMe,
+    translations,
+    openModal,
+    closeModal,
+    login,
+    loggingIn,
+  ]);
 
   const triggerShake = (which: "password" | "email") => {
     const valueToMove = 5;
@@ -156,8 +172,10 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.emailPlaceholder}
+            label={translations.emailPlaceholder}
             placeholderTextColor="#999"
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -181,7 +199,9 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.passwordPlaceholder}
+            label={translations.passwordPlaceholder}
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             placeholderTextColor="#999"
             secureTextEntry={!showPassword}
             value={password}
@@ -212,8 +232,18 @@ const LoginScreen: React.FC = () => {
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <ButtonComponent
-          label={translations.loginButton}
+          label={!loggingIn ? translations.loginButton : ""}
           touchableOpacity
+          disabled={loggingIn}
+          children={
+            loggingIn ? (
+              <ActivityIndicator
+                size="small"
+                color="#fff"
+                style={styles.loadingIndicator}
+              />
+            ) : null
+          }
           handlePress={handlePressLogin}
           customStyles={{
             button: styles.loginButton,

@@ -17,19 +17,26 @@ export type User = {
   userId: string;
   role: RoleType;
   name: string;
-  patientUserIds?: ObjectId[];
+  patientUserIds?: string[];
+  patientsUser?: User[];
   imageId: string;
   createdAt: string;
   phone: string;
-  caregiverId?: ObjectId;
+  caregiverId?: string;
   medicationIds?: ObjectId[];
+  medications?: MedicationUser[];
   description: string;
+  age?: number;
+  conditions?: string[];
+  allergies?: string[];
 };
 
-export interface MedicationApi {
+export type MedicationApi = {
   _id?: ObjectId;
   namesTranslations: Record<string, string>;
   name: string;
+  name_es: string;
+  name_fr: string;
   manufacturer: string;
   active_ingredient: string;
   purpose: string;
@@ -45,31 +52,35 @@ export interface MedicationApi {
   storage: string;
   inactive_ingredients: string;
   questions: string;
-}
+};
 
-export interface MedicationUser {
+export type UrgencyType = "low" | "medium" | "high";
+
+export type MedicationUser = {
   userId: string;
   _id?: ObjectId;
   grams: number;
   dosage: string;
+  medicationId: ObjectId | string;
   intervalHours: number;
-  days: number;
+  days: string[];
   startHour: string;
   stock: number;
-  urgency: "low" | "medium" | "high";
-}
+  urgency: UrgencyType;
+  name: string;
+};
 
-export interface ImagePath {
+export type ImagePath = {
   _id?: ObjectId;
   userId: string;
   path: string;
-}
+};
 
-export interface UserConfig {
+export type UserConfig = {
   _id?: ObjectId;
   userId: string;
   language: string;
   pushNotifications: boolean;
-}
+};
 
 export { ObjectId };

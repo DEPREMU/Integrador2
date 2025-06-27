@@ -9,7 +9,7 @@ export const logsHandler = async (
   const { log, timestamp } = req.body;
 
   const collection = await getCollection("logs");
-  await collection.insertOne({
+  await collection?.insertOne({
     log,
     timestamp,
   });

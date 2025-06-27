@@ -131,6 +131,10 @@ const stylesLoginScreen = () => {
       fontSize: 14,
       fontWeight: "500",
     },
+    loadingIndicator: {
+      width: 20,
+      height: 20,
+    },
   });
 
   return { styles, height, width };

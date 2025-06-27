@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Db, ObjectId } from "mongodb";
+import { Collection, Db, Document, ObjectId } from "mongodb";
 import { CollectionName, MedicationApi } from "../types/index.js";
 import { defaultDatabase, defaultCollection, client } from "./connection.js";
 
@@ -28,22 +28,16 @@ export const getDatabase = async (database: string = defaultDatabase) => {
  * @returns A promise that resolves to the requested MongoDB collection.
  * @throws Will throw an error if there is an issue retrieving or creating the collection.
  */
-export const getCollection = async (
+export const getCollection = async <T extends Document = Document>(
   collection: CollectionName = defaultCollection,
   database: string | Db = defaultDatabase
-) => {
+): Promise<Collection<T> | null> => {
   try {
     let db = database as Db;
 
     if (typeof database === "string") db = await getDatabase(database);
 
-    const collections = await db
-      .listCollections({ name: collection })
-      .toArray();
-
-    if (collections.length === 0) await db.createCollection(collection);
-
-    return db.collection(collection);
+    return db.collection<T>(collection);
   } catch (error) {
     console.error("Error getting the collection", error);
     throw error;
@@ -66,7 +60,7 @@ export const findInCollection = async (
 ) => {
   try {
     const coll = await getCollection(collection, database);
-    const result = await coll.find(query).toArray();
+    const result = await coll?.find(query).toArray();
     return result;
   } catch (error) {
     console.error("Error finding in collection", error);
@@ -90,7 +84,7 @@ export const getUserData = async (
   const database = await getDatabase(db);
   const coll = await getCollection(collection, database);
 
-  const result = await coll.findOne({ uuid });
+  const result = await coll?.findOne({ uuid });
   return result;
 };
 
@@ -123,27 +117,18 @@ export const getObjectId = (id: string) => new ObjectId(id);
 const insertMedicationsFromJSON = async () => {
   const db = await getDatabase();
   const coll = await getCollection("medicationsApi", db);
-  const medicationsAdded = (await coll.find({}).toArray()) as MedicationApi[];
+  const medicationsAdded = (await coll?.find({}).toArray()) as MedicationApi[];
   const data = fs.readFileSync("./src/database/medicationsApi.json", "utf-8");
 
   const medications = (JSON.parse(data) as MedicationApi[]).filter(
     (med) => !medicationsAdded.some((added) => added.name === med.name)
-  );
-  fs.writeFileSync(
-    "./src/database/names.json",
-    JSON.stringify(
-      JSON.parse(data).map((m: MedicationApi) => m.name),
-      null,
-      2
-    ),
-    "utf-8"
   );
   if (medications.length === 0) {
     console.log("No new medications to insert");
     return;
   }
   coll
-    .insertMany(medications)
+    ?.insertMany(medications)
     .then((data) => {
       console.log("Medications inserted successfully", data.insertedCount);
     })
@@ -151,5 +136,3 @@ const insertMedicationsFromJSON = async () => {
       console.error("Error inserting medications:", error);
     });
 };
-
-insertMedicationsFromJSON();

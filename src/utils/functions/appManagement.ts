@@ -176,6 +176,15 @@ export const interpolateMessage = (message: string, values: string[]) => {
   });
 };
 
+/**
+ * Checks if the application has permission to send push notifications.
+ *
+ * This function first checks the current notification permission status.
+ * If permission is not granted, it requests permission from the user.
+ * Returns `true` if permission is granted, otherwise `false`.
+ *
+ * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
+ */
 export const hasPushNotifications = async (): Promise<boolean> => {
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== Notifications.PermissionStatus.GRANTED) {
@@ -183,4 +192,39 @@ export const hasPushNotifications = async (): Promise<boolean> => {
     return newStatus === Notifications.PermissionStatus.GRANTED;
   }
   return status === Notifications.PermissionStatus.GRANTED;
+};
+
+/**
+ * Capitalizes the first letter of a string.
+ *
+ * @param str - The string to capitalize.
+ * @returns The string with the first letter capitalized, or the original string if it is empty.
+ *
+ * @example
+ * ```typescript
+ * const result = capitalize("hello");
+ * console.log(result); // Output: "Hello"
+ * ```
+ */
+export const capitalize = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Checks if a value is falsy.
+ *
+ * A value is considered falsy if it is:
+ * - `null`
+ * - `undefined`
+ * - `false`
+ * - an empty string (`""`)
+ *
+ * @param value - The value to check.
+ * @returns `true` if the value is falsy, otherwise `false`.
+ */
+export const isFalsy = (value: any): boolean => {
+  return (
+    value === null || value === undefined || value === false || value === ""
+  );
 };

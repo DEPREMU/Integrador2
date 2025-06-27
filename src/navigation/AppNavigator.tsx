@@ -13,6 +13,7 @@ import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
+import MedicationScheduler from "@/screens/Schedule";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -46,12 +47,15 @@ const screens: Screens = {
   Patient: { component: PatientScreen },
   Dashboard: { component: DashboardScreen },
   HowToCode: { component: HowToCodeExample },
+  Schedule: {
+    component: MedicationScheduler,
+  },
 };
 
 const AppNavigator: React.FC = () => (
   <NavigationContainer>
     <BackgroundTaskProvider>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Schedule">
         {Object.entries(screens).map(([name, { component, options }]) => (
           <Stack.Screen
             key={name}

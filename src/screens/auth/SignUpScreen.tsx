@@ -8,15 +8,17 @@ import Animated, {
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
+import { useModal } from "@/context/ModalContext";
 import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
+import { useUserContext } from "@context/UserContext";
+import { Text, TextInput } from "react-native-paper";
+import { ActivityIndicator } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { isValidEmail, isValidPassword } from "@utils";
+import { View, Image, Keyboard, Platform } from "react-native";
 import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Image, Keyboard, Platform, TextInput } from "react-native";
-import { useUserContext } from "@/context/UserContext";
-import { useModal } from "@/context/ModalContext";
 
 type SignUpScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -37,6 +39,7 @@ const SignUpScreen: React.FC = () => {
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [signingUp, setSigningUp] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [validations, setValidations] = useState<
@@ -47,12 +50,16 @@ const SignUpScreen: React.FC = () => {
   });
 
   const handlePressSignUp = useCallback(() => {
+    setSigningUp(true);
+    if (signingUp) return;
     signUp(email, password, (err) => {
       if (err) {
         setError(err.message);
+        setSigningUp(false);
         return log(err.message, email, password);
       }
 
+      setSigningUp(false);
       openModal(
         //Label
         translations.successSignUp,
@@ -68,7 +75,7 @@ const SignUpScreen: React.FC = () => {
         />
       );
     });
-  }, [email, password, translations, openModal, closeModal, signUp]);
+  }, [email, password, translations, openModal, closeModal, signUp, signingUp]);
 
   const shakeInputs: ShakeInput[] = Array.from({ length: 2 }).map(() => {
     const shake = useSharedValue(0);
@@ -145,8 +152,9 @@ const SignUpScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.emailPlaceholder}
-            placeholderTextColor="#999"
+            label={translations.emailPlaceholder}
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -170,7 +178,9 @@ const SignUpScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.passwordPlaceholder}
+            label={translations.passwordPlaceholder}
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             placeholderTextColor="#999"
             secureTextEntry={!showPassword}
             value={password}
@@ -201,7 +211,17 @@ const SignUpScreen: React.FC = () => {
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <ButtonComponent
-          label={translations.signUp}
+          label={!signingUp ? translations.signUp : ""}
+          children={
+            signingUp ? (
+              <ActivityIndicator
+                size="small"
+                color="#fff"
+                style={{ marginRight: 10 }}
+              />
+            ) : null
+          }
+          disabled={signingUp}
           touchableOpacity
           handlePress={handlePressSignUp}
           customStyles={{

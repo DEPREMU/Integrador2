@@ -1,11 +1,16 @@
 import express from "express";
+import { RoutesAPI } from "../types/TypesAPI.js";
 import { logsHandler } from "./logs.js";
-import { loginHandler, signUpHandler } from "./auth.js";
 import { RequestHandler } from "express";
+import { updateUserDataHandler } from "./updateUserData.js";
+import { loginHandler, signUpHandler } from "./auth.js";
 import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
-import { RoutesAPI } from "../types/TypesAPI.js";
-import { updateUserDataHandler } from "./updateUserData.js";
+import {
+  getAllMedications,
+  getUserMedications,
+  getUserPatients,
+} from "./gets/index.js";
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -19,8 +24,6 @@ type RouteConfig = {
   middlewares?: RequestHandler[];
 };
 
-
-
 const routes: Record<RoutesAPI, RouteConfig> = {
   "/login": { handler: loginHandler },
   "/encrypt": { handler: encryptHandler },
@@ -32,6 +35,9 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   },
   "/signup": { handler: signUpHandler },
   "/updateUserData": { handler: updateUserDataHandler },
+  "/getUserPatients": { handler: getUserPatients },
+  "/getUserMedications": { handler: getUserMedications },
+  "/getAllMedications": { handler: getAllMedications },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

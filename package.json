@@ -11,9 +11,9 @@
     }
   },
   "scripts": {
-    "backend": "cd server & npm start",
+    "backend": "cd server && npm start",
     "clean": "npx rimraf node_modules package-lock.json server/node_modules server/package-lock.json .expo && npm cache clean --force",
-    "clean:all": "npm run clean & npm run install-all",
+    "clean:all": "npm run clean && npm run install-all",
     "app": "npx expo start -c -g",
     "app-dev": "npx expo start -c -d",
     "build:android": "eas build --clear-cache --platform android --profile preview",
@@ -32,11 +32,11 @@
     "@types/crypto-js": "^4.2.2",
     "axios": "^1.9.0",
     "crypto-js": "^4.2.0",
-    "expo": "53.0.11",
+    "expo": "53.0.12",
     "expo-background-fetch": "~13.1.5",
     "expo-build-properties": "~0.14.6",
     "expo-constants": "~17.1.6",
-    "expo-dev-client": "~5.2.0",
+    "expo-dev-client": "~5.2.1",
     "expo-image-picker": "~16.1.4",
     "expo-localization": "~16.1.5",
     "expo-notifications": "~0.31.3",
@@ -45,12 +45,13 @@
     "memoize-one": "^6.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-native": "0.79.3",
+    "react-native": "0.79.4",
     "react-native-paper": "^5.14.3",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "@react-native-community/datetimepicker": "8.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",

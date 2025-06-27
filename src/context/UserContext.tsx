@@ -136,9 +136,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setIsLoggedIn(true);
       setUserSession(session);
     };
+
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (!userSession || !userSession.user?.id) return;
+
     const getUserData = async () => {
       if (!userSession || !userSession.user?.id) {
         setUserData(null);
+        setIsLoggedIn(false);
         return;
       }
 
@@ -168,6 +176,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           };
         });
 
+      setUpdatedInfo(true);
       if (error || !data) {
         logError("Error fetching user data", error?.message);
         setUserData(null);
@@ -175,21 +184,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setUserData(data.user);
         setLoading(false);
       }
-      setUpdatedInfo(true);
     };
 
-    checkSession()
-      .then(async () => await getUserData())
-      .catch((error) => {
-        logError("Error checking session", error.message);
-        setLoading(false);
-      });
-  }, []);
+    getUserData();
+  }, [userSession]);
 
   useEffect(() => {
     if (!userSession || !userData || !isLoggedIn) return;
 
-    if (updatedInfo && userSession?.user?.id === userData?.userId)
+    if (!updatedInfo && userSession?.user?.id === userData?.userId)
       updateUserData(userData);
   }, [userSession, userData, updatedInfo]);
 
@@ -317,7 +320,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       setIsLoggedIn(true);
       setUserSession(session);
-
       setUserData(userData.data?.user || null);
       return callback?.(session);
     },
@@ -344,6 +346,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       newData?: { [key: string]: any },
       callback?: (success: boolean, error?: Error) => void
     ) => {
+      if (!userData || !newData)
+        return callback?.(false, new Error("No user data to update"));
       const res: ResponseUpdateUserData = await fetch(
         getRouteAPI("/updateUserData"),
         fetchOptions<TypeBodyUpdateUserData>("POST", {
@@ -379,7 +383,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       log("User data updated successfully");
       return callback?.(true);
     },
-    [userData]
+    [userData, userSession]
   );
 
   const contextValue = {
