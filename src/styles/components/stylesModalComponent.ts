@@ -8,7 +8,6 @@ export const useStylesModalComponent = () => {
     overlay: {
       flex: 1,
       width: "100%",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
       justifyContent: "center",
       alignItems: "center",
       position: "absolute",
