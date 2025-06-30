@@ -1,6 +1,8 @@
 import { logError } from "./debug";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
+import * as Notifications from "expo-notifications";
+import { ResponseUploadImage } from "@typesAPI";
 
 /**
  * Requests permission to access the media library.
@@ -53,7 +55,10 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
  * - It constructs a `FormData` object and sends it to the server using a POST request.
  * - If the upload is successful, it returns the uploaded image data.
  */
-export const uploadImage = async (pickMultipleImages: boolean = false) => {
+export const uploadImage = async (
+  userId: string,
+  pickMultipleImages: boolean = false
+) => {
   const grant = await requestImagePermission();
   if (!grant) return;
 
@@ -61,18 +66,29 @@ export const uploadImage = async (pickMultipleImages: boolean = false) => {
   if (pickerResult.canceled) return;
 
   const formData = getFormData(pickerResult.assets);
+  formData.append("userId", userId);
 
   try {
     const fetchOptions = {
       method: "POST",
       body: formData,
     };
-    const res = await fetch(getRouteAPI("upload"), fetchOptions);
+    const data: ResponseUploadImage = await fetch(
+      getRouteAPI("/upload"),
+      fetchOptions
+    ).then((r) => r.json());
 
-    const data = await res.json();
-    return data.files;
+    return { files: data.files, success: data.success };
   } catch (error) {
-    logError("Error al subir imagen:", error);
+    logError("Error uploading image:", error);
+    return {
+      files: [],
+      success: false,
+      error: {
+        message: "Error uploading image",
+        timestamp: new Date().toISOString(),
+      },
+    };
   }
 };
 
@@ -158,4 +174,57 @@ export const interpolateMessage = (message: string, values: string[]) => {
     const value = values[parseInt(index, 10)];
     return value !== undefined ? value : match;
   });
+};
+
+/**
+ * Checks if the application has permission to send push notifications.
+ *
+ * This function first checks the current notification permission status.
+ * If permission is not granted, it requests permission from the user.
+ * Returns `true` if permission is granted, otherwise `false`.
+ *
+ * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
+ */
+export const hasPushNotifications = async (): Promise<boolean> => {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== Notifications.PermissionStatus.GRANTED) {
+    const { status: newStatus } = await Notifications.requestPermissionsAsync();
+    return newStatus === Notifications.PermissionStatus.GRANTED;
+  }
+  return status === Notifications.PermissionStatus.GRANTED;
+};
+
+/**
+ * Capitalizes the first letter of a string.
+ *
+ * @param str - The string to capitalize.
+ * @returns The string with the first letter capitalized, or the original string if it is empty.
+ *
+ * @example
+ * ```typescript
+ * const result = capitalize("hello");
+ * console.log(result); // Output: "Hello"
+ * ```
+ */
+export const capitalize = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Checks if a value is falsy.
+ *
+ * A value is considered falsy if it is:
+ * - `null`
+ * - `undefined`
+ * - `false`
+ * - an empty string (`""`)
+ *
+ * @param value - The value to check.
+ * @returns `true` if the value is falsy, otherwise `false`.
+ */
+export const isFalsy = (value: any): boolean => {
+  return (
+    value === null || value === undefined || value === false || value === ""
+  );
 };

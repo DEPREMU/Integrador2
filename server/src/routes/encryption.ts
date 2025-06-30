@@ -4,7 +4,7 @@ import {
   RequestEncrypt,
   ResponseDecrypt,
   ResponseEncrypt,
-} from "../TypesAPI";
+} from "../types/TypesAPI";
 import crypto from "crypto";
 
 /**
@@ -133,7 +133,6 @@ export const decryptHandler = async (
 
   try {
     const decryptedData = decrypt(dataToDecrypt);
-    console.log("Decrypted data:", decryptedData);
     res.status(200).json({ dataDecrypted: decryptedData });
   } catch (error) {
     console.error("Decryption error:", error);

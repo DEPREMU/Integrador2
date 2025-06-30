@@ -17,6 +17,7 @@
       "@hooks/*": ["src/hooks/*"],
       "@assets/*": ["./assets/*"],
       "@styles/*": ["src/styles/*"],
+      "@typesAPI": ["server/src/types/"],
       "@screens/*": ["src/screens/*"],
       "@context/*": ["src/context/*"],
       "@constants/*": ["src/constants/*"],

@@ -5,12 +5,26 @@ import {
   loadDataSecure,
   saveDataSecure,
   removeDataSecure,
+  getRouteAPI,
+  fetchOptions,
+  checkLanguage,
+  hasPushNotifications,
+  log,
 } from "@utils";
-import { UserSession, UserData } from "@types";
-import React, { createContext, useState, useEffect } from "react";
+import { UserSession } from "@types";
+import React, { createContext, useState, useEffect, useCallback } from "react";
+import {
+  User,
+  ResponseAuth,
+  TypeBodyLogin,
+  TypeBodySignup,
+  TypeBodyUpdateUserData,
+  ResponseUpdateUserData,
+} from "@typesAPI";
 
 type UserContextType = {
   userSession: UserSession | null;
+  userData: User | null;
   isLoggedIn: boolean;
   loading: boolean;
   login: <T = void>(
@@ -24,10 +38,13 @@ type UserContextType = {
     password: string,
     callback?: (err?: Error) => T
   ) => Promise<T>;
-  logout: () => Promise<void>;
+  logout: (callback?: (message: string) => void) => Promise<void>;
   setUserSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
   refreshToken: (refreshToken: string) => Promise<void>;
-  userData: UserData | null;
+  updateUserData: (
+    userData: User,
+    callback?: (success: boolean, error?: Error) => void
+  ) => Promise<void | undefined>;
 };
 
 interface UserProviderProps {
@@ -104,94 +121,277 @@ const clearSession = async (): Promise<void> => {
 };
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [updatedInfo, setUpdatedInfo] = useState<boolean>(false);
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession();
 
-      setLoading(() => {
-        if (!session || !session?.access_token || !session?.user?.id)
-          return false;
+      if (!session || !session?.access_token || !session?.user?.id) return;
 
-        setIsLoggedIn(true);
-        setUserSession(session);
-        return false;
-      });
+      setIsLoggedIn(true);
+      setUserSession(session);
     };
 
     checkSession();
   }, []);
 
-  const refreshToken = async (refresh_token: string) => {
-    const { data, error } = await supabase.auth.refreshSession({
-      refresh_token,
-    });
-    const session = data?.session as unknown as UserSession;
+  useEffect(() => {
+    if (!userSession || !userSession.user?.id) return;
 
-    if (error || !session) {
-      logError("Error while updating the access_token", error?.message);
-      await clearSession();
-      return;
-    }
-    await saveSession(session, false, true);
-  };
+    const getUserData = async () => {
+      if (!userSession || !userSession.user?.id) {
+        setUserData(null);
+        setIsLoggedIn(false);
+        return;
+      }
 
-  const signUp = async <T = void,>(
-    email: string,
-    password: string,
-    callback: (err?: Error) => T = (_) => null as T
-  ) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
 
-    if (error) return callback?.(new Error(error.message));
-    return callback?.();
-  };
+      const { data, error }: ResponseAuth = await fetch(
+        getRouteAPI("/login"),
+        fetchOptions<TypeBodyLogin>("POST", {
+          uuid: userSession.user.id,
+          language,
+          pushNotifications,
+        })
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error fetching user data", error.message);
+          setLoading(false);
+          return {
+            data: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        });
 
-  const login = async <T = void,>(
-    email: string,
-    password: string,
-    rememberMe: boolean = false,
-    callback: (session: UserSession | null, err?: Error) => T = (_, __) =>
-      null as T
-  ) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      setUpdatedInfo(true);
+      if (error || !data) {
+        logError("Error fetching user data", error?.message);
+        setUserData(null);
+      } else {
+        setUserData(data.user);
+        setLoading(false);
+      }
+    };
 
-    if (error) return callback?.(null, new Error(error.message));
+    getUserData();
+  }, [userSession]);
 
-    const session = data?.session as unknown as UserSession;
-    if (!session)
-      return callback?.(null, new Error("No session data received"));
+  useEffect(() => {
+    if (!userSession || !userData || !isLoggedIn) return;
 
-    await saveSession(session, rememberMe);
-    setIsLoggedIn(true);
-    setUserSession(session);
-    return callback?.(session);
-  };
+    if (!updatedInfo && userSession?.user?.id === userData?.userId)
+      updateUserData(userData);
+  }, [userSession, userData, updatedInfo]);
 
-  const logout = async () => {
-    if (!userSession || !isLoggedIn) return;
+  const refreshToken = useCallback(
+    async (refresh_token: string) => {
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token,
+      });
+      const session = data?.session as unknown as UserSession;
 
-    await supabase.auth.signOut();
-    await clearSession();
-    setIsLoggedIn(false);
-    setUserSession(null);
-  };
+      if (error || !session) {
+        logError("Error while updating the access_token", error?.message);
+        await clearSession();
+        return;
+      }
+      await saveSession(session, false, true);
+    },
+    [saveSession]
+  );
+
+  const signUp = useCallback(
+    async <T = void,>(
+      email: string,
+      password: string,
+      callback: (err?: Error) => T = (_) => null as T
+    ) => {
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) return callback?.(new Error(error.message));
+
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
+
+      const userData = (await fetch(
+        getRouteAPI("/signup"),
+        fetchOptions<TypeBodySignup>("POST", {
+          userId: data.session?.user?.id || "",
+          role: "caregiver",
+          userConfig: {
+            userId: data.session?.user?.id || "",
+            language,
+            pushNotifications,
+          },
+          createdAt: new Date().toISOString(),
+          imageId: "",
+          description: "",
+          name: "",
+          phone: "",
+        })
+      )
+        .then((res) => {
+          log("User signed up successfully", res);
+          return res.json();
+        })
+        .catch((err) => {
+          logError("Error during sign up", err.message);
+          return {
+            data: null,
+            error: {
+              message: err.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        })) as ResponseAuth;
+
+      if (userData.error) {
+        logError("Error during sign up", userData.error.message);
+        return callback?.(new Error(userData.error.message));
+      }
+      setUserData(userData.data?.user || null);
+
+      return callback?.();
+    },
+    []
+  );
+
+  const login = useCallback(
+    async <T = void,>(
+      email: string,
+      password: string,
+      rememberMe: boolean = false,
+      callback: (session: UserSession | null, err?: Error) => T = (_, __) =>
+        null as T
+    ) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) return callback?.(null, new Error(error.message));
+
+      const session = data?.session as unknown as UserSession;
+      if (!session)
+        return callback?.(null, new Error("No session data received"));
+
+      await saveSession(session, rememberMe);
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
+      const userData = (await fetch(
+        getRouteAPI("/login"),
+        fetchOptions<TypeBodyLogin>("POST", {
+          uuid: session?.user?.id,
+          language,
+          pushNotifications,
+        })
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error fetching user data on login", error.message);
+          return {
+            data: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        })) as ResponseAuth;
+
+      setIsLoggedIn(true);
+      setUserSession(session);
+      setUserData(userData.data?.user || null);
+      return callback?.(session);
+    },
+    []
+  );
+
+  const logout = useCallback(
+    async (callback?: (message: string) => void) => {
+      if (!userSession || !isLoggedIn)
+        return callback?.("No user session to log out");
+
+      await Promise.all([supabase.auth.signOut(), clearSession()]);
+      setUserData(null);
+      setIsLoggedIn(false);
+      setUserSession(null);
+      log("User logged out successfully");
+      callback?.("User logged out successfully");
+    },
+    [isLoggedIn, userSession]
+  );
+
+  const updateUserData = useCallback(
+    async (
+      newData?: { [key: string]: any },
+      callback?: (success: boolean, error?: Error) => void
+    ) => {
+      if (!userData || !newData)
+        return callback?.(false, new Error("No user data to update"));
+      const res: ResponseUpdateUserData = await fetch(
+        getRouteAPI("/updateUserData"),
+        fetchOptions<TypeBodyUpdateUserData>("POST", {
+          userId: userData?.userId || "",
+          userData: (newData as User) || {},
+        })
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error updating user data", error.message);
+          return {
+            success: false,
+            user: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        });
+
+      if (res.error || !res.success) {
+        logError(
+          "Error updating user data",
+          res.error?.message || "Unknown error"
+        );
+        return callback?.(
+          false,
+          new Error(res.error?.message || "Unknown error")
+        );
+      }
+      setUserData(res.user || null);
+      setUpdatedInfo(true);
+      log("User data updated successfully");
+      return callback?.(true);
+    },
+    [userData, userSession]
+  );
 
   const contextValue = {
     signUp,
     loading,
     isLoggedIn,
     userSession,
+    updateUserData,
     setUserSession,
     refreshToken,
     userData,

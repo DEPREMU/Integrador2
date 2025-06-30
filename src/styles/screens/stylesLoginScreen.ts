@@ -94,7 +94,6 @@ const stylesLoginScreen = () => {
       borderColor: "#ff0000",
     },
     linksContainer: {
-      marginTop: 20,
       width: "100%",
       alignItems: "center",
     },
@@ -120,6 +119,21 @@ const stylesLoginScreen = () => {
       paddingHorizontal: 0,
       width: "100%",
       height: 50,
+    },
+    rememberMeContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      width: "100%",
+      justifyContent: "space-around",
+    },
+    rememberMeText: {
+      color: "#2c3e50",
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    loadingIndicator: {
+      width: 20,
+      height: 20,
     },
   });
 

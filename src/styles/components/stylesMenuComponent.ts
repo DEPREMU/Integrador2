@@ -12,13 +12,13 @@ import { useResponsiveLayout } from "@context/LayoutContext";
  * <View style={styles.menu}>...</View>
  */
 export const stylesMenuComponent = () => {
-  const { isPhone, isWeb, width: screenWidth } = useResponsiveLayout();
+  const { isPhone } = useResponsiveLayout();
 
   return StyleSheet.create({
     overlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: "transparent", // Puedes poner "rgba(0,0,0,0.1)" si quieres sombra leve
-      zIndex: 999, // Asegura que esté sobre otros elementos
+      backgroundColor: "black",
+      zIndex: 999,
     },
     menu: {
       position: "absolute",
@@ -41,7 +41,7 @@ export const stylesMenuComponent = () => {
       paddingHorizontal: 15,
     },
     textButton: {
-      fontSize: isPhone? 13 : 16,
+      fontSize: isPhone ? 13 : 16,
       color: "#333",
     },
   });

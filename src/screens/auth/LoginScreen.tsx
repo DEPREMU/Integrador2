@@ -5,16 +5,20 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { ActivityIndicator, Switch } from "react-native-paper";
+import { useModal } from "@context/ModalContext";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
+import { useUserContext } from "@context/UserContext";
+import { TextInput, Text } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { isValidEmail, isValidPassword } from "@utils";
 import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, Keyboard, Platform, TextInput } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { View, Image, Keyboard, Platform } from "react-native";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -30,11 +34,15 @@ const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { styles } = stylesLoginScreen();
   const { translations } = useLanguage();
+  const { login, isLoggedIn } = useUserContext();
+  const { openModal, closeModal } = useModal();
 
   const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState<string>("");
+  const [loggingIn, setLoggingIn] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [validations, setValidations] = useState<
     Record<"isEmailValid" | "isPasswordValid", boolean>
   >({
@@ -50,6 +58,49 @@ const LoginScreen: React.FC = () => {
     return { shake, animatedStyle };
   });
 
+  const handlePressLogin = useCallback(() => {
+    setLoggingIn(true);
+    if (loggingIn) return;
+    login(email, password, rememberMe, (session, err) => {
+      if (err) {
+        setError(err.message);
+        setLoggingIn(false);
+        return log(err.message, email, password);
+      }
+      if (!session) {
+        openModal(
+          translations.errorNoSession,
+          translations.errorNoSessionMessage,
+          <ButtonComponent
+            label={translations.close}
+            handlePress={closeModal}
+          />
+        );
+        setLoggingIn(false);
+        return log(translations.errorNoSession, email, password);
+      }
+
+      setLoggingIn(false);
+      openModal(
+        //Label
+        translations.successSignUp,
+        // Body
+        `${translations.successSignUpMessage}\n${translations.verifyEmail}`,
+        // Buttons
+        <ButtonComponent label={translations.close} handlePress={closeModal} />
+      );
+    });
+  }, [
+    email,
+    password,
+    rememberMe,
+    translations,
+    openModal,
+    closeModal,
+    login,
+    loggingIn,
+  ]);
+
   const triggerShake = (which: "password" | "email") => {
     const valueToMove = 5;
     const duration = 50;
@@ -64,16 +115,9 @@ const LoginScreen: React.FC = () => {
       );
   };
 
-  const handleLogin = () => {
-    handlerBlurInputEmail();
-    handlerBlurInputPassword();
-    if (!email || !password) return setError(translations.errorEmpty);
-    if (!isValidEmail(email)) return setError(translations.errorEmail);
-    if (!isValidPassword(password)) return setError(translations.errorPassword);
-
-    setError(null);
-    navigation.replace("Home");
-  };
+  useEffect(() => {
+    if (isLoggedIn) navigation.replace("Home");
+  }, [isLoggedIn, navigation]);
 
   const handlerBlurInputEmail = () => {
     if (isValidEmail(email)) {
@@ -128,15 +172,18 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.emailPlaceholder}
+            label={translations.emailPlaceholder}
             placeholderTextColor="#999"
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
             onFocus={() => {
               if (Platform.OS !== "android") return;
-              Keyboard.emit("keyboardDidShow");
+              if (typeof Keyboard.emit === "function")
+                Keyboard?.emit("keyboardDidShow");
             }}
             onBlur={handlerBlurInputEmail}
           />
@@ -152,14 +199,17 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder={translations.passwordPlaceholder}
+            label={translations.passwordPlaceholder}
+            underlineColor="#00a69d"
+            activeUnderlineColor="#00a69d"
             placeholderTextColor="#999"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
             onFocus={() => {
               if (Platform.OS !== "android") return;
-              Keyboard.emit("keyboardDidShow");
+              if (typeof Keyboard.emit === "function")
+                Keyboard?.emit("keyboardDidShow");
             }}
             onBlur={handlerBlurInputPassword}
           />
@@ -182,9 +232,19 @@ const LoginScreen: React.FC = () => {
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <ButtonComponent
-          label={translations.loginButton}
+          label={!loggingIn ? translations.loginButton : ""}
           touchableOpacity
-          handlePress={handleLogin}
+          disabled={loggingIn}
+          children={
+            loggingIn ? (
+              <ActivityIndicator
+                size="small"
+                color="#fff"
+                style={styles.loadingIndicator}
+              />
+            ) : null
+          }
+          handlePress={handlePressLogin}
           customStyles={{
             button: styles.loginButton,
             textButton: styles.buttonText,
@@ -192,6 +252,14 @@ const LoginScreen: React.FC = () => {
         />
 
         <View style={styles.linksContainer}>
+          <View style={styles.rememberMeContainer}>
+            <Text style={styles.rememberMeText}>{translations.rememberMe}</Text>
+            <Switch
+              color="#7cced4"
+              value={rememberMe}
+              onValueChange={setRememberMe}
+            />
+          </View>
           <ButtonComponent
             label={translations.forgotPassword}
             touchableOpacity

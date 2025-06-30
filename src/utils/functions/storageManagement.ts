@@ -3,7 +3,7 @@ import {
   RequestDecrypt,
   ResponseEncrypt,
   ResponseDecrypt,
-} from "../../../server/src/TypesAPI";
+} from "@typesAPI";
 import { logError } from "./debug";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,7 +39,7 @@ export const saveDataSecure = async <T = undefined>(
     }
 
     const response = await fetch(
-      getRouteAPI("encrypt"),
+      getRouteAPI("/encrypt"),
       fetchOptions("POST", {
         dataToEncrypt: stringifiedValue,
       } satisfies RequestEncrypt)
@@ -90,7 +90,7 @@ export const loadDataSecure = async <T = string | object | null>(
 
   try {
     const result = await fetch(
-      getRouteAPI("decrypt"),
+      getRouteAPI("/decrypt"),
       fetchOptions("POST", {
         dataToDecrypt: storedValue,
       })

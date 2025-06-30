@@ -1,4 +1,4 @@
-import { RequestLogs } from "../TypesAPI";
+import { RequestLogs } from "../types/TypesAPI";
 import { getCollection } from "../database/functions.js";
 import { Request, Response } from "express";
 
@@ -9,7 +9,7 @@ export const logsHandler = async (
   const { log, timestamp } = req.body;
 
   const collection = await getCollection("logs");
-  await collection.insertOne({
+  await collection?.insertOne({
     log,
     timestamp,
   });

@@ -15,8 +15,6 @@ type typeBurger = {
 /**
  * Custom hook to manage the state and animation of a burger (hamburger) menu button.
  *
- * @param open - Callback function to execute when the menu is opened.
- * @param close - Callback function to execute when the menu is closed.
  * @returns An object containing:
  *   - `toggleMenu`: Function to toggle the menu open/closed state.
  *   - `burgerComponent`: JSX element representing the animated burger button and overlay.
@@ -25,7 +23,7 @@ type typeBurger = {
  * This hook handles the animation of the burger icon lines using `useAnimatedStyle` and `withTiming`.
  * It also manages the overlay that appears when the menu is open, and triggers the provided `open` and `close` callbacks.
  */
-const burger = (open: () => void, close: () => void): typeBurger => {
+const burger = (): typeBurger => {
   const { styles, widthLine } = stylesBurger();
   const [isOpen, setIsOpen] = React.useState(false);
 

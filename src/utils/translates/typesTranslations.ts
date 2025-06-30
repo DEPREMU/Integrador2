@@ -1,3 +1,6 @@
+import { DaysOfWeek } from "@types";
+import { UrgencyType } from "@typesAPI";
+
 export type LanguagesSupported = "en" | "es";
 
 /**
@@ -54,4 +57,40 @@ export type typeLanguages = {
   errorEmpty: string;
   errorEmail: string;
   errorPassword: string;
+  hasAccount: string;
+  errorNoSession: string;
+  errorNoSessionMessage: string;
+  successLogout: string;
+  successLogoutMessage: string;
+  age: string;
+  years: string;
+  patientText: string;
+  medicationText: string;
+  dosage: string;
+  dosagePlaceholder: string;
+  noNameGiven: string;
+  conditions: string;
+  allergies: string;
+  name: string;
+  medicationsManagement: string;
+  type: string;
+  daysText: string;
+  selectTime: string;
+  addSchedule: string;
+  schedulesScheduled: string;
+  schedulesNotScheduled: string;
+  addMedicationsOnTop: string;
+  hour: string;
+  days: DaysOfWeek;
+  dosageTypes: string[];
+  urgency: Record<UrgencyType, string>;
+  unknown: string;
+  medicationPlaceholder: string;
+  clearMedication: string;
+  deleteMedication: string;
+  intervalHours: string;
+  intervalHoursPlaceholder: string;
+  stock: string;
+  stockPlaceholder: string;
+  urgencyText: string;
 };
