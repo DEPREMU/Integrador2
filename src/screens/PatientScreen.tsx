@@ -27,7 +27,7 @@ const PatientScreen: React.FC = () => {
           {translations.patientDescription}
         </Text>
       </View>
-      <View style={styles.buttonContainer}>
+      <View style={{ alignItems: "flex-start" }}>
         <Button
           label={translations.addMedication}
           handlePress={() => {}}
