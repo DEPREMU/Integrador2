@@ -25,7 +25,7 @@ interface MenuProps {
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Home"
+  "Settings"
 >;
 
 /**
@@ -63,6 +63,9 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
     } else if (option === "Login") {
       navigation.replace("Login");
       setShowLanguageSelector(false);
+    } else if (option === "Settings") {
+      navigation.replace("Settings");
+      setShowLanguageSelector(false);
     }
   };
 
@@ -79,10 +82,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
       openModal(
         translations.successLogout,
         translations.successLogoutMessage,
-        <ButtonComponent
-          label={translations.close}
-          handlePress={closeModal}
-        />
+        <ButtonComponent label={translations.close} handlePress={closeModal} />
       );
     });
   };
@@ -117,6 +117,15 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             <ButtonComponent
               handlePress={() => handlePress("Language")}
               label={translations.languages}
+              touchableOpacity
+              replaceStyles={{
+                button: styles.button,
+                textButton: styles.textButton,
+              }}
+            />
+            <ButtonComponent
+              handlePress={() => handlePress("Settings")}
+              label={translations.settings}
               touchableOpacity
               replaceStyles={{
                 button: styles.button,
