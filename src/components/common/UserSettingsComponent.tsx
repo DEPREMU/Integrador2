@@ -82,7 +82,6 @@ const UserSettingsComponent: React.FC = () => {
       description,
       imageId,
     } as User;
-    log(userData, "User Data before update");
 
     await updateUserData(updatedUserData, (success, error) => {
       if (error) logError(error);
@@ -114,7 +113,6 @@ const UserSettingsComponent: React.FC = () => {
   };
 
   const renderImage = () => {
-    console.log(imageId);
     return (
       <View style={styles.imageContainer}>
         {imageId ? (
