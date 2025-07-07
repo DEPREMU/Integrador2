@@ -93,4 +93,17 @@ export type typeLanguages = {
   stock: string;
   stockPlaceholder: string;
   urgencyText: string;
+  settings: string;
+  enableNotifications: string;
+  save: string;
+  uploadImage: string;
+  description: string;
+  caregiver: string;
+  patient: string;
+  both: string;
+  fullName: string;
+  mumberPhone: string;
+  userImage: string;
+  noImage: string;
+  role: string;
 };
