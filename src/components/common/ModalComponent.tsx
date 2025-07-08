@@ -77,7 +77,7 @@ const ModalComponent: React.FC<ModalProps> = ({
       ]}
     >
       <Pressable
-        style={[styles.overlay, customStyles?.overlay]}
+        style={{ flex: 1, width: "100%", justifyContent: "center", alignItems: "center" }}
         onPress={onClose}
       >
         <Pressable style={[styles.modal, customStyles?.modal]}>

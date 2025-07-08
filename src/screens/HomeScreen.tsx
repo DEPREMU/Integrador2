@@ -2,7 +2,7 @@ import React from "react";
 import CardComponent from "@components/Home/Card";
 import { View, Image } from "react-native";
 import { useLanguage } from "@context/LanguageContext";
-import HeaderComponent from "@components/common/Header";
+import Header from "@components/common/Header";
 import stylesHomeScreen from "@styles/screens/stylesHomeScreen";
 import CarouselComponent from "@components/Home/Carousel";
 import { PAST_IMA, SLOGAN_MSGS } from "@utils";
@@ -24,7 +24,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.viewContainer}>
-      <HeaderComponent />
+      <Header />
       <CarouselComponent items={SLOGAN_MSGS} />
       <CardComponent
         title="Capsy"

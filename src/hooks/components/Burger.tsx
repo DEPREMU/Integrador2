@@ -3,7 +3,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import React, { useCallback, useState } from "react";
-import ButtonComponent from "@components/common/Button";
+import Button from "@components/common/Button";
 import { stylesBurger } from "@styles/components/stylesBurgerComponent";
 import { View, Pressable } from "react-native";
 
@@ -59,7 +59,7 @@ const burger = (): typeBurger => {
       <>
         {isOpen && <Pressable style={styles.overlay} onPress={toggleMenu} />}
 
-        <ButtonComponent
+        <Button
           forceReplaceStyles
           handlePress={toggleMenu}
           replaceStyles={{ button: styles.button, textButton: {} }}

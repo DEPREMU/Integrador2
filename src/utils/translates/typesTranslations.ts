@@ -30,6 +30,7 @@ export type typeLanguages = {
   patientName: string;
   patientDescription: string;
   addMedication: string;
+  configurePillDispenser: string;
   noMedications: string;
   // Days of the week
   monday: string;
@@ -73,6 +74,7 @@ export type typeLanguages = {
   allergies: string;
   name: string;
   medicationsManagement: string;
+  manageMedicationsDescription: string;
   type: string;
   daysText: string;
   selectTime: string;
@@ -93,4 +95,17 @@ export type typeLanguages = {
   stock: string;
   stockPlaceholder: string;
   urgencyText: string;
+  settings: string;
+  enableNotifications: string;
+  save: string;
+  uploadImage: string;
+  description: string;
+  caregiver: string;
+  patient: string;
+  both: string;
+  fullName: string;
+  mumberPhone: string;
+  userImage: string;
+  noImage: string;
+  role: string;
 };

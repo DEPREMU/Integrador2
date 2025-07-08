@@ -10,9 +10,10 @@ import {
   checkLanguage,
   hasPushNotifications,
   log,
+  logExpoGoWarning,
 } from "@utils";
 import { UserSession } from "@types";
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   User,
   ResponseAuth,
@@ -20,7 +21,7 @@ import {
   TypeBodySignup,
   TypeBodyUpdateUserData,
   ResponseUpdateUserData,
-} from "@typesAPI";
+} from "@types";
 
 type UserContextType = {
   userSession: UserSession | null;
@@ -124,77 +125,108 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [updatedInfo, setUpdatedInfo] = useState<boolean>(false);
   const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const isMountedRef = useRef(true);
+  const hasInitialized = useRef(false);
+  const isInitializing = useRef(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession();
-
-      if (!session || !session?.access_token || !session?.user?.id) return;
-
-      setIsLoggedIn(true);
-      setUserSession(session);
+    return () => {
+      isMountedRef.current = false;
     };
+  }, []);
 
-    checkSession();
+  // Show development warning about expo-notifications in Expo Go
+  useEffect(() => {
+    logExpoGoWarning();
+  }, []);
+
+  const saveSessionCallback = useCallback(async (
+    session: UserSession,
+    rememberMe: boolean,
+    keepOldExpiry: boolean = false
+  ): Promise<void> => {
+    const newSession: UserSession = {
+      ...session,
+      user: {
+        ...session.user,
+        identities: null,
+      },
+    };
+    await saveDataSecure(KEYS_STORAGE.USER_SESSION_STORAGE, newSession);
+
+    if (keepOldExpiry) return;
+
+    const expiryDate = rememberMe
+      ? new Date().getTime() + 15 * 24 * 60 * 60 * 1000
+      : 0;
+    await saveDataSecure(KEYS_STORAGE.SESSION_EXPIRY, expiryDate.toString());
   }, []);
 
   useEffect(() => {
-    if (!userSession || !userSession.user?.id) return;
+    if (hasInitialized.current || isInitializing.current || !isMountedRef.current) return;
+    
+    const performInitialization = async () => {
+      isInitializing.current = true;
 
-    const getUserData = async () => {
-      if (!userSession || !userSession.user?.id) {
-        setUserData(null);
-        setIsLoggedIn(false);
-        return;
-      }
+      try {
+        const session = await getSession();
 
-      const [language, pushNotifications] = await Promise.all([
-        checkLanguage(),
-        hasPushNotifications(),
-      ]);
+        if (!isMountedRef.current) return;
 
-      const { data, error }: ResponseAuth = await fetch(
-        getRouteAPI("/login"),
-        fetchOptions<TypeBodyLogin>("POST", {
-          uuid: userSession.user.id,
-          language,
-          pushNotifications,
-        })
-      )
-        .then((res) => res.json())
-        .catch((error) => {
-          logError("Error fetching user data", error.message);
+        if (!session?.access_token || !session?.user?.id) {
           setLoading(false);
-          return {
-            data: null,
-            error: {
-              message: error.message,
-              timestamp: new Date().toISOString(),
-            },
-          };
-        });
+          hasInitialized.current = true;
+          return;
+        }
 
-      setUpdatedInfo(true);
-      if (error || !data) {
-        logError("Error fetching user data", error?.message);
-        setUserData(null);
-      } else {
-        setUserData(data.user);
-        setLoading(false);
+        // Fetch user data immediately
+        const [language, pushNotifications] = await Promise.all([
+          checkLanguage(),
+          hasPushNotifications(),
+        ]);
+
+        const { data, error }: ResponseAuth = await fetch(
+          getRouteAPI("/login"),
+          fetchOptions<TypeBodyLogin>("POST", {
+            uuid: session.user.id,
+            language,
+            pushNotifications,
+          })
+        )
+          .then((res) => res.json())
+          .catch((error) => {
+            logError("Error fetching user data", error.message);
+            return {
+              data: null,
+              error: {
+                message: error.message,
+                timestamp: new Date().toISOString(),
+              },
+            };
+          });
+
+        if (!isMountedRef.current) return;
+
+        if (error || !data) {
+          logError("Error fetching user data", error?.message);
+          setLoading(false);
+        } else {
+          // Set all state at once to avoid multiple re-renders
+          setIsLoggedIn(true);
+          setUserSession(session);
+          setUserData(data.user);
+          setLoading(false);
+        }
+        
+        hasInitialized.current = true;
+      } finally {
+        isInitializing.current = false;
       }
     };
 
-    getUserData();
-  }, [userSession]);
-
-  useEffect(() => {
-    if (!userSession || !userData || !isLoggedIn) return;
-
-    if (!updatedInfo && userSession?.user?.id === userData?.userId)
-      updateUserData(userData);
-  }, [userSession, userData, updatedInfo]);
+    performInitialization();
+  }, []);
 
   const refreshToken = useCallback(
     async (refresh_token: string) => {
@@ -208,9 +240,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         await clearSession();
         return;
       }
-      await saveSession(session, false, true);
+      await saveSessionCallback(session, false, true);
     },
-    [saveSession]
+    [saveSessionCallback]
   );
 
   const signUp = useCallback(
@@ -240,6 +272,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             userId: data.session?.user?.id || "",
             language,
             pushNotifications,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
           createdAt: new Date().toISOString(),
           imageId: "",
@@ -267,7 +300,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         logError("Error during sign up", userData.error.message);
         return callback?.(new Error(userData.error.message));
       }
-      setUserData(userData.data?.user || null);
+      if (isMountedRef.current) {
+        setUserData(userData.data?.user || null);
+      }
 
       return callback?.();
     },
@@ -293,7 +328,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (!session)
         return callback?.(null, new Error("No session data received"));
 
-      await saveSession(session, rememberMe);
+      await saveSessionCallback(session, rememberMe);
       const [language, pushNotifications] = await Promise.all([
         checkLanguage(),
         hasPushNotifications(),
@@ -318,12 +353,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           };
         })) as ResponseAuth;
 
-      setIsLoggedIn(true);
-      setUserSession(session);
-      setUserData(userData.data?.user || null);
+      if (isMountedRef.current) {
+        setIsLoggedIn(true);
+        setUserSession(session);
+        setUserData(userData.data?.user || null);
+        hasInitialized.current = true;
+      }
       return callback?.(session);
     },
-    []
+    [saveSessionCallback]
   );
 
   const logout = useCallback(
@@ -332,9 +370,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         return callback?.("No user session to log out");
 
       await Promise.all([supabase.auth.signOut(), clearSession()]);
-      setUserData(null);
-      setIsLoggedIn(false);
-      setUserSession(null);
+      if (isMountedRef.current) {
+        setUserData(null);
+        setIsLoggedIn(false);
+        setUserSession(null);
+        hasInitialized.current = false;
+        isInitializing.current = false;
+      }
       log("User logged out successfully");
       callback?.("User logged out successfully");
     },
@@ -379,14 +421,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         );
       }
       setUserData(res.user || null);
-      setUpdatedInfo(true);
       log("User data updated successfully");
       return callback?.(true);
     },
-    [userData, userSession]
+    [userData]
   );
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     signUp,
     loading,
     isLoggedIn,
@@ -397,7 +438,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     userData,
     logout,
     login,
-  };
+  }), [
+    signUp,
+    loading,
+    isLoggedIn,
+    userSession,
+    updateUserData,
+    refreshToken,
+    userData,
+    logout,
+    login
+  ]);
 
   return (
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>

@@ -1,8 +1,17 @@
 import { logError } from "./debug";
+import { stringifyData } from "./shared";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
-import * as Notifications from "expo-notifications";
 import { ResponseUploadImage } from "@typesAPI";
+
+// Conditionally import expo-notifications to avoid errors in Expo Go
+let Notifications: any = null;
+try {
+  Notifications = require("expo-notifications");
+} catch (error) {
+  // expo-notifications not available (likely in Expo Go)
+  console.warn("expo-notifications not available, push notifications will be disabled");
+}
 
 /**
  * Requests permission to access the media library.
@@ -93,43 +102,6 @@ export const uploadImage = async (
 };
 
 /**
- * Parses a JSON string into an object of type `T`.
- *
- * @template T - The expected return type, defaults to `object | null`.
- * @param value - The JSON string to parse. If `null`, it will be treated as `"null"`.
- * @returns The parsed object of type `T`. If parsing fails, returns the original value cast to type `T`.
- */
-export const parseData = <T = object | null>(value: string | null): T => {
-  let parsed: T;
-  try {
-    parsed = JSON.parse(value || "null") as T;
-  } catch {
-    parsed = value as T;
-  }
-  return parsed;
-};
-
-/**
- * Converts a given value to its string representation.
- *
- * - If the value is already a string, it returns the value as is.
- * - Otherwise, it attempts to stringify the value using `JSON.stringify`.
- * - If stringification fails, it logs the error and returns an empty string.
- *
- * @param value - The value to be converted to a string.
- * @returns The string representation of the value, or an empty string if an error occurs.
- */
-export const stringifyData = (value: any): string => {
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    logError(`Error stringifying data: ${error}`);
-    return "";
-  }
-};
-
-/**
  * Creates a debounced version of the provided function that delays its execution until after
  * a specified delay has elapsed since the last time it was invoked.
  *
@@ -179,19 +151,32 @@ export const interpolateMessage = (message: string, values: string[]) => {
 /**
  * Checks if the application has permission to send push notifications.
  *
- * This function first checks the current notification permission status.
+ * This function first checks if expo-notifications is available (not in Expo Go).
+ * If available, it checks the current notification permission status.
  * If permission is not granted, it requests permission from the user.
  * Returns `true` if permission is granted, otherwise `false`.
+ * In Expo Go, this will always return `false` since notifications are not supported.
  *
  * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
  */
 export const hasPushNotifications = async (): Promise<boolean> => {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== Notifications.PermissionStatus.GRANTED) {
-    const { status: newStatus } = await Notifications.requestPermissionsAsync();
-    return newStatus === Notifications.PermissionStatus.GRANTED;
+  // Check if expo-notifications is available (not in Expo Go)
+  if (!Notifications) {
+    console.warn("Push notifications not available in Expo Go. Use a development build for full functionality.");
+    return false;
   }
-  return status === Notifications.PermissionStatus.GRANTED;
+
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== Notifications.PermissionStatus.GRANTED) {
+      const { status: newStatus } = await Notifications.requestPermissionsAsync();
+      return newStatus === Notifications.PermissionStatus.GRANTED;
+    }
+    return status === Notifications.PermissionStatus.GRANTED;
+  } catch (error) {
+    console.warn("Error checking push notification permissions:", error);
+    return false;
+  }
 };
 
 /**

@@ -5,11 +5,11 @@ import { LanguageProvider } from "@context/LanguageContext";
 
 const AppProviders = ({ children }: { children: React.ReactNode }) => (
   <LayoutProvider>
-    <UserProvider>
-      <LanguageProvider>
+    <LanguageProvider>
+      <UserProvider>
         <ModalProvider>{children}</ModalProvider>
-      </LanguageProvider>
-    </UserProvider>
+      </UserProvider>
+    </LanguageProvider>
   </LayoutProvider>
 );
 

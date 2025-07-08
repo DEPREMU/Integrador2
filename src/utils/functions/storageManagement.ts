@@ -11,7 +11,7 @@ import { KEYS_STORAGE } from "../constants/keysStorage";
 import * as SecureStore from "expo-secure-store";
 import * as Localization from "expo-localization";
 import { KeyStorageValues } from "../constants/keysStorage";
-import { parseData, stringifyData } from "./appManagement";
+import { parseData, stringifyData } from "./shared";
 import { fetchOptions, getRouteAPI } from "./APIManagement";
 import { LanguagesSupported, languagesSupported } from "../translates";
 

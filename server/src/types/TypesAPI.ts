@@ -11,7 +11,8 @@ export type RoutesAPI =
   | "/updateUserData"
   | "/getUserPatients"
   | "/getUserMedications"
-  | "/getAllMedications";
+  | "/getAllMedications"
+  | "/addUserMedication";
 
 export type ResponseEncrypt = {
   dataEncrypted?: string;
@@ -91,7 +92,7 @@ export type TypeBodyGetUserPatients = {
 };
 
 export type ResponseGetUserMedications = {
-  medications: User[];
+  medications: MedicationUser[];
   error?: { message: string; timestamp: string };
 };
 
@@ -107,4 +108,14 @@ export type ResponseGetAllMedications = {
 export type TypeBodyGetAllMedications = {
   onlyGetTheseColumns?: (keyof MedicationApi)[];
   onlyGetTheseMedicationsById?: string[];
+};
+
+export type TypeBodyAddUserMedication = {
+  medication: Omit<MedicationUser, "_id">;
+};
+
+export type ResponseAddUserMedication = {
+  success: boolean;
+  medication?: MedicationUser;
+  error?: { message: string; timestamp: string };
 };

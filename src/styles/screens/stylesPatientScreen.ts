@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { useResponsiveLayout } from "@context/LayoutContext";
+import { useMemo } from "react";
 
 /**
  * Returns responsive styles for the PatientScreen component.
@@ -10,7 +11,7 @@ import { useResponsiveLayout } from "@context/LayoutContext";
 export const stylesPatientScreen = () => {
   const { isPhone, width, height, isWeb } = useResponsiveLayout();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: "#ecebea",
@@ -47,7 +48,7 @@ export const stylesPatientScreen = () => {
       color: "white",
       textAlign: "center",
     },
-  });
+  }), [isPhone]);
 
   return styles;
 };

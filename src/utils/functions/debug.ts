@@ -1,4 +1,5 @@
-import { fetchOptions, getRouteAPI } from "./APIManagement";
+import { API_URL } from "../constants/API_URL";
+import { stringifyData } from "./shared";
 
 /**
  * Logs an error message to the console or sends it to a server.
@@ -30,11 +31,18 @@ export async function logError(...args: any[]): Promise<void> {
       .join(" ");
 
     await fetch(
-      getRouteAPI("/logs"),
-      fetchOptions("POST", {
-        log: errorMessage,
-        timestamp: date.toISOString(),
-      })
+      `${API_URL}/logs`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: stringifyData({
+          log: errorMessage,
+          timestamp: date.toISOString(),
+        }),
+      }
     );
   }
 }
@@ -68,11 +76,18 @@ export async function log(...args: any[]): Promise<void> {
       .join(" ");
 
     await fetch(
-      getRouteAPI("/logs"),
-      fetchOptions("POST", {
-        log: message,
-        timestamp: date.toISOString(),
-      })
+      `${API_URL}/logs`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: stringifyData({
+          log: message,
+          timestamp: date.toISOString(),
+        }),
+      }
     );
   }
 }

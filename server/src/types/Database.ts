@@ -81,6 +81,7 @@ export type UserConfig = {
   userId: string;
   language: string;
   pushNotifications: boolean;
+  timeZone: string;
 };
 
 export { ObjectId };

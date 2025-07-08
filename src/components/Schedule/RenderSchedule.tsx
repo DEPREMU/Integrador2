@@ -2,8 +2,8 @@ import React from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
 import { capitalize, log } from "@/utils";
-import ButtonComponent from "@components/common/Button";
-import { MedicationUser } from "@typesAPI";
+import Button from "@components/common/Button";
+import { MedicationUser } from "@types";
 
 const RenderScheduleItem: React.FC<{
   data: MedicationUser[];
@@ -38,7 +38,7 @@ const RenderScheduleItem: React.FC<{
               </Text>
             ))}
           </View>
-          <ButtonComponent
+          <Button
             label="✕"
             replaceStyles={{
               button: styles.deleteButton,

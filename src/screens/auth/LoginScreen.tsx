@@ -7,7 +7,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { ActivityIndicator, Switch } from "react-native-paper";
 import { useModal } from "@context/ModalContext";
-import ButtonComponent from "@components/common/Button";
+import Button from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import stylesLoginScreen from "@styles/screens/stylesLoginScreen";
@@ -71,7 +71,7 @@ const LoginScreen: React.FC = () => {
         openModal(
           translations.errorNoSession,
           translations.errorNoSessionMessage,
-          <ButtonComponent
+          <Button
             label={translations.close}
             handlePress={closeModal}
           />
@@ -87,7 +87,7 @@ const LoginScreen: React.FC = () => {
         // Body
         `${translations.successSignUpMessage}\n${translations.verifyEmail}`,
         // Buttons
-        <ButtonComponent label={translations.close} handlePress={closeModal} />
+        <Button label={translations.close} handlePress={closeModal} />
       );
     });
   }, [
@@ -213,7 +213,7 @@ const LoginScreen: React.FC = () => {
             }}
             onBlur={handlerBlurInputPassword}
           />
-          <ButtonComponent
+          <Button
             replaceStyles={{
               button: styles.showPasswordButton,
               textButton: {},
@@ -231,7 +231,7 @@ const LoginScreen: React.FC = () => {
 
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-        <ButtonComponent
+        <Button
           label={!loggingIn ? translations.loginButton : ""}
           touchableOpacity
           disabled={loggingIn}
@@ -260,7 +260,7 @@ const LoginScreen: React.FC = () => {
               onValueChange={setRememberMe}
             />
           </View>
-          <ButtonComponent
+          <Button
             label={translations.forgotPassword}
             touchableOpacity
             handlePress={() => setShowPassword((prev) => !prev)}
@@ -269,7 +269,7 @@ const LoginScreen: React.FC = () => {
               textButton: styles.linkText,
             }}
           />
-          <ButtonComponent
+          <Button
             label={translations.createAccount}
             touchableOpacity
             handlePress={() => navigation.replace("SignUp")}

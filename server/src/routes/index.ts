@@ -6,6 +6,7 @@ import { updateUserDataHandler } from "./updateUserData.js";
 import { loginHandler, signUpHandler } from "./auth.js";
 import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
+import { addUserMedicationHandler } from "./addUserMedication.js";
 import {
   getAllMedications,
   getUserMedications,
@@ -38,6 +39,7 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/getUserPatients": { handler: getUserPatients },
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
+  "/addUserMedication": { handler: addUserMedicationHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

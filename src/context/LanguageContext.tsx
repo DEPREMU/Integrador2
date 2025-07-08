@@ -4,6 +4,7 @@ import React, {
   ReactNode,
   useContext,
   createContext,
+  useMemo,
 } from "react";
 import {
   saveData,
@@ -74,8 +75,14 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   const translations = languages[language || "en"];
 
+  const contextValue = useMemo(() => ({
+    language,
+    setLanguage,
+    translations,
+  }), [language, translations]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, translations }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );

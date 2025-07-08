@@ -110,19 +110,22 @@ const DayCarousel: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Left Arrow */}
-      <Pressable
-        onPress={handlePrev}
+      <ButtonComponent
+        label={translations.addMedication}
+        handlePress={handlePrev}
         disabled={startIndex === 0}
-        style={[styles.arrowButton, startIndex === 0 && { opacity: 0.5 }]}
-        accessibilityLabel="Previous"
-      >
-        <Ionicons
-          name="chevron-back"
-          size={32}
-          color={startIndex === 0 ? "#ccc" : "#00a69d"}
-        />
-      </Pressable>
+        customStyles={{
+          button: styles.arrowButton,
+          textButton: {},
+        }}
+        children={
+          <Ionicons
+            name="add"
+            size={24}
+            color={startIndex === 0 ? "#ccc" : "#00a69d"}
+          />
+        }
+      />
       <View style={styles.cardsRow}>
         {visibleDays.map((day, index) => (
           <ButtonComponent
@@ -164,19 +167,22 @@ const DayCarousel: React.FC = () => {
           />
         ))}
       </View>
-      {/* Right Arrow */}
-      <Pressable
-        onPress={handleNext}
+      <ButtonComponent
+        label={translations.addMedication}
+        handlePress={handleNext}
         disabled={startIndex >= days.length - cardsToShow}
-        style={[styles.arrowButton, startIndex >= days.length - cardsToShow && { opacity: 0.5 }]}
-        accessibilityLabel="Next"
-      >
-        <Ionicons
-          name="chevron-forward"
-          size={32}
-          color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
-        />
-      </Pressable>
+        customStyles={{
+          button: styles.arrowButton,
+          textButton: {},
+        }}
+        children={
+          <Ionicons
+            name="add"
+            size={24}
+            color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
+          />
+        }
+      />
     </View>
   );
 };

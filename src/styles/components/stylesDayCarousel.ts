@@ -1,10 +1,11 @@
 import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
+import { useMemo } from "react";
 
 export const stylesDayCarousel = () => {
   const { isPhone, isWeb, width } = useResponsiveLayout();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       flexDirection: "row",
@@ -66,9 +67,9 @@ export const stylesDayCarousel = () => {
       marginTop: 5,
       textAlign: "center",
     },
-  });
+  }), [isPhone, isWeb]);
 
-  const customStyles = StyleSheet.create({
+  const customStyles = useMemo(() => StyleSheet.create({
     modal: {
       backgroundColor: "#fff",
       borderRadius: 24,
@@ -83,6 +84,9 @@ export const stylesDayCarousel = () => {
       shadowRadius: 24,
       borderWidth: 2,
       borderColor: "#00a69d",
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
     },
     title: {
       color: "#00a69d",
@@ -103,12 +107,8 @@ export const stylesDayCarousel = () => {
       width: "100%",
       marginTop: 12,
     },
-    overlay: {
-      zIndex: 999,
-      elevation: 49,
-    },
     messageText: {},
-  });
+  }), []);
 
   return { styles, customStyles, width, isPhone, isWeb };
 };

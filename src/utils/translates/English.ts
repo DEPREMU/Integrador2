@@ -2,6 +2,7 @@ import { typeLanguages } from "./typesTranslations";
 
 export const en: typeLanguages = {
   addMedication: "Add medication",
+  configurePillDispenser: "Configure pill dispenser",
   addPatient: "Add Patient",
   addPatientForm: "Here would be the form to add a patient",
   capsysDescription:
@@ -67,6 +68,7 @@ export const en: typeLanguages = {
   allergies: "Allergies",
   name: "Name",
   medicationsManagement: "Medications Management",
+  manageMedicationsDescription: "Manage your patients' medication schedules",
   type: "Type",
   daysText: "Days",
   selectTime: "Select Time",
@@ -99,4 +101,17 @@ export const en: typeLanguages = {
   stock: "Stock",
   stockPlaceholder: "E.g. 30",
   urgencyText: "Urgency",
+  settings: "Settings",
+  save: "Save",
+  enableNotifications: "Enable notifications",
+  uploadImage: "Upload image",
+  description: "Description",
+  caregiver: "Caregiver",
+  patient: "Patient",
+  both: "Both",
+  fullName: "Full Name",
+  mumberPhone: "Phone Number",
+  userImage: "User Image",
+  noImage: "No Image",
+  role: "Role",
 };

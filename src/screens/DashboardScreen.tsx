@@ -1,7 +1,7 @@
 import React from "react";
 import { useModal } from "@context/ModalContext";
 import { View, Text } from "react-native";
-import HeaderComponent from "@components/common/Header";
+import Header from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
@@ -40,7 +40,7 @@ const DashboardScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderComponent />
+      <Header />
       <Text style={styles.greeting}>
         {interpolateMessage(translations.greeting, [
           userData?.name || translations.dearUser,

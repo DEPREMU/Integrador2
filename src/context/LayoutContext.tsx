@@ -1,5 +1,5 @@
 import { Dimensions, Platform, ScaledSize } from "react-native";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 
 interface LayoutProviderProps {
   children: any;
@@ -61,7 +61,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const isTablet: boolean = width > 768 && height <= 1600;
   const isLargeTablet: boolean = width > 1024 && height <= 2048;
 
-  const layoutData = {
+  const layoutData = useMemo(() => ({
     isWeb,
     isPhone,
     isPortrait,
@@ -71,7 +71,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     isTablet,
     height,
     width,
-  };
+  }), [isWeb, isPhone, isPortrait, isLargeTablet, isPlatformWeb, isLandscape, isTablet, height, width]);
 
   return (
     <LayoutContext.Provider value={layoutData}>

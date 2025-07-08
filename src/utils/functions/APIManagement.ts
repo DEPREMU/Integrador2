@@ -1,6 +1,6 @@
 import { API_URL } from "../constants/API_URL";
 import { RequestBody, RoutesAPI } from "@typesAPI";
-import { stringifyData } from "./appManagement";
+import { stringifyData } from "./shared";
 
 /**
  * Generates an options object for a fetch request.

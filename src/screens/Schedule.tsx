@@ -8,19 +8,24 @@ import {
   ResponseGetUserPatients,
   ResponseGetAllMedications,
   TypeBodyGetAllMedications,
-} from "@typesAPI";
-import ButtonComponent from "@components/common/Button";
+  TypeBodyAddUserMedication,
+  ResponseAddUserMedication,
+  ResponseGetUserMedications,
+  TypeBodyGetUserMedications,
+} from "@types";
+import Button from "@components/common/Button";
+import Header from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
-import { TextInput, Text, Searchbar } from "react-native-paper";
+import { TextInput, Text } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import RenderScheduleItemMemo from "@components/Schedule/RenderSchedule";
 import { DayOfWeek, DaysOfWeek } from "@types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useStylesScheduleMedication } from "@styles/screens/stylesScheduleMedication";
-import { View, Platform, Pressable, ScrollView } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import { View, Platform, Pressable, ScrollView, Animated } from "react-native";
+import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { log, getRouteAPI, fetchOptions, interpolateMessage } from "@utils";
 
 type ScheduleScreenNavigationProp = NativeStackNavigationProp<
@@ -36,7 +41,28 @@ const MedicationScheduler: React.FC = () => {
   const { userData } = useUserContext();
   const { language, translations } = useLanguage();
 
-  const daysOfWeek: Record<DayOfWeek, string> = {
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const iconRotateAnim = useRef(new Animated.Value(0)).current;
+  const headerAnim = useRef(new Animated.Value(1)).current;
+  const patientAnim = useRef(new Animated.Value(1)).current;
+  const formAnim = useRef(new Animated.Value(1)).current;
+
+  // Custom theme for consistent TextInput styling
+  const inputTheme = {
+    colors: {
+      background: "#ecebea",
+      surface: "#ecebea",
+      onSurface: "#333333",
+      primary: "#00a69d",
+      onSurfaceVariant: "#666666",
+      placeholder: "#666666",
+    }
+  };
+
+  const daysOfWeek: Record<DayOfWeek, string> = useMemo(() => ({
     monday: translations.days.monday,
     tuesday: translations.days.tuesday,
     wednesday: translations.days.wednesday,
@@ -44,8 +70,8 @@ const MedicationScheduler: React.FC = () => {
     friday: translations.days.friday,
     saturday: translations.days.saturday,
     sunday: translations.days.sunday,
-  };
-  const dosageTypes: string[] = translations.dosageTypes;
+  }), [translations.days]);
+  const dosageTypes: string[] = useMemo(() => translations.dosageTypes, [translations.dosageTypes]);
 
   const [dose, setDose] = useState<string>("");
   const [time, setTime] = useState<Date>(new Date());
@@ -65,34 +91,26 @@ const MedicationScheduler: React.FC = () => {
     Medication[]
   >([]);
   const [medicationsList, setMedicationsList] = useState<Medication[]>();
-  const [_, setKeysPressed] = useState<string[]>([]); //! Delete
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const startEntranceAnimations = useCallback(() => {}, []);
+  const startPulseAnimation = useCallback(() => {}, []);
+  const animateButtonPress = useCallback(() => {}, []);
+  const animateIconRotation = useCallback(() => {}, []);
+  const resetForm = useCallback(() => {
+    setMedication(null);
+    setDose("");
+    setSelectedDays(null);
+    setDosageType("pills");
+    setIntervalHours(0);
+    setStock(0);
+    setUrgency({ low: translations.urgency.low });
+    setTime(new Date());
+  }, [translations.urgency.low]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      setKeysPressed((prev) => {
-        if (prev.includes(e.key)) return prev;
-        const keys = [...prev, e.key];
-        log(keys, "keysPressed");
-
-        if (keys.includes("Control") && keys.includes("h")) {
-          navigation.replace("Home");
-        }
-
-        return keys;
-      });
-    };
-    const handler1 = (e: KeyboardEvent) => {
-      setKeysPressed((prev) => prev.filter((key) => key !== e.key));
-    };
-
-    document?.addEventListener("keydown", handler);
-    document?.addEventListener("keyup", handler1);
-    if (!userData)
-      return () => {
-        document?.removeEventListener("keydown", handler);
-        document?.removeEventListener("keyup", handler1);
-      };
+    if (!userData) return;
 
     const getPatients = async () => {
       if (!userData?.patientUserIds || userData.patientUserIds.length === 0)
@@ -127,63 +145,152 @@ const MedicationScheduler: React.FC = () => {
         })
       ).then((res) => res.json());
 
-      setMedicationsList(data.medications);
+      setMedicationsList(data.medications as any);
+    };
+
+    const getUserScheduledMedications = async () => {
+      if (!userData?.userId) return;
+      
+      log("Fetching user scheduled medications...");
+      const data: ResponseGetUserMedications = await fetch(
+        getRouteAPI("/getUserMedications"),
+        fetchOptions<TypeBodyGetUserMedications>("POST", {
+          userId: userData.userId,
+        })
+      ).then((res) => res.json());
+
+      if (data.error) {
+        console.error("Error fetching user medications:", data.error);
+        return;
+      }
+      
+      log("User medications loaded:", data.medications);
+      setSchedules(data.medications || []);
     };
 
     getPatients();
     getMedications();
-    return () => {
-      document?.removeEventListener("keydown", handler);
-      setKeysPressed([]);
-    };
-  }, [userData]);
+    getUserScheduledMedications();
+  }, [userData?.userId, language]);
 
-  const handleAddSchedule = useCallback(() => {
+  // Start animations when component mounts
+  useEffect(() => {
+    startEntranceAnimations();
+  }, [startEntranceAnimations]);
+
+  // Start pulse animation when add button becomes enabled
+  useEffect(() => {
+    const isFormValid = medication && 
+                       dose && 
+                       (Object.keys(selectedDays || {}).length > 0) && 
+                       intervalHours > 0 && 
+                       urgency;
+    
+    console.log("🔍 Form validation check:", {
+      medication: !!medication,
+      dose: !!dose,
+      selectedDays: Object.keys(selectedDays || {}).length,
+      intervalHours,
+      urgency: !!urgency,
+      isFormValid
+    });
+    
+    if (isFormValid) {
+      startPulseAnimation();
+    }
+  }, [medication, dose, selectedDays, intervalHours, urgency, startPulseAnimation]);
+
+  const handleAddSchedule = useCallback(async () => {
+    console.log("🚀 handleAddSchedule called");
+    animateButtonPress();
+    
+    if (!selectedPatient || !medication) {
+      console.error("❌ Missing required data:", { selectedPatient, medication });
+      alert("Por favor selecciona un paciente y un medicamento");
+      return;
+    }
+
+    console.log("✅ Required data available:", { 
+      selectedPatient: selectedPatient.name, 
+      medication: medication.name 
+    });
+
+    setIsSubmitting(true);
+
     const medicationAPI = medicationsList?.find(
       (med) => med._id === medication?._id
     ) as Medication;
-    const newSchedule: MedicationUser = {
-      medicationId: medication?._id || "",
+    
+    const newSchedule: Omit<MedicationUser, "_id"> = {
+      medicationId: medication._id,
       name: medicationAPI?.name || translations.unknown,
-      userId: selectedPatient?.userId || "",
+      userId: selectedPatient.userId,
       dosage: dosageType,
       startHour: time.toTimeString().slice(0, 5),
       days: [...Object.keys(selectedDays || {})],
-      grams: parseFloat(dose.split(" ")[0]),
+      grams: parseFloat(dose.split(" ")[0]) || 0,
       intervalHours,
       stock,
       urgency: (Object.values(urgency)[0] ||
         translations.urgency.low) as UrgencyType,
     };
 
-    setSchedules((prev) => [...prev, newSchedule]);
-    resetForm();
-  }, [medication, dose, selectedDays, time, dosageType]);
+    console.log("📝 New schedule data:", newSchedule);
 
-  const resetForm = useCallback(() => {
-    setMedication(null);
-    setDose("");
-    setSelectedDays(null);
-    setTime(new Date());
-    setDosageType("pastillas");
-  }, []);
+    try {
+      console.log("🌐 Sending request to backend...");
+      // Save to backend
+      const response: ResponseAddUserMedication = await fetch(
+        getRouteAPI("/addUserMedication"),
+        fetchOptions<TypeBodyAddUserMedication>("POST", {
+          medication: newSchedule,
+        })
+      ).then((res) => res.json());
 
-  const toggleDay = (day: DayOfWeek) => {
+      console.log("📦 Backend response:", response);
+
+      if (response.error) {
+        console.error("❌ Error saving medication:", response.error);
+        alert(`Error: ${response.error.message}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (response.success && response.medication) {
+        console.log("✅ Medication saved successfully:", response.medication);
+        setSchedules((prev) => [...prev, response.medication!]);
+        resetForm();
+        
+        console.log("🔄 Navigating to Patient screen...");
+        // Small delay for better UX, then navigate back
+        setTimeout(() => {
+          setIsSubmitting(false);
+          navigation.navigate("Patient");
+          console.log("✅ Navigation completed");
+        }, 500);
+      }
+    } catch (error) {
+      console.error("💥 Network error saving medication:", error);
+      alert(`Network error: ${error}`);
+      setIsSubmitting(false);
+    }
+  }, [medication, dose, selectedDays, time, dosageType, intervalHours, stock, urgency, selectedPatient, medicationsList, translations.unknown, translations.urgency.low, resetForm, animateButtonPress, navigation]);
+
+  const toggleDay = useCallback((day: DayOfWeek) => {
     setSelectedDays((prev) => {
-      if (!prev) return { [day]: translations.days[day] } as DaysOfWeek;
-      log(prev, "prevSelectedDays", day);
-      if (Object.keys(prev).includes(day)) {
-        log(prev);
-        delete prev[day];
-        log(prev);
-        return prev;
+      if (!prev) return { [day]: daysOfWeek[day] } as DaysOfWeek;
+      
+      const newSelectedDays = { ...prev };
+      if (Object.keys(newSelectedDays).includes(day)) {
+        delete newSelectedDays[day];
+        return Object.keys(newSelectedDays).length === 0 ? null : newSelectedDays;
       }
       return {
-        ...prev,
-        [day]: translations.days[day],
+        ...newSelectedDays,
+        [day]: daysOfWeek[day],
       };
     });
-  };
+  }, [daysOfWeek]);
 
   const handleTimeChange = (
     event: DateTimePickerEvent,
@@ -198,7 +305,7 @@ const MedicationScheduler: React.FC = () => {
       const ageText = translations?.age || "Age";
       return `${ageText}: ${age} ${translations?.years || "years"}`;
     },
-    [language, translations]
+    [translations?.age, translations?.years]
   );
 
   const deleteSchedule = useCallback(
@@ -211,6 +318,7 @@ const MedicationScheduler: React.FC = () => {
   );
 
   const handleSearchMedication = useCallback(() => {
+    animateIconRotation();
     if (searchValue.length < 3) return;
 
     const found = medicationsList?.filter((med) =>
@@ -219,80 +327,151 @@ const MedicationScheduler: React.FC = () => {
     log(found?.length, "foundMedications", searchValue);
     if (found) setSearchMedicationsList(found);
     else setSearchMedicationsList([]);
-  }, [setSearchValue, searchValue, medicationsList]);
+  }, [searchValue, medicationsList, animateIconRotation]);
+
+  // Rotation interpolation
+  const iconRotation = iconRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{translations.medicationsManagement}</Text>
-
-        <View style={styles.patientSelector}>
-          <Text style={styles.patientLabel}>{translations.patientText}:</Text>
-          <View style={styles.patientButtons}>
-            {patients.map((patient) => (
-              <Pressable
-                key={patient.userId}
-                style={[
-                  styles.patientButton,
-                  selectedPatient?.userId === patient.userId &&
-                    styles.selectedPatient,
-                ]}
-                onPress={() => setSelectedPatient(patient)}
-              >
-                <Text
-                  style={
-                    selectedPatient?.userId === patient.userId
-                      ? styles.selectedPatientText
-                      : styles.patientButtonText
-                  }
-                >
-                  {patient.name || translations.noNameGiven}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {selectedPatient && (
-          <View style={styles.patientInfo}>
-            <Text style={styles.patientDetail}>
-              {translations.name}: {selectedPatient?.name || "N/A"}
-            </Text>
-            <Text style={styles.patientDetail}>
-              {getAgeText(selectedPatient?.age || "N/A")}
-            </Text>
-            {selectedPatient?.conditions &&
-              selectedPatient.conditions.length > 0 && (
-                <Text style={styles.patientDetail}>
-                  {translations.conditions}:{" "}
-                  {selectedPatient?.conditions.join(", ")}
-                </Text>
-              )}
-          </View>
-        )}
-      </View>
-
-      <ScrollView
-        style={styles.formContainer}
-        contentContainerStyle={styles.formContent}
+    <Animated.View 
+      style={[
+        styles.screenContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }
+      ]}
+    >
+      <Header />
+      
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <Animated.View 
+          style={[
+            styles.pageHeader,
+            {
+              opacity: headerAnim,
+              transform: [{ translateY: Animated.multiply(headerAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              }), 1) }],
+            }
+          ]}
+        >
+          <Text style={styles.pageTitle}>{translations.medicationsManagement}</Text>
+          <Text style={styles.pageSubtitle}>{translations.manageMedicationsDescription}</Text>
+        </Animated.View>
+
+        <Animated.View 
+          style={[
+            styles.header,
+            {
+              opacity: patientAnim,
+              transform: [{ translateY: Animated.multiply(patientAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              }), 1) }],
+            }
+          ]}
+        >
+          <View style={styles.patientSelector}>
+            <Text style={styles.patientLabel}>{translations.patientText}:</Text>
+            <View style={styles.patientButtons}>
+              {patients.map((patient) => (
+                <Pressable
+                  key={patient.userId}
+                  style={[
+                    styles.patientButton,
+                    selectedPatient?.userId === patient.userId &&
+                      styles.selectedPatient,
+                  ]}
+                  onPress={() => {
+                    animateButtonPress();
+                    setSelectedPatient(patient);
+                  }}
+                >
+                  <Text
+                    style={
+                      selectedPatient?.userId === patient.userId
+                        ? styles.selectedPatientText
+                        : styles.patientButtonText
+                    }
+                  >
+                    {patient.name || translations.noNameGiven}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {selectedPatient && (
+            <View style={styles.patientInfo}>
+              <Text style={styles.patientDetail}>
+                {translations.name}: {selectedPatient?.name || "N/A"}
+              </Text>
+              <Text style={styles.patientDetail}>
+                {getAgeText(selectedPatient?.age || "N/A")}
+              </Text>
+              {selectedPatient?.conditions &&
+                selectedPatient.conditions.length > 0 && (
+                  <Text style={styles.patientDetail}>
+                    {translations.conditions}:{" "}
+                    {selectedPatient?.conditions.join(", ")}
+                  </Text>
+                )}
+            </View>
+          )}
+        </Animated.View>
+
+      <Animated.View 
+        style={[
+          styles.formContainer,
+          {
+            opacity: formAnim,
+            transform: [{ translateY: Animated.multiply(formAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0],
+            }), 1) }],
+          }
+        ]}
+      >
+        <View style={styles.formContent}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{translations.medicationText}:</Text>
           {!medication && (
-            <Searchbar
+            <TextInput
               style={styles.input}
               value={searchValue}
-              placeholder={translations.medicationPlaceholder}
               onChangeText={setSearchValue}
-              onIconPress={handleSearchMedication}
+              onSubmitEditing={handleSearchMedication}
               autoCorrect={false}
               autoCapitalize="none"
-              onSubmitEditing={handleSearchMedication}
+              placeholder={translations.medicationPlaceholder}
+              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              theme={inputTheme}
+              right={
+                <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
+                  <TextInput.Icon 
+                    icon="magnify" 
+                    onPress={() => {
+                      animateIconRotation();
+                      handleSearchMedication();
+                    }}
+                  />
+                </Animated.View>
+              }
             />
           )}
           {medication && (
-            <ButtonComponent
+            <Button
               handlePress={() => {
                 setMedication(null);
                 setSearchValue("");
@@ -320,23 +499,41 @@ const MedicationScheduler: React.FC = () => {
             style={styles.medicationScroll}
           >
             {searchMedicationsList.length > 0 &&
-              searchMedicationsList.map((medication) => {
+              searchMedicationsList.map((medication, index) => {
                 log(medication, "searchMedicationsList");
                 return (
-                  <ButtonComponent
+                  <Animated.View
                     key={medication._id}
-                    label={medication.name || translations.unknown}
-                    handlePress={() => {
-                      setSearchValue("");
-                      setSearchMedicationsList([]);
-                      setMedication(medication);
+                    style={{
+                      opacity: formAnim,
+                      transform: [
+                        {
+                          translateY: Animated.multiply(
+                            formAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [20, 0],
+                            }),
+                            1
+                          ),
+                        },
+                      ],
                     }}
-                    replaceStyles={{
-                      button: { ...styles.addButton, marginHorizontal: 5 },
-                      textButton: {},
-                    }}
-                    touchableOpacity
-                  />
+                  >
+                    <Button
+                      label={medication.name || translations.unknown}
+                      handlePress={() => {
+                        animateButtonPress();
+                        setSearchValue("");
+                        setSearchMedicationsList([]);
+                        setMedication(medication);
+                      }}
+                      replaceStyles={{
+                        button: { ...styles.addButton, marginHorizontal: 5 },
+                        textButton: {},
+                      }}
+                      touchableOpacity
+                    />
+                  </Animated.View>
                 );
               })}
           </ScrollView>
@@ -348,13 +545,15 @@ const MedicationScheduler: React.FC = () => {
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              underlineColor="#00a69d"
-              activeUnderlineColor="#00a69d"
               value={dose}
               onChangeText={setDose}
-              label={interpolateMessage(translations.dosagePlaceholder, [
+              placeholder={interpolateMessage(translations.dosagePlaceholder, [
                 "100 ",
               ])}
+              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              theme={inputTheme}
             />
           </View>
 
@@ -368,7 +567,10 @@ const MedicationScheduler: React.FC = () => {
                     styles.dosageButton,
                     dosageType === type && styles.selectedDosageButton,
                   ]}
-                  onPress={() => setDosageType(type)}
+                  onPress={() => {
+                    animateButtonPress();
+                    setDosageType(type);
+                  }}
                 >
                   <Text
                     style={
@@ -389,18 +591,28 @@ const MedicationScheduler: React.FC = () => {
           <Text style={styles.label}>{translations.daysText}:</Text>
           <View style={styles.daysContainer}>
             {Object.entries(daysOfWeek).map(([key, day], index) => (
-              <ButtonComponent
-                label={day}
-                replaceStyles={{
-                  button: styles.dayButton,
-                  textButton: Object.values(selectedDays || {}).includes(day)
-                    ? styles.selectedDayText
-                    : styles.dayButtonText,
-                }}
-                handlePress={() => toggleDay(key as DayOfWeek)}
-                forceReplaceStyles
+              <Pressable
                 key={index}
-              />
+                style={[
+                  styles.dayButton,
+                  Object.values(selectedDays || {}).includes(day) &&
+                    styles.selectedDay,
+                ]}
+                onPress={() => {
+                  animateButtonPress();
+                  toggleDay(key as DayOfWeek);
+                }}
+              >
+                <Text
+                  style={
+                    Object.values(selectedDays || {}).includes(day)
+                      ? styles.selectedDayText
+                      : styles.dayButtonText
+                  }
+                >
+                  {day}
+                </Text>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -408,15 +620,27 @@ const MedicationScheduler: React.FC = () => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{translations.hour}:</Text>
           {Platform.OS !== "web" && (
-            <ButtonComponent
-              label={time.toTimeString().slice(0, 5)}
-              handlePress={() => setShowTimePicker(true)}
-              replaceStyles={{
-                button: styles.timeButton,
-                textButton: styles.timeButtonText,
-              }}
-              forceReplaceStyles
-              touchableOpacity
+            <TextInput
+              style={styles.input}
+              value={time.toTimeString().slice(0, 5)}
+              onFocus={() => setShowTimePicker(true)}
+              showSoftInputOnFocus={false}
+              placeholder={translations.selectTime}
+              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              theme={inputTheme}
+              right={
+                <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
+                  <TextInput.Icon 
+                    icon="clock-outline" 
+                    onPress={() => {
+                      animateIconRotation();
+                      setShowTimePicker(true);
+                    }}
+                  />
+                </Animated.View>
+              }
             />
           )}
           {Platform.OS !== "web" && showTimePicker && (
@@ -438,7 +662,11 @@ const MedicationScheduler: React.FC = () => {
                 newTime.setMinutes(minutes);
                 setTime(newTime);
               }}
-              style={styles.timeButton}
+              style={{
+                ...styles.timeButton,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
             />
           )}
         </View>
@@ -448,11 +676,13 @@ const MedicationScheduler: React.FC = () => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            underlineColor="#00a69d"
-            activeUnderlineColor="#00a69d"
-            value={intervalHours ? intervalHours.toString() : ""}
-            onChangeText={(text) => setIntervalHours(Number(text))}
-            label={translations.intervalHoursPlaceholder}
+            value={intervalHours.toString()}
+            onChangeText={(text) => setIntervalHours(Number(text) || 0)}
+            placeholder={translations.intervalHoursPlaceholder}
+            mode="flat"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            theme={inputTheme}
           />
         </View>
 
@@ -461,11 +691,13 @@ const MedicationScheduler: React.FC = () => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            underlineColor="#00a69d"
-            activeUnderlineColor="#00a69d"
             value={stock ? stock.toString() : ""}
             onChangeText={(text) => setStock(Number(text))}
-            label={translations.stockPlaceholder}
+            placeholder={translations.stockPlaceholder}
+            mode="flat"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            theme={inputTheme}
           />
         </View>
 
@@ -480,7 +712,10 @@ const MedicationScheduler: React.FC = () => {
                   Object.values(urgency)[0] === label &&
                     styles.selectedUrgencyButton,
                 ]}
-                onPress={() => setUrgency({ [key as UrgencyType]: label })}
+                onPress={() => {
+                  animateButtonPress();
+                  setUrgency({ [key as UrgencyType]: label });
+                }}
               >
                 <Text
                   style={
@@ -496,25 +731,33 @@ const MedicationScheduler: React.FC = () => {
           </View>
         </View>
 
-        <ButtonComponent
-          label={["+", translations.addSchedule].join(" ")}
-          handlePress={handleAddSchedule}
-          replaceStyles={{
-            button: styles.addButton,
-            textButton: styles.addButtonText,
-          }}
-          forceReplaceStyles
-          touchableOpacity
-          disabled={
-            !medication ||
-            !dose ||
-            !(Object.keys(selectedDays || {}).length > 0) ||
-            intervalHours <= 0 ||
-            !urgency
-          }
-        />
-      </ScrollView>
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <Button
+            label={isSubmitting ? "..." : ["+", translations.addSchedule].join(" ")}
+            handlePress={handleAddSchedule}
+            replaceStyles={{
+              button: [
+                styles.addButton,
+                isSubmitting && { opacity: 0.7 }
+              ],
+              textButton: styles.addButtonText,
+            }}
+            forceReplaceStyles
+            touchableOpacity
+            disabled={
+              isSubmitting ||
+              !medication ||
+              !dose ||
+              !(Object.keys(selectedDays || {}).length > 0) ||
+              intervalHours <= 0 ||
+              !urgency
+            }
+          />
+        </Animated.View>
+        </View>
+      </Animated.View>
     </ScrollView>
+    </Animated.View>
   );
 };
 /*
