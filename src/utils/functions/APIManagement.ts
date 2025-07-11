@@ -12,7 +12,7 @@ import { stringifyData } from "./appManagement";
  */
 export const fetchOptions = <T = RequestBody>(
   method: "POST" | "GET",
-  body?: T
+  body?: T,
 ) => ({
   method,
   headers: {
@@ -21,7 +21,6 @@ export const fetchOptions = <T = RequestBody>(
   },
   body: stringifyData(body) ?? undefined,
 });
-
 
 /**
  * Constructs a full API route URL by appending the given route to the base API URL.

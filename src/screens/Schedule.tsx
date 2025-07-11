@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -8,6 +9,7 @@ import {
   ResponseGetUserPatients,
   ResponseGetAllMedications,
   TypeBodyGetAllMedications,
+  MedicationApi,
 } from "@typesAPI";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
@@ -15,57 +17,63 @@ import { useNavigation } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
 import { TextInput, Text, Searchbar } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
-import RenderScheduleItemMemo from "@components/Schedule/RenderSchedule";
 import { DayOfWeek, DaysOfWeek } from "@types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useStylesScheduleMedication } from "@styles/screens/stylesScheduleMedication";
 import { View, Platform, Pressable, ScrollView } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { log, getRouteAPI, fetchOptions, interpolateMessage } from "@utils";
+import {
+  log,
+  getRouteAPI,
+  fetchOptions,
+  interpolateMessage,
+  typeLanguages,
+} from "@utils";
 
 type ScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Schedule"
 >;
 
-type Medication = { _id: string; name: string };
-
 const MedicationScheduler: React.FC = () => {
   const { styles } = useStylesScheduleMedication();
   const navigation = useNavigation<ScheduleScreenNavigationProp>();
   const { userData } = useUserContext();
-  const { language, translations } = useLanguage();
+  const { language, t } = useLanguage();
 
   const daysOfWeek: Record<DayOfWeek, string> = {
-    monday: translations.days.monday,
-    tuesday: translations.days.tuesday,
-    wednesday: translations.days.wednesday,
-    thursday: translations.days.thursday,
-    friday: translations.days.friday,
-    saturday: translations.days.saturday,
-    sunday: translations.days.sunday,
+    monday: t("days.monday" as keyof typeLanguages),
+    tuesday: t("days.tuesday" as keyof typeLanguages),
+    wednesday: t("days.wednesday" as keyof typeLanguages),
+    thursday: t("days.thursday" as keyof typeLanguages),
+    friday: t("days.friday" as keyof typeLanguages),
+    saturday: t("days.saturday" as keyof typeLanguages),
+    sunday: t("days.sunday" as keyof typeLanguages),
   };
-  const dosageTypes: string[] = translations.dosageTypes;
+  const dosageTypes: string[] = JSON.parse(t("dosageTypes")) as string[];
 
   const [dose, setDose] = useState<string>("");
   const [time, setTime] = useState<Date>(new Date());
   const [intervalHours, setIntervalHours] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
   const [urgency, setUrgency] = useState<Partial<Record<UrgencyType, string>>>({
-    low: translations.urgency.low,
+    low: t("urgency.low" as keyof typeLanguages),
   });
   const [patients, setPatients] = useState<User[]>([]);
-  const [schedules, setSchedules] = useState<MedicationUser[]>([]);
-  const [medication, setMedication] = useState<Medication | null>(null);
+  const [, setSchedules] = useState<MedicationUser[]>([]);
+  const [medication, setMedication] = useState<Partial<MedicationApi> | null>(
+    null,
+  );
   const [dosageType, setDosageType] = useState<string>("pills");
   const [searchValue, setSearchValue] = useState<string>("");
   const [selectedDays, setSelectedDays] = useState<DaysOfWeek | null>(null);
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
   const [searchMedicationsList, setSearchMedicationsList] = useState<
-    Medication[]
+    Partial<MedicationApi>[]
   >([]);
-  const [medicationsList, setMedicationsList] = useState<Medication[]>();
-  const [_, setKeysPressed] = useState<string[]>([]); //! Delete
+  const [medicationsList, setMedicationsList] =
+    useState<Partial<MedicationApi>[]>();
+  const [, setKeysPressed] = useState<string[]>([]); //! Delete
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
 
   useEffect(() => {
@@ -100,7 +108,7 @@ const MedicationScheduler: React.FC = () => {
 
       const data: ResponseGetUserPatients = await fetch(
         getRouteAPI("/getUserPatients"),
-        fetchOptions("POST", { userId: userData.userId })
+        fetchOptions("POST", { userId: userData.userId }),
       ).then((res) => res.json());
 
       if (data.error) {
@@ -124,7 +132,7 @@ const MedicationScheduler: React.FC = () => {
             "_id",
             language !== "en" ? `name_${language}` : "name",
           ],
-        })
+        }),
       ).then((res) => res.json());
 
       setMedicationsList(data.medications);
@@ -136,29 +144,7 @@ const MedicationScheduler: React.FC = () => {
       document?.removeEventListener("keydown", handler);
       setKeysPressed([]);
     };
-  }, [userData]);
-
-  const handleAddSchedule = useCallback(() => {
-    const medicationAPI = medicationsList?.find(
-      (med) => med._id === medication?._id
-    ) as Medication;
-    const newSchedule: MedicationUser = {
-      medicationId: medication?._id || "",
-      name: medicationAPI?.name || translations.unknown,
-      userId: selectedPatient?.userId || "",
-      dosage: dosageType,
-      startHour: time.toTimeString().slice(0, 5),
-      days: [...Object.keys(selectedDays || {})],
-      grams: parseFloat(dose.split(" ")[0]),
-      intervalHours,
-      stock,
-      urgency: (Object.values(urgency)[0] ||
-        translations.urgency.low) as UrgencyType,
-    };
-
-    setSchedules((prev) => [...prev, newSchedule]);
-    resetForm();
-  }, [medication, dose, selectedDays, time, dosageType]);
+  }, [userData, language, navigation]);
 
   const resetForm = useCallback(() => {
     setMedication(null);
@@ -168,9 +154,47 @@ const MedicationScheduler: React.FC = () => {
     setDosageType("pastillas");
   }, []);
 
+  const handleAddSchedule = useCallback(() => {
+    const medicationAPI = medicationsList?.find(
+      (med) => String(med._id) === String(medication?._id),
+    );
+    const newSchedule: MedicationUser = {
+      medicationId: String(medication?._id || ""),
+      name: (medicationAPI?.name as string) || t("unknown"),
+      userId: selectedPatient?.userId || "",
+      dosage: dosageType,
+      startHour: time.toTimeString().slice(0, 5),
+      days: [...Object.keys(selectedDays || {})],
+      grams: parseFloat(dose.split(" ")[0]),
+      intervalHours,
+      stock,
+      urgency: (Object.values(urgency)[0] ||
+        t("urgency.low" as keyof typeLanguages)) as UrgencyType,
+    };
+
+    setSchedules((prev) => [...prev, newSchedule]);
+    resetForm();
+  }, [
+    medication,
+    t,
+    dose,
+    selectedDays,
+    time,
+    dosageType,
+    intervalHours,
+    stock,
+    urgency,
+    medicationsList,
+    resetForm,
+    selectedPatient,
+  ]);
+
   const toggleDay = (day: DayOfWeek) => {
     setSelectedDays((prev) => {
-      if (!prev) return { [day]: translations.days[day] } as DaysOfWeek;
+      if (!prev)
+        return {
+          [day]: t(("days." + day) as keyof typeLanguages),
+        } as DaysOfWeek;
       log(prev, "prevSelectedDays", day);
       if (Object.keys(prev).includes(day)) {
         log(prev);
@@ -180,14 +204,14 @@ const MedicationScheduler: React.FC = () => {
       }
       return {
         ...prev,
-        [day]: translations.days[day],
+        [day]: t(("days." + day) as keyof typeLanguages),
       };
     });
   };
 
   const handleTimeChange = (
     event: DateTimePickerEvent,
-    selectedTime?: Date
+    selectedTime?: Date,
   ) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
@@ -195,39 +219,30 @@ const MedicationScheduler: React.FC = () => {
 
   const getAgeText = useCallback(
     (age: number | string): string => {
-      const ageText = translations?.age || "Age";
-      return `${ageText}: ${age} ${translations?.years || "years"}`;
+      const ageText = t("age") || "Age";
+      return `${ageText}: ${age} ${t("years") || "years"}`;
     },
-    [language, translations]
-  );
-
-  const deleteSchedule = useCallback(
-    (scheduleId: string) => {
-      setSchedules((prev) =>
-        prev.filter((s) => (s._id as unknown) !== scheduleId)
-      );
-    },
-    [setSchedules]
+    [t],
   );
 
   const handleSearchMedication = useCallback(() => {
     if (searchValue.length < 3) return;
 
     const found = medicationsList?.filter((med) =>
-      med.name.toLowerCase().includes(searchValue.toLowerCase())
+      med.name?.toLowerCase().includes(searchValue.toLowerCase()),
     );
     log(found?.length, "foundMedications", searchValue);
     if (found) setSearchMedicationsList(found);
     else setSearchMedicationsList([]);
-  }, [setSearchValue, searchValue, medicationsList]);
+  }, [searchValue, medicationsList]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>{translations.medicationsManagement}</Text>
+        <Text style={styles.title}>{t("medicationsManagement")}</Text>
 
         <View style={styles.patientSelector}>
-          <Text style={styles.patientLabel}>{translations.patientText}:</Text>
+          <Text style={styles.patientLabel}>{t("patientText")}:</Text>
           <View style={styles.patientButtons}>
             {patients.map((patient) => (
               <Pressable
@@ -246,7 +261,7 @@ const MedicationScheduler: React.FC = () => {
                       : styles.patientButtonText
                   }
                 >
-                  {patient.name || translations.noNameGiven}
+                  {patient.name || t("noNameGiven")}
                 </Text>
               </Pressable>
             ))}
@@ -256,16 +271,17 @@ const MedicationScheduler: React.FC = () => {
         {selectedPatient && (
           <View style={styles.patientInfo}>
             <Text style={styles.patientDetail}>
-              {translations.name}: {selectedPatient?.name || "N/A"}
+              {t("namePatient", {
+                interpolateMessage: selectedPatient?.name || t("unknown"),
+              })}
             </Text>
             <Text style={styles.patientDetail}>
               {getAgeText(selectedPatient?.age || "N/A")}
             </Text>
-            {selectedPatient?.conditions &&
+            {selectedPatient.conditions &&
               selectedPatient.conditions.length > 0 && (
                 <Text style={styles.patientDetail}>
-                  {translations.conditions}:{" "}
-                  {selectedPatient?.conditions.join(", ")}
+                  {t("conditions")}: {selectedPatient?.conditions?.join(", ")}
                 </Text>
               )}
           </View>
@@ -278,12 +294,12 @@ const MedicationScheduler: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.medicationText}:</Text>
+          <Text style={styles.label}>{t("medicationText")}:</Text>
           {!medication && (
             <Searchbar
               style={styles.input}
               value={searchValue}
-              placeholder={translations.medicationPlaceholder}
+              placeholder={t("medicationPlaceholder")}
               onChangeText={setSearchValue}
               onIconPress={handleSearchMedication}
               autoCorrect={false}
@@ -302,7 +318,7 @@ const MedicationScheduler: React.FC = () => {
                 <View style={styles.clearMedicationChildren}>
                   <Text style={styles.clearMedicationText}>X</Text>
                   <Text style={styles.clearMedicationText}>
-                    {medication?.name || translations.unknown}
+                    {medication?.name || t("unknown")}
                   </Text>
                 </View>
               }
@@ -320,12 +336,12 @@ const MedicationScheduler: React.FC = () => {
             style={styles.medicationScroll}
           >
             {searchMedicationsList.length > 0 &&
-              searchMedicationsList.map((medication) => {
+              searchMedicationsList.map((medication, index) => {
                 log(medication, "searchMedicationsList");
                 return (
                   <ButtonComponent
-                    key={medication._id}
-                    label={medication.name || translations.unknown}
+                    key={(medication._id as unknown as string) || index}
+                    label={medication.name || t("unknown")}
                     handlePress={() => {
                       setSearchValue("");
                       setSearchMedicationsList([]);
@@ -344,7 +360,7 @@ const MedicationScheduler: React.FC = () => {
 
         <View style={styles.doseContainer}>
           <View style={styles.doseInputGroup}>
-            <Text style={styles.label}>{translations.dosage}:</Text>
+            <Text style={styles.label}>{t("dosage")}:</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -352,14 +368,12 @@ const MedicationScheduler: React.FC = () => {
               activeUnderlineColor="#00a69d"
               value={dose}
               onChangeText={setDose}
-              label={interpolateMessage(translations.dosagePlaceholder, [
-                "100 ",
-              ])}
+              label={interpolateMessage(t("dosagePlaceholder"), ["100 "])}
             />
           </View>
 
           <View style={styles.dosageTypeGroup}>
-            <Text style={styles.label}>{translations.type}:</Text>
+            <Text style={styles.label}>{t("type")}:</Text>
             <View style={styles.dosageButtons}>
               {dosageTypes.map((type, index) => (
                 <Pressable
@@ -386,7 +400,7 @@ const MedicationScheduler: React.FC = () => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.daysText}:</Text>
+          <Text style={styles.label}>{t("daysText")}:</Text>
           <View style={styles.daysContainer}>
             {Object.entries(daysOfWeek).map(([key, day], index) => (
               <ButtonComponent
@@ -406,7 +420,7 @@ const MedicationScheduler: React.FC = () => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.hour}:</Text>
+          <Text style={styles.label}>{t("hour")}:</Text>
           {Platform.OS !== "web" && (
             <ButtonComponent
               label={time.toTimeString().slice(0, 5)}
@@ -444,7 +458,7 @@ const MedicationScheduler: React.FC = () => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.intervalHours}:</Text>
+          <Text style={styles.label}>{t("intervalHours")}:</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -452,12 +466,12 @@ const MedicationScheduler: React.FC = () => {
             activeUnderlineColor="#00a69d"
             value={intervalHours ? intervalHours.toString() : ""}
             onChangeText={(text) => setIntervalHours(Number(text))}
-            label={translations.intervalHoursPlaceholder}
+            label={t("intervalHoursPlaceholder")}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.stock}:</Text>
+          <Text style={styles.label}>{t("stock")}:</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -465,14 +479,16 @@ const MedicationScheduler: React.FC = () => {
             activeUnderlineColor="#00a69d"
             value={stock ? stock.toString() : ""}
             onChangeText={(text) => setStock(Number(text))}
-            label={translations.stockPlaceholder}
+            label={t("stockPlaceholder")}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.urgencyText}:</Text>
+          <Text style={styles.label}>{t("urgencyText")}:</Text>
           <View style={styles.urgencyButtons}>
-            {Object.entries(translations.urgency).map(([key, label]) => (
+            {Object.entries(
+              JSON.parse(t("urgency")) as Record<UrgencyType, string>,
+            ).map(([key, label]) => (
               <Pressable
                 key={key}
                 style={[
@@ -497,7 +513,7 @@ const MedicationScheduler: React.FC = () => {
         </View>
 
         <ButtonComponent
-          label={["+", translations.addSchedule].join(" ")}
+          label={["+", t("addSchedule")].join(" ")}
           handlePress={handleAddSchedule}
           replaceStyles={{
             button: styles.addButton,
@@ -517,32 +533,5 @@ const MedicationScheduler: React.FC = () => {
     </ScrollView>
   );
 };
-/*
-  <ScrollView
-        style={styles.schedulesContainer}
-        contentContainerStyle={styles.schedulesContent}
-      >
-        <Text style={styles.sectionTitle}>
-          {translations.schedulesScheduled}
-        </Text>
-        {schedules.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {translations.schedulesNotScheduled}
-            </Text>
-            <Text style={styles.emptyStateSubtext}>
-              {translations.addMedicationsOnTop}
-            </Text>
-          </View>
-        ) : (
-          <RenderScheduleItemMemo
-            data={schedules}
-            styles={styles}
-            deleteSchedule={deleteSchedule}
-          />
-        )}
-      </ScrollView>
-
- */
 
 export default MedicationScheduler;

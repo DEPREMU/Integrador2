@@ -1,5 +1,5 @@
 import { Falsy } from "react-native";
-import { MedicationApi, MedicationUser, User, UserConfig } from "./Database";
+import { MedicationApi, User, UserConfig } from "./Database";
 
 export type RoutesAPI =
   | "/login"
@@ -100,7 +100,7 @@ export type TypeBodyGetUserMedications = {
 };
 
 export type ResponseGetAllMedications = {
-  medications: any[];
+  medications: Partial<MedicationApi>[];
   error?: { message: string; timestamp: string };
 };
 

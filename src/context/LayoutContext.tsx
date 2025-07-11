@@ -1,8 +1,14 @@
 import { Dimensions, Platform, ScaledSize } from "react-native";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface LayoutProviderProps {
-  children: any;
+  children: ReactNode;
 }
 
 /**
@@ -91,7 +97,7 @@ export const useResponsiveLayout = () => {
   const context = useContext(LayoutContext);
   if (!context) {
     throw new Error(
-      "useResponsiveLayout debe ser usado dentro de un LayoutProvider"
+      "useResponsiveLayout debe ser usado dentro de un LayoutProvider",
     );
   }
   return context;

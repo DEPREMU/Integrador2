@@ -3,7 +3,7 @@ import React from "react";
 import burger from "@hooks/components/Burger";
 import { View, Text, Image } from "react-native";
 import { APP_ICON, APP_NAME } from "@utils";
-import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
+import { useStylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
 
 /**
  * HeaderComponent renders a header bar with a menu toggle button, app icon, and app name.
@@ -15,7 +15,7 @@ import { stylesHeaderComponent } from "@styles/components/stylesHeaderComponent"
  * <HeaderComponent />
  */
 const HeaderComponent: React.FC = () => {
-  const styles = stylesHeaderComponent();
+  const styles = useStylesHeaderComponent();
 
   const { burgerComponent, toggleMenu, isOpen: menuVisible } = burger();
 

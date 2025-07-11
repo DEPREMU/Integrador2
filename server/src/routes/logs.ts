@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 
 export const logsHandler = async (
   req: Request<{}, {}, RequestLogs>,
-  res: Response
+  res: Response,
 ) => {
   const { log, timestamp } = req.body;
 

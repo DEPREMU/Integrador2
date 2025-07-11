@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Text,
   Pressable,
@@ -35,7 +36,7 @@ interface ButtonComponentProps {
  */
 const areEqual = (
   prev: ButtonComponentProps,
-  next: ButtonComponentProps
+  next: ButtonComponentProps,
 ): boolean => {
   return (
     prev.disabled === next.disabled &&
@@ -64,7 +65,7 @@ const areEqual = (
  */
 const shallowEqual = (
   obj1?: Record<string, any>,
-  obj2?: Record<string, any>
+  obj2?: Record<string, any>,
 ): boolean => {
   if (obj1 === obj2) return true;
   if (!obj1 || !obj2) return false;
@@ -73,7 +74,7 @@ const shallowEqual = (
   const keys2 = Object.keys(obj2);
   if (keys1.length !== keys2.length) return false;
 
-  for (let key of keys1) {
+  for (const key of keys1) {
     if (obj1[key] !== obj2[key]) return false;
   }
   return true;

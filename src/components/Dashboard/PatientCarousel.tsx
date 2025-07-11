@@ -36,9 +36,19 @@ type NavProp = NativeStackNavigationProp<RootStackParamList, "Dashboard">;
  * @property {(title: string, body: React.ReactNode, buttons: React.ReactNode) => void} openModal - Function to open the modal.
  * @property {() => void} closeModal - Function to close the modal.
  */
+
+export type stylesPatientCarousel =
+  | "listContent"
+  | "addCard"
+  | "addButton"
+  | "image"
+  | "closeButton"
+  | "closeText"
+  | "marginRight";
+
 interface PatientCarouselProps {
   data: Patient[];
-  styles: any;
+  styles: Record<stylesPatientCarousel, object>;
   translations: {
     addPatient: string;
     addPatientForm: string;
@@ -47,7 +57,7 @@ interface PatientCarouselProps {
   openModal: (
     title: string,
     body: React.ReactNode,
-    buttons: React.ReactNode
+    buttons: React.ReactNode,
   ) => void;
   closeModal: () => void;
 }
@@ -106,16 +116,11 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
                         button: styles.closeButton,
                         textButton: styles.closeText,
                       }}
-                    />
+                    />,
                   )
                 }
                 customStyles={{ button: styles.addButton, textButton: {} }}
-                children={
-                  <Image
-                    source={ADD_ICON}
-                    style={{ width: 32, height: 32, tintColor: "#fff" }}
-                  />
-                }
+                children={<Image source={ADD_ICON} style={styles.image} />}
               />
             </View>
           );
@@ -126,7 +131,7 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
             photoUrl={item.photo}
             pills={item.pills}
             onPress={() => navigation.replace("Login")}
-            style={{ marginRight: 15 }}
+            style={styles.marginRight}
           />
         );
       }}

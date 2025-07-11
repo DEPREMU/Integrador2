@@ -20,16 +20,13 @@ import { PAST_IMA, SLOGAN_MSGS } from "@utils";
  */
 const HomeScreen: React.FC = () => {
   const { stylesHomeScreen: styles } = stylesHomeScreen();
-  const { translations } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <View style={styles.viewContainer}>
       <HeaderComponent />
       <CarouselComponent items={SLOGAN_MSGS} />
-      <CardComponent
-        title="Capsy"
-        description={translations.capsysDescription}
-      />
+      <CardComponent title="Capsy" description={t("capsysDescription")} />
       <Image source={PAST_IMA} style={styles.image} />
     </View>
   );

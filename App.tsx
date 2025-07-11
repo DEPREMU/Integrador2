@@ -1,4 +1,5 @@
 import React from "react";
+import "./src/utils/translates/i18n";
 import AppProviders from "@context/AppProviders";
 import AppNavigator from "@navigation/AppNavigator";
 

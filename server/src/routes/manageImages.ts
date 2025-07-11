@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { __dirname } from "../config.js";
+import { ImagePath } from "../types/Database.js";
+import { getDatabase } from "../database/functions.js";
 import { Request, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
-import { __dirname, __filename } from "../config.js";
-import { getCollection, getDatabase } from "../database/functions.js";
-import { ImagePath } from "../types/Database.js";
 
 const IMAGES_DIR = path.join(__dirname, "..", "..", "images");
 
@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
 const imageFilter = (
   _req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
@@ -102,7 +102,7 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
       .collection("users")
       .updateOne(
         { userId: body.userId },
-        { $set: { imageId: fileInfos[0].path } }
+        { $set: { imageId: fileInfos[0].path } },
       ),
   ]);
 

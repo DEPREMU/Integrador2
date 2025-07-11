@@ -4,7 +4,6 @@ export const KEYS_STORAGE = {
   SESSION_EXPIRY: "_sessionExpiry",
   TEST1: "_test1",
   TEST2: "@test2",
-  NOTIFICATIONS: "@notifications",
 } as const;
 
 export type KeyStorageKeys = keyof typeof KEYS_STORAGE;

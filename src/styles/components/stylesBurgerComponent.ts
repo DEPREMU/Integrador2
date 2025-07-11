@@ -1,7 +1,7 @@
 import { useResponsiveLayout } from "@context/LayoutContext";
 import { StatusBar, StyleSheet } from "react-native";
 
-export const stylesBurger = () => {
+export const useStylesBurger = () => {
   const { height, width, isPhone } = useResponsiveLayout();
   const widthLine = isPhone ? 50 : 55;
 
@@ -35,6 +35,9 @@ export const stylesBurger = () => {
       height: height + (StatusBar?.currentHeight || 0),
       width,
       cursor: "auto",
+    },
+    top18: {
+      top: 18,
     },
   });
 

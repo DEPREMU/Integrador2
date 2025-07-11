@@ -10,7 +10,7 @@ import { fetchOptions, getRouteAPI } from "./APIManagement";
  * - In preview mode, sends the log to a server endpoint.
  * - In production mode, does nothing.
  */
-export async function logError(...args: any[]): Promise<void> {
+export async function logError(...args: unknown[]): Promise<void> {
   const env = process.env.NODE_ENV;
   const isDev = env === "development" || __DEV__;
   const isPreview = process.env.NODE_ENV === "preview";
@@ -34,7 +34,7 @@ export async function logError(...args: any[]): Promise<void> {
       fetchOptions("POST", {
         log: errorMessage,
         timestamp: date.toISOString(),
-      })
+      }),
     );
   }
 }
@@ -49,7 +49,7 @@ export async function logError(...args: any[]): Promise<void> {
  * - In preview mode, sends the log to a server endpoint.
  * - In production mode, does nothing.
  */
-export async function log(...args: any[]): Promise<void> {
+export async function log(...args: unknown[]): Promise<void> {
   const env = process.env.NODE_ENV;
   const isDev = env === "development" || __DEV__;
   const isPreview = process.env.NODE_ENV === "preview";
@@ -72,7 +72,7 @@ export async function log(...args: any[]): Promise<void> {
       fetchOptions("POST", {
         log: message,
         timestamp: date.toISOString(),
-      })
+      }),
     );
   }
 }

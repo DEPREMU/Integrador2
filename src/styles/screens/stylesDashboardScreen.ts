@@ -14,7 +14,7 @@ import { useResponsiveLayout } from "@context/LayoutContext";
  * const { stylesDashboardScreen, height, width } = stylesDashboardScreen();
  * <View style={stylesDashboardScreen.container}>...</View>
  */
-const stylesDashboardScreen = () => {
+const useStylesDashboardScreen = () => {
   const { height, width, isPhone, isTablet } = useResponsiveLayout();
 
   const userImgSize = isPhone ? 100 : isTablet ? 100 : 100;
@@ -99,6 +99,8 @@ const stylesDashboardScreen = () => {
       fontSize: 16,
       fontWeight: "600",
     },
+    image: { width: 32, height: 32, tintColor: "#fff" },
+    marginRight: { marginRight: 15 },
   });
 
   return {
@@ -108,4 +110,4 @@ const stylesDashboardScreen = () => {
   };
 };
 
-export default stylesDashboardScreen;
+export default useStylesDashboardScreen;

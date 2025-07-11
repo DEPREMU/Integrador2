@@ -8,11 +8,11 @@ import { useResponsiveLayout } from "@/context/LayoutContext";
  * @returns {import('react-native').StyleSheet.NamedStyles<any>} The styles object for the Card component.
  *
  * @example
- * const styles = stylesCardComponent();
+ * const styles = useStylesCardComponent();
  * <View style={styles.card}>...</View>
  */
-export const stylesCardComponent = () => {
-  const { isPhone, isWeb, width: screenWidth } = useResponsiveLayout(); 
+export const useStylesCardComponent = () => {
+  const { isPhone } = useResponsiveLayout();
 
   return StyleSheet.create({
     card: {
@@ -21,7 +21,7 @@ export const stylesCardComponent = () => {
       padding: 16,
       marginVertical: 10,
       marginHorizontal: isPhone ? 10 : 20,
-      width: isPhone ? "80%" : 800, 
+      width: isPhone ? "80%" : 800,
       alignSelf: "center",
       flexDirection: "row",
       alignItems: "flex-start",

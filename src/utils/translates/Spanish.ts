@@ -1,6 +1,7 @@
+/* eslint-disable quotes */
 import { typeLanguages } from "./typesTranslations";
 
-export const es: typeLanguages = {
+const es: typeLanguages = {
   addMedication: "Agregar medicamento",
   addPatient: "Agregar Paciente",
   addPatientForm: "Aquí estaría el formulario para agregar un paciente",
@@ -40,7 +41,7 @@ export const es: typeLanguages = {
     "Hemos enviado un correo de verificación a tu dirección. Por favor, revisa tu bandeja de entrada y verifica tu correo para completar el proceso de registro.",
   wednesday: "Miércoles",
   welcome: "Bienvenido",
-  welcomeUser: "Bienvenido, {0}!",
+  welcomeUser: "Bienvenido, {{name}}!",
   emailPlaceholder: "Correo electrónico",
   passwordPlaceholder: "Contraseña",
   loginButton: "Iniciar Sesión",
@@ -84,12 +85,8 @@ export const es: typeLanguages = {
     saturday: "Sa",
     sunday: "Do",
   },
-  dosageTypes: ["pastillas", "mg", "unidades"],
-  urgency: {
-    low: "Baja",
-    medium: "Media",
-    high: "Alta",
-  },
+  dosageTypes: '["pastillas", "mg", "unidades"]',
+  urgency: '{"low": "Baja","medium": "Media","high": "Alta"}',
   unknown: "Desconocido",
   medicationPlaceholder: "P. ej. Loratadina",
   clearMedication: "Limpiar Medicamento",
@@ -99,17 +96,7 @@ export const es: typeLanguages = {
   stock: "Stock",
   stockPlaceholder: "Ej. 30",
   urgencyText: "Urgencia",
-  settings: "Ajustes",
-  save: "Guardar",
-  enableNotifications: "Activar notificaciones",
-  uploadImage: "Subir imagen",
-  description: "Descripción",
-  caregiver: "Cuidador",
-  patient: "Paciente",
-  both: "Ambos",
-  fullName: "Nombre completo",
-  mumberPhone: "Número de teléfono",
-  userImage: "Imagen de usuario",
-  noImage: "Sin imagen",
-  role: "Rol",
-};
+  namePatient: "Nombre: {{interpolateMessage}}",
+} as const;
+
+export default es;

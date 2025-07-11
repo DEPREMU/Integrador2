@@ -19,7 +19,7 @@ interface ModalContextProps {
   openModal: (title: string, body: ReactNode, buttons: ReactNode) => void;
   closeModal: () => void;
   setCustomStyles: React.Dispatch<
-    React.SetStateAction<Record<StylesModal, any> | undefined>
+    React.SetStateAction<Record<StylesModal, object> | undefined>
   >;
 }
 
@@ -62,7 +62,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [buttons, setButtons] = useState<ReactNode>(null);
   const [hideModal, setHideModal] = useState<boolean>(true);
   const [customStyles, setCustomStyles] = useState<
-    Record<StylesModal, any> | undefined
+    Record<StylesModal, object> | undefined
   >(undefined);
 
   /**
@@ -92,7 +92,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const openModal = (
     modalTitle: string,
     modalBody: ReactNode | string,
-    modalButtons: ReactNode
+    modalButtons: ReactNode,
   ) => {
     setIsOpen((prev) => {
       if (prev) return prev;

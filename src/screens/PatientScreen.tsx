@@ -4,7 +4,7 @@ import DayCarousel from "@components/PatientScreen/DayCarousel";
 import { Text, View } from "react-native";
 import HeaderComponent from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
-import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
+import { useStylesPatientScreen } from "@styles/screens/stylesPatientScreen";
 
 /**
  * PatientScreen displays the header, patient information,
@@ -15,21 +15,19 @@ import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
  * @returns {JSX.Element}
  */
 const PatientScreen: React.FC = () => {
-  const styles = stylesPatientScreen();
-  const { translations } = useLanguage();
+  const { t } = useLanguage();
+  const styles = useStylesPatientScreen();
 
   return (
     <View style={styles.container}>
       <HeaderComponent />
       <View style={styles.patientInfo}>
-        <Text style={styles.patientName}>{translations.patientName}</Text>
-        <Text style={styles.patientDescription}>
-          {translations.patientDescription}
-        </Text>
+        <Text style={styles.patientName}>{t("patientName")}</Text>
+        <Text style={styles.patientDescription}>{t("patientDescription")}</Text>
       </View>
-      <View style={{ alignItems: "flex-start" }}>
+      <View style={styles.buttonContainer}>
         <Button
-          label={translations.addMedication}
+          label={t("addMedication")}
           handlePress={() => {}}
           replaceStyles={{
             button: styles.button,

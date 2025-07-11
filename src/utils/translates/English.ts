@@ -1,6 +1,7 @@
+/* eslint-disable quotes */
 import { typeLanguages } from "./typesTranslations";
 
-export const en: typeLanguages = {
+const en: typeLanguages = {
   addMedication: "Add medication",
   addPatient: "Add Patient",
   addPatientForm: "Here would be the form to add a patient",
@@ -39,7 +40,7 @@ export const en: typeLanguages = {
   verifyEmail:
     "We have sent a verification email to your address. Please check your inbox and verify your email to complete the registration process.",
   wednesday: "Wednesday",
-  welcomeUser: "Welcome, {0}!",
+  welcomeUser: "Welcome, {{name}}!",
   welcome: "Welcome to MediTime",
   emailPlaceholder: "Email",
   passwordPlaceholder: "Password",
@@ -84,12 +85,8 @@ export const en: typeLanguages = {
     saturday: "Sa",
     sunday: "Su",
   },
-  dosageTypes: ["pills", "mg", "units"],
-  urgency: {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-  },
+  dosageTypes: '["pills", "mg", "units"]',
+  urgency: '{"low": "Low","medium": "Medium","high": "High",}',
   unknown: "Unknown",
   medicationPlaceholder: "E.g. Loratadine",
   clearMedication: "Clear Medication",
@@ -99,17 +96,7 @@ export const en: typeLanguages = {
   stock: "Stock",
   stockPlaceholder: "E.g. 30",
   urgencyText: "Urgency",
-  settings: "Settings",
-  save: "Save",
-  enableNotifications: "Enable notifications",
-  uploadImage: "Upload image",
-  description: "Description",
-  caregiver: "Caregiver",
-  patient: "Patient",
-  both: "Both",
-  fullName: "Full Name",
-  mumberPhone: "Phone Number",
-  userImage: "User Image",
-  noImage: "No Image",
-  role: "Role",
-};
+  namePatient: "Name: {{interpolateMessage}}",
+} as const;
+
+export default en;

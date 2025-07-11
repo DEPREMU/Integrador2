@@ -8,7 +8,7 @@ import { Request, Response } from "express";
 
 export const getAllMedications = async (
   req: Request<{}, {}, TypeBodyGetAllMedications>,
-  res: Response<ResponseGetAllMedications>
+  res: Response<ResponseGetAllMedications>,
 ) => {
   const body: TypeBodyGetAllMedications | null = req.body;
   console.log("getAllMedications called with body:", body);
@@ -29,7 +29,7 @@ export const getAllMedications = async (
   let filteredMedications = medications;
   if (!body) {
     console.log(
-      "No body provided in request to getAllMedications, sending all medications"
+      "No body provided in request to getAllMedications, sending all medications",
     );
     res.json({
       medications: medications || [],
@@ -41,18 +41,19 @@ export const getAllMedications = async (
   if (onlyGetTheseMedicationsById && onlyGetTheseMedicationsById?.length > 0) {
     console.log(
       "Filtering medications by onlyGetTheseMedications",
-      onlyGetTheseMedicationsById
+      onlyGetTheseMedicationsById,
     );
     filteredMedications = filteredMedications.filter((medication) =>
-      onlyGetTheseMedicationsById.includes(medication._id as unknown as string)
+      onlyGetTheseMedicationsById.includes(medication._id as unknown as string),
     );
   }
   if (onlyGetTheseColumns && onlyGetTheseColumns?.length > 0) {
     console.log(
       "Filtering medications by onlyGetTheseColumns",
-      onlyGetTheseColumns
+      onlyGetTheseColumns,
     );
     filteredMedications = filteredMedications.map((medication) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filteredMedication: any = {};
       onlyGetTheseColumns.forEach((column) => {
         if (!medication[column]) {

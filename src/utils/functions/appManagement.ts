@@ -1,7 +1,6 @@
 import { logError } from "./debug";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
-import * as Notifications from "expo-notifications";
 import { ResponseUploadImage } from "@typesAPI";
 
 /**
@@ -39,6 +38,7 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
       uri: image.uri,
       name: image.fileName ?? "upload.jpg",
       type: image.mimeType ?? "image/jpeg",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
     formData.append("images", formValue);
   }
@@ -57,7 +57,7 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
  */
 export const uploadImage = async (
   userId: string,
-  pickMultipleImages: boolean = false
+  pickMultipleImages: boolean = false,
 ) => {
   const grant = await requestImagePermission();
   if (!grant) return;
@@ -75,7 +75,7 @@ export const uploadImage = async (
     };
     const data: ResponseUploadImage = await fetch(
       getRouteAPI("/upload"),
-      fetchOptions
+      fetchOptions,
     ).then((r) => r.json());
 
     return { files: data.files, success: data.success };
@@ -119,7 +119,7 @@ export const parseData = <T = object | null>(value: string | null): T => {
  * @param value - The value to be converted to a string.
  * @returns The string representation of the value, or an empty string if an error occurs.
  */
-export const stringifyData = (value: any): string => {
+export const stringifyData = (value: unknown): string => {
   if (typeof value === "string") return value;
   try {
     return JSON.stringify(value);
@@ -138,13 +138,13 @@ export const stringifyData = (value: any): string => {
  * @param delay - The number of milliseconds to delay.
  * @returns A debounced version of the input function.
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
-  delay: number
+  delay: number,
 ): (() => void) => {
   let timeoutId: NodeJS.Timeout;
 
-  return (...args: any[]) => {
+  return (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
@@ -177,24 +177,6 @@ export const interpolateMessage = (message: string, values: string[]) => {
 };
 
 /**
- * Checks if the application has permission to send push notifications.
- *
- * This function first checks the current notification permission status.
- * If permission is not granted, it requests permission from the user.
- * Returns `true` if permission is granted, otherwise `false`.
- *
- * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
- */
-export const hasPushNotifications = async (): Promise<boolean> => {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== Notifications.PermissionStatus.GRANTED) {
-    const { status: newStatus } = await Notifications.requestPermissionsAsync();
-    return newStatus === Notifications.PermissionStatus.GRANTED;
-  }
-  return status === Notifications.PermissionStatus.GRANTED;
-};
-
-/**
  * Capitalizes the first letter of a string.
  *
  * @param str - The string to capitalize.
@@ -223,7 +205,7 @@ export const capitalize = (str: string): string => {
  * @param value - The value to check.
  * @returns `true` if the value is falsy, otherwise `false`.
  */
-export const isFalsy = (value: any): boolean => {
+export const isFalsy = (value: unknown): boolean => {
   return (
     value === null || value === undefined || value === false || value === ""
   );

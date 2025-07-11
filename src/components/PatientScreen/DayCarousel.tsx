@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useModal } from "@context/ModalContext";
-import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
-import { stylesDayCarousel } from "@styles/components/stylesDayCarousel";
+import ButtonComponent from "@components/common/Button";
+import { typeLanguages } from "@utils";
+import { useStylesDayCarousel } from "@styles/components/stylesDayCarousel";
 import { View, Text, Pressable } from "react-native";
 import React, { useEffect, useState } from "react";
 
@@ -24,38 +25,35 @@ type Day = { name: string; medications: string[] };
  */
 
 const DayCarousel: React.FC = () => {
-  const { translations } = useLanguage();
-  const { styles, customStyles, isPhone } = stylesDayCarousel();
+  const { t } = useLanguage();
+  const { styles, customStyles, isPhone } = useStylesDayCarousel();
   const { openModal, closeModal, setCustomStyles } = useModal();
   const cardsToShow = isPhone ? 1 : 3;
 
   const [startIndex, setStartIndex] = useState<number>(0);
-  const [days, setDays] = useState<Day[]>([]);
+  const days = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ].map((day) => {
+    return {
+      name: (t(day as keyof typeLanguages) || day) as string,
+      medications: Array.from(
+        { length: Math.floor(Math.random() * 10) },
+        (_, index) => `Med${index + 1}`,
+      ),
+    };
+  });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchedDays: Day[] = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ].map((day) => {
-      return {
-        name: translations[day as keyof typeof translations] || day,
-        medications: Array.from(
-          { length: Math.floor(Math.random() * 10) },
-          (_, index) => `Med${index + 1}`
-        ),
-      };
-    });
-
-    setDays(fetchedDays);
-  }, [translations]);
-
-  useEffect(() => setCustomStyles(customStyles), [customStyles]);
+  useEffect(
+    () => setCustomStyles(customStyles),
+    [setCustomStyles, customStyles],
+  );
 
   /**
    * Open modal with medication details for the selected day.
@@ -72,27 +70,12 @@ const DayCarousel: React.FC = () => {
             </Text>
           ))
         ) : (
-          <Text style={styles.medicationText}>
-            {translations.noMedications}
-          </Text>
+          <Text style={styles.medicationText}>{t("noMedications")}</Text>
         )}
       </View>,
       <Pressable onPress={closeModal}>
-        <Text
-          style={{
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: 16,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            backgroundColor: "#00a69d",
-            borderRadius: 8,
-            textAlign: "center",
-          }}
-        >
-          {translations.close}
-        </Text>
-      </Pressable>
+        <Text style={styles.closeButtonText}>{t("close")}</Text>
+      </Pressable>,
     );
   };
 
@@ -110,20 +93,22 @@ const DayCarousel: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={handlePrev}
+      <ButtonComponent
+        label={t("addMedication")}
+        handlePress={handlePrev}
         disabled={startIndex === 0}
-        style={[
-          styles.arrowButton,
-          { backgroundColor: "transparent", elevation: 0, shadowOpacity: 0 },
-        ]}
-      >
-        <Ionicons
-          name="chevron-back"
-          size={32}
-          color={startIndex === 0 ? "#ccc" : "#00a69d"}
-        />
-      </Pressable>
+        customStyles={{
+          button: styles.arrowButton,
+          textButton: {},
+        }}
+        children={
+          <Ionicons
+            name="add"
+            size={24}
+            color={startIndex === 0 ? "#ccc" : "#00a69d"}
+          />
+        }
+      />
       <View style={styles.cardsRow}>
         {visibleDays.map((day, index) => (
           <ButtonComponent
@@ -148,7 +133,7 @@ const DayCarousel: React.FC = () => {
                     ))}
                     {day.medications.length > 3 && (
                       <Text style={styles.moreMedicationsText}>
-                        +{day.medications.length - 3} {translations.more}
+                        +{day.medications.length - 3} {t("more")}
                       </Text>
                     )}
                   </>
@@ -156,7 +141,7 @@ const DayCarousel: React.FC = () => {
                 {day.medications.length <= 0 && (
                   <View style={styles.emptyMedication}>
                     <Text style={styles.medicationText}>
-                      {translations.noMedications}
+                      {t("noMedications")}
                     </Text>
                   </View>
                 )}
@@ -165,20 +150,22 @@ const DayCarousel: React.FC = () => {
           />
         ))}
       </View>
-      <Pressable
-        onPress={handleNext}
+      <ButtonComponent
+        label={t("addMedication")}
+        handlePress={handleNext}
         disabled={startIndex >= days.length - cardsToShow}
-        style={[
-          styles.arrowButton,
-          { backgroundColor: "transparent", elevation: 0, shadowOpacity: 0 },
-        ]}
-      >
-        <Ionicons
-          name="chevron-forward"
-          size={32}
-          color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
-        />
-      </Pressable>
+        customStyles={{
+          button: styles.arrowButton,
+          textButton: {},
+        }}
+        children={
+          <Ionicons
+            name="add"
+            size={24}
+            color={startIndex >= days.length - cardsToShow ? "#ccc" : "#00a69d"}
+          />
+        }
+      />
     </View>
   );
 };

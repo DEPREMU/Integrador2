@@ -20,21 +20,21 @@ import path from "path";
  */
 const app: express.Application = express();
 
-// Block connections that are not from mainUrl
 app.use(
   cors({
     origin: mainUrl,
     credentials: true,
-  })
+  }),
 );
 
-// Use express static middleware to serve images
 app.use("/images", express.static(path.join(__dirname, "..", "..", "images")));
 
-// Use json for response
 app.use(express.json());
 
-// Use prefix /api in each route
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 app.use("/api/v1", router);
 
 export default app;

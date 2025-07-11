@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   saveData,
   removeData,
@@ -16,8 +17,8 @@ import { useLanguage } from "@context/LanguageContext";
 import ButtonComponent from "@components/common/Button";
 import { useUserContext } from "@context/UserContext";
 import { useBackgroundTask } from "@context/BackgroundTaskContext";
-import { useEffect, useState } from "react";
 import { useResponsiveLayout } from "@context/LayoutContext";
+import React, { useEffect, useState } from "react";
 import { View, TextInput, Text, StyleSheet, Switch } from "react-native";
 
 const HowToCodeExample: React.FC = () => {
@@ -25,7 +26,7 @@ const HowToCodeExample: React.FC = () => {
   // useStylesLoginTest is a custom hook that returns styles for the Login component based on the device's responsive layout.
   const { styles, height, width } = useStylesLoginTest();
   // useLanguage provides translations for the app, allowing for multilingual support. translations is an object containing the translated strings, language is the current language code, and setLanguage is a function to change the language.
-  const { translations, language, setLanguage } = useLanguage();
+  const { t, language, changeLanguage } = useLanguage();
   // useModal provides methods to open and close modals, and set custom styles for them. openModal is used to display a modal with a title, body content, and buttons, while closeModal hides the modal.
   // setCustomStyles allows for dynamic styling of the modal based on the current theme or user preferences.
   const { openModal, closeModal, setCustomStyles } = useModal();
@@ -37,7 +38,9 @@ const HowToCodeExample: React.FC = () => {
   // user is the current user object, isLoggedIn indicates if the user is authenticated, loading shows if the authentication process is ongoing, and login/logout methods handle user sessions.
   const { userSession, isLoggedIn, loading, signUp } = useUserContext();
   const customStylesButtonModal = StyleSheet.create({
+    // eslint-disable-next-line react-native/no-unused-styles
     button: { marginVertical: 0 },
+    // eslint-disable-next-line react-native/no-unused-styles
     textButton: {},
   });
 
@@ -94,10 +97,10 @@ const HowToCodeExample: React.FC = () => {
     };
 
     save();
-  }, []);
+  }, [addTaskQueue, runTask]);
 
   // If loading is true (from userContext), display a welcome message
-  if (loading) return <Text>{translations.welcome}</Text>;
+  if (loading) return <Text>{t("welcome")}</Text>;
 
   // Function to handle sign-up button press
   // This function calls the signUp method from userContext with the provided email and password.
@@ -106,28 +109,28 @@ const HowToCodeExample: React.FC = () => {
       if (err) {
         openModal(
           // We give the modal a title, body, and buttons
-          translations.error,
-          `${translations.errorSignUp}\n${err.message}`,
+          t("error"),
+          `${t("errorSignUp")}\n${err.message}`,
           <ButtonComponent
-            label={translations.close}
+            label={t("close")}
             handlePress={closeModal}
             customStyles={customStylesButtonModal}
-          />
+          />,
         );
         return;
       }
 
       openModal(
         //Label
-        translations.successSignUp,
+        t("successSignUp"),
         // Body
-        `${translations.successSignUpMessage}\n${translations.verifyEmail}`,
+        `${t("successSignUpMessage")}\n${t("verifyEmail")}`,
         // Buttons
         <ButtonComponent
-          label={translations.close}
+          label={t("close")}
           handlePress={closeModal}
           customStyles={customStylesButtonModal}
-        />
+        />,
       );
     });
   };
@@ -135,9 +138,7 @@ const HowToCodeExample: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* This make the code more readable, if the first condition is true, it will render "UserLoggedIn" */}
-      {isLoggedIn && (
-        <UserLoggedIn userSession={userSession} translations={translations} />
-      )}
+      {isLoggedIn && <UserLoggedIn userSession={userSession} />}
       {!isLoggedIn && <AuthComponent handlePressSignUp={handlePressSignUp} />}
     </View>
   );
@@ -153,7 +154,7 @@ interface AuthProps {
 const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
   const { login } = useUserContext();
   const { styles } = useStylesLoginTest();
-  const { translations } = useLanguage();
+  const { t } = useLanguage();
 
   // Local state for email, password, and remember me toggle
   // These states are used to manage the login form inputs and feedback messages, all of these states are typed and initialized with default values.
@@ -164,9 +165,9 @@ const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
 
   return (
     <View style={styles.containerAuth}>
-      <Text style={styles.titleLogin}>{translations.login}</Text>
+      <Text style={styles.titleLogin}>{t("login")}</Text>
 
-      <Text style={styles.label}>{translations.email}</Text>
+      <Text style={styles.label}>{t("email")}</Text>
       <TextInput
         style={styles.input}
         onChangeText={setEmail}
@@ -175,7 +176,7 @@ const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
         autoComplete="email"
         keyboardType="email-address"
       />
-      <Text style={styles.label}>{translations.password}</Text>
+      <Text style={styles.label}>{t("password")}</Text>
       <TextInput
         style={styles.input}
         onChangeText={setPassword}
@@ -184,19 +185,15 @@ const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
         secureTextEntry
       />
       <View style={styles.switchContainer}>
-        <Text>{translations.rememberMe}</Text>
+        <Text>{t("rememberMe")}</Text>
         <Switch value={rememberMe} onValueChange={setRememberMe} />
       </View>
       <ButtonComponent
-        label={translations.login} // This is the label for the button
+        label={t("login")} // This is the label for the button
         handlePress={() => login(email, password, rememberMe)} // This is the function that will be called when the button is pressed
         touchableOpacity // This is a prop that makes the button a TouchableOpacity component
-        Children={() => (
-          <Text style={styles.welcomeText}>{translations.welcome}</Text>
-        )} // This is a child component that will be rendered inside the button
-        children={
-          <Text style={styles.welcomeText}>{translations.welcome}</Text>
-        } // This is another way to pass children to the button
+        Children={() => <Text style={styles.welcomeText}>{t("welcome")}</Text>} // This is a child component that will be rendered inside the button
+        children={<Text style={styles.welcomeText}>{t("welcome")}</Text>} // This is another way to pass children to the button
         customStyles={{ button: styles.button, textButton: styles.textButton }}
         // This is used to add custom styles to the button and text
         // If you want to replace the styles, you can use replaceStyles prop
@@ -224,7 +221,7 @@ const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
         touchableOpacityIntensity={0.2} // This sets the intensity of the TouchableOpacity effect, default is 0.7
       />
       <ButtonComponent
-        label={translations.signUp}
+        label={t("signUp")}
         handlePress={() => handlePressSignUp(email, password)}
         touchableOpacity
       />
@@ -237,23 +234,21 @@ const AuthComponent: React.FC<AuthProps> = ({ handlePressSignUp }) => {
 // Example name of file: UserLoggedIn.tsx
 interface UserLoggedInProps {
   userSession: UserSession | null;
-  translations: typeLanguages;
 }
-const UserLoggedIn: React.FC<UserLoggedInProps> = ({
-  userSession,
-  translations,
-}) => {
-  if (!userSession) return <Text>{translations.notLoggedIn}</Text>;
+const UserLoggedIn: React.FC<UserLoggedInProps> = ({ userSession }) => {
   const { logout } = useUserContext();
+  const { t } = useLanguage();
+
+  if (!userSession) return <Text>{t("notLoggedIn")}</Text>;
 
   return (
     <>
       <Text>
-        {interpolateMessage(translations.welcomeUser, [
+        {interpolateMessage(t("welcomeUser"), [
           userSession?.user?.id || "Unknown id",
         ])}
       </Text>
-      <ButtonComponent label={translations.logOut} handlePress={logout} />
+      <ButtonComponent label={t("logOut")} handlePress={logout} />
     </>
   );
 };
@@ -329,12 +324,6 @@ const useStylesLoginTest = () => {
       textAlign: "center",
       marginBottom: 20,
       color: "#333",
-    },
-    message: {
-      marginTop: 20,
-      textAlign: "center",
-      color: "#e53935",
-      fontSize: 14,
     },
   });
 

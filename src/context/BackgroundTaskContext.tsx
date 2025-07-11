@@ -2,11 +2,17 @@ import {
   ScreensAvailable,
   RootStackParamList,
 } from "@navigation/navigationTypes";
+import React, {
+  useRef,
+  useState,
+  useContext,
+  useCallback,
+  createContext,
+} from "react";
 import { StatusBar } from "react-native";
 import { log, logError } from "@utils";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, useNavigationState } from "@react-navigation/native";
-import React, { createContext, useContext, useRef, useState } from "react";
 
 type BackgroundTask = () => void | Promise<void>;
 
@@ -173,7 +179,7 @@ interface BackgroundTaskProviderProps {
  * `addTaskQueue`, `updateScreen`, and `getCurrentRouteName` methods.
  */
 const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
-  null
+  null,
 );
 
 /**
@@ -237,32 +243,34 @@ export const BackgroundTaskProvider: React.FC<BackgroundTaskProviderProps> = ({
   const taskQueueRef = useRef<BackgroundTask[]>([]);
   const isProcessingRef = useRef<boolean>(false);
 
-  const getCurrentRouteName = () => {
-    return useNavigationState((state) => {
+  const getCurrentRouteName = () =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useNavigationState((state) => {
       const route = state.routes[state.index];
-      return route.name as ScreensAvailable;
+      return route?.name as ScreensAvailable;
     });
-  };
 
   const addTaskQueue = (task: BackgroundTask) => {
     taskQueueRef.current.push(task);
     processQueue();
   };
 
-  const runTask = async (task: BackgroundTask) => {
+  const runTask = useCallback(async (task: BackgroundTask) => {
     try {
       await task();
-    } catch {}
-  };
+    } catch {
+      logError("Error running task:", task);
+    }
+  }, []);
 
-  const updateScreen = (screen: ScreensAvailable, force?: boolean) => {
+  const updateScreen = async (screen: ScreensAvailable, force?: boolean) => {
     const currentRouteName = getCurrentRouteName();
 
     if (force || currentRouteName === screen) navigation.replace(screen);
     else log("The screen given is not the current screen");
   };
 
-  const processQueue = async () => {
+  const processQueue = useCallback(async () => {
     if (isProcessingRef.current) return;
 
     isProcessingRef.current = true;
@@ -279,7 +287,7 @@ export const BackgroundTaskProvider: React.FC<BackgroundTaskProviderProps> = ({
     }
 
     isProcessingRef.current = false;
-  };
+  }, [isProcessingRef, taskQueueRef]);
 
   return (
     <BackgroundTaskContext.Provider
@@ -313,7 +321,7 @@ export const useBackgroundTask = (): BackgroundTaskContextType => {
   const context = useContext(BackgroundTaskContext);
   if (!context) {
     throw new Error(
-      "useBackgroundTask must be used within a BackgroundTaskProvider"
+      "useBackgroundTask must be used within a BackgroundTaskProvider",
     );
   }
   return context;

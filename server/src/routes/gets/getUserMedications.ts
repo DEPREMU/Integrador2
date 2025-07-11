@@ -6,7 +6,7 @@ import { Request, Response } from "express";
 
 export const getUserMedications = async (
   req: Request<{}, {}, TypeBodyGetUserMedications>,
-  res: Response<ResponseGetUserMedications>
+  res: Response<ResponseGetUserMedications>,
 ) => {
   const { userId } = req.body;
   if (!userId) {

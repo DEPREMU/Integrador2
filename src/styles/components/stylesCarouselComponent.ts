@@ -1,31 +1,31 @@
-import { useResponsiveLayout } from "@/context/LayoutContext";
 import { StyleSheet } from "react-native";
+import { useResponsiveLayout } from "@/context/LayoutContext";
 
 /**
  * Hook that returns responsive styles for the carousel,
  * using the device's dynamic width to ensure animations work correctly.
  */
 
-export const stylesCarouselComponent = () => {
+export const useStylesCarouselComponent = () => {
   const { width } = useResponsiveLayout();
 
   const styles = StyleSheet.create({
     container: {
       height: 180,
-      width: "100%", 
+      width: "100%",
       justifyContent: "center",
       alignItems: "center",
     },
     carouselContainer: {
-      width, 
+      width,
       height: 180,
-      overflow: "hidden", 
+      overflow: "hidden",
       justifyContent: "center",
       alignItems: "center",
     },
     slide: {
-      width, 
-      position: "absolute", 
+      width,
+      position: "absolute",
       justifyContent: "center",
       alignItems: "center",
       zIndex: 10,

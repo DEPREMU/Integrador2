@@ -1,5 +1,3 @@
-import { DayOfWeek } from "@types";
-
 export const APP_NAME = "MediTime";
 /**
  * Array of slogan messages used in the application.
@@ -13,5 +11,4 @@ export const SLOGAN_MSGS = [
   "Where health meets punctuality.",
   "Right dose. Right time. Every time.",
 ];
-
 

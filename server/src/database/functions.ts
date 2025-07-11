@@ -1,6 +1,5 @@
-import fs from "fs";
+import { CollectionName } from "../types/index.js";
 import { Collection, Db, Document, ObjectId } from "mongodb";
-import { CollectionName, MedicationApi } from "../types/index.js";
 import { defaultDatabase, defaultCollection, client } from "./connection.js";
 
 /**
@@ -30,7 +29,7 @@ export const getDatabase = async (database: string = defaultDatabase) => {
  */
 export const getCollection = async <T extends Document = Document>(
   collection: CollectionName = defaultCollection,
-  database: string | Db = defaultDatabase
+  database: string | Db = defaultDatabase,
 ): Promise<Collection<T> | null> => {
   try {
     let db = database as Db;
@@ -55,8 +54,8 @@ export const getCollection = async <T extends Document = Document>(
  */
 export const findInCollection = async (
   collection: CollectionName = defaultCollection,
-  query: { [key: string]: any },
-  database: string = defaultDatabase
+  query: { [key: string]: unknown },
+  database: string = defaultDatabase,
 ) => {
   try {
     const coll = await getCollection(collection, database);
@@ -79,7 +78,7 @@ export const findInCollection = async (
 export const getUserData = async (
   uuid: string,
   db: string = defaultDatabase,
-  collection: CollectionName = defaultCollection
+  collection: CollectionName = defaultCollection,
 ) => {
   const database = await getDatabase(db);
   const coll = await getCollection(collection, database);
@@ -113,26 +112,3 @@ export const createCollections = async () => {
 };
 
 export const getObjectId = (id: string) => new ObjectId(id);
-
-const insertMedicationsFromJSON = async () => {
-  const db = await getDatabase();
-  const coll = await getCollection("medicationsApi", db);
-  const medicationsAdded = (await coll?.find({}).toArray()) as MedicationApi[];
-  const data = fs.readFileSync("./src/database/medicationsApi.json", "utf-8");
-
-  const medications = (JSON.parse(data) as MedicationApi[]).filter(
-    (med) => !medicationsAdded.some((added) => added.name === med.name)
-  );
-  if (medications.length === 0) {
-    console.log("No new medications to insert");
-    return;
-  }
-  coll
-    ?.insertMany(medications)
-    .then((data) => {
-      console.log("Medications inserted successfully", data.insertedCount);
-    })
-    .catch((error) => {
-      console.error("Error inserting medications:", error);
-    });
-};

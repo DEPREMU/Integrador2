@@ -1,7 +1,7 @@
 import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 
-export const stylesDayCarousel = () => {
+export const useStylesDayCarousel = () => {
   const { isPhone, isWeb, width } = useResponsiveLayout();
 
   const styles = StyleSheet.create({
@@ -64,6 +64,16 @@ export const stylesDayCarousel = () => {
     moreMedicationsText: {
       color: "#00a69d",
       marginTop: 5,
+      textAlign: "center",
+    },
+    closeButtonText: {
+      color: "#fff",
+      fontWeight: "bold",
+      fontSize: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: "#00a69d",
+      borderRadius: 8,
       textAlign: "center",
     },
   });
