@@ -1,5 +1,10 @@
+import { Notifications } from "@types";
+import { log, logError } from "./debug";
+import * as notifications from "expo-notifications";
 import { ScreensAvailable } from "@/navigation/navigationTypes";
-import * as Notifications from "expo-notifications";
+import { loadData, saveData } from "./storageManagement";
+import { ReasonNotification } from "../constants/notifications";
+import { KEYS_STORAGE, reasonNotification } from "../constants";
 
 /**
  * Checks if the application has permission to send push notifications.
@@ -11,22 +16,79 @@ import * as Notifications from "expo-notifications";
  * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
  */
 export const hasPushNotifications = async (): Promise<boolean> => {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status === Notifications.PermissionStatus.GRANTED) return true;
+  const { status } = await notifications.getPermissionsAsync();
+  if (status === notifications.PermissionStatus.GRANTED) return true;
 
-  const { status: newStatus } = await Notifications.requestPermissionsAsync();
-  return newStatus === Notifications.PermissionStatus.GRANTED;
+  const { status: newStatus } = await notifications.requestPermissionsAsync();
+  return newStatus === notifications.PermissionStatus.GRANTED;
+};
+
+/**
+ * Cancels a notification based on the reason provided.
+ *
+ * This function loads existing notifications from storage, checks if a notification
+ * with the specified reason exists, and cancels it if found.
+ *
+ * @param {Notifications} notificationsData - The current notifications data.
+ * @param {string} reason - The reason for the notification to be canceled.
+ */
+export const handleCancelNotification = async (
+  notificationsData: Notifications,
+  reason: ReasonNotification,
+  saveNewNotifications = false,
+) => {
+  const idNotification = notificationsData[reason]?.id;
+  if (!idNotification) return;
+  try {
+    await notifications.cancelScheduledNotificationAsync(idNotification);
+    if (saveNewNotifications) {
+      notificationsData[reason] = null;
+      await saveData(
+        KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+        JSON.stringify(notificationsData),
+      );
+    }
+    log(`Notification with reason "${reason}" canceled successfully.`);
+  } catch (error) {
+    logError(`Error canceling notification with reason "${reason}":`, error);
+  }
 };
 
 export const sendNotification = async (
+  reason: ReasonNotification,
   title: string,
   body: string | null,
-  trigger: Notifications.NotificationTriggerInput | null = null,
+  trigger: notifications.NotificationTriggerInput | null = null,
   screen: ScreensAvailable = "Home",
   data?: Record<string, unknown>,
 ): Promise<void> => {
   try {
-    await Notifications.scheduleNotificationAsync({
+    const notificationsData = await loadData<Notifications>(
+      KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+      (value) => (value ? value : ({} as Notifications)),
+    );
+
+    const lenNotificationsSaved = Object.keys(notificationsData).length;
+
+    if (
+      lenNotificationsSaved === 0 ||
+      lenNotificationsSaved !== reasonNotification.length
+    ) {
+      log(
+        "No saved notifications found, initializing empty notifications data.",
+      );
+      reasonNotification.forEach((reason) => {
+        if (!notificationsData[reason]) notificationsData[reason] = null;
+      });
+      await saveData(
+        KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+        JSON.stringify(notificationsData),
+      );
+    }
+
+    await handleCancelNotification(notificationsData, reason);
+
+    const id = await notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
@@ -37,6 +99,20 @@ export const sendNotification = async (
       },
       trigger,
     });
+
+    notificationsData[reason] = {
+      id,
+      body,
+      data,
+      title,
+      screen,
+      trigger,
+    };
+
+    await saveData(
+      KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+      JSON.stringify(notificationsData),
+    );
   } catch (error) {
     console.error("Error sending notification:", error);
   }
@@ -53,9 +129,8 @@ export interface NotificationData {
 export const setupNotificationHandlers = (
   navigateToScreen: (screen: ScreensAvailable) => void,
 ) => {
-  Notifications.setNotificationHandler({
+  notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldShowList: true,
       shouldShowBanner: true,
       shouldPlaySound: true,
@@ -63,29 +138,27 @@ export const setupNotificationHandlers = (
     }),
   });
 
-  // Handle notification taps when app is in foreground/background
   const notificationListener =
-    Notifications.addNotificationResponseReceivedListener((response) => {
+    notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content
         .data as NotificationData;
 
-      if (data?.screen) {
-        console.log(`Navigating to screen: ${data.screen}`);
-        navigateToScreen(data.screen);
-      }
+      if (!data?.screen) return;
+
+      navigateToScreen(data.screen);
     });
 
-  // Handle notifications received while app is in foreground
-  const foregroundListener = Notifications.addNotificationReceivedListener(
+  const foregroundListener = notifications.addNotificationReceivedListener(
     (notification) => {
-      console.log("Notification received in foreground:", notification);
-      // Optionally handle foreground notifications differently
+      console.log(
+        "Notification received in foreground:",
+        notification.request.content,
+      );
     },
   );
 
-  // Return cleanup function
   return () => {
-    Notifications.removeNotificationSubscription(notificationListener);
-    Notifications.removeNotificationSubscription(foregroundListener);
+    foregroundListener.remove();
+    notificationListener.remove();
   };
 };

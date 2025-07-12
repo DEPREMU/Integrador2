@@ -3,32 +3,32 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import {
+  log,
+  getRouteAPI,
+  fetchOptions,
+  typeLanguages,
+  interpolateMessage,
+} from "@utils";
+import {
   User,
   UrgencyType,
+  MedicationApi,
   MedicationUser,
   ResponseGetUserPatients,
   ResponseGetAllMedications,
   TypeBodyGetAllMedications,
-  MedicationApi,
 } from "@typesAPI";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
-import { TextInput, Text, Searchbar } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { DayOfWeek, DaysOfWeek } from "@types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { TextInput, Text, Searchbar } from "react-native-paper";
 import { useStylesScheduleMedication } from "@styles/screens/stylesScheduleMedication";
 import { View, Platform, Pressable, ScrollView } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  log,
-  getRouteAPI,
-  fetchOptions,
-  interpolateMessage,
-  typeLanguages,
-} from "@utils";
 
 type ScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -50,6 +50,7 @@ const MedicationScheduler: React.FC = () => {
     saturday: t("days.saturday" as keyof typeLanguages),
     sunday: t("days.sunday" as keyof typeLanguages),
   };
+
   const dosageTypes: string[] = JSON.parse(t("dosageTypes")) as string[];
 
   const [dose, setDose] = useState<string>("");
@@ -73,35 +74,9 @@ const MedicationScheduler: React.FC = () => {
   >([]);
   const [medicationsList, setMedicationsList] =
     useState<Partial<MedicationApi>[]>();
-  const [, setKeysPressed] = useState<string[]>([]); //! Delete
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      setKeysPressed((prev) => {
-        if (prev.includes(e.key)) return prev;
-        const keys = [...prev, e.key];
-        log(keys, "keysPressed");
-
-        if (keys.includes("Control") && keys.includes("h")) {
-          navigation.replace("Home");
-        }
-
-        return keys;
-      });
-    };
-    const handler1 = (e: KeyboardEvent) => {
-      setKeysPressed((prev) => prev.filter((key) => key !== e.key));
-    };
-
-    document?.addEventListener("keydown", handler);
-    document?.addEventListener("keyup", handler1);
-    if (!userData)
-      return () => {
-        document?.removeEventListener("keydown", handler);
-        document?.removeEventListener("keyup", handler1);
-      };
-
     const getPatients = async () => {
       if (!userData?.patientUserIds || userData.patientUserIds.length === 0)
         return;
@@ -140,10 +115,6 @@ const MedicationScheduler: React.FC = () => {
 
     getPatients();
     getMedications();
-    return () => {
-      document?.removeEventListener("keydown", handler);
-      setKeysPressed([]);
-    };
   }, [userData, language, navigation]);
 
   const resetForm = useCallback(() => {
@@ -151,8 +122,8 @@ const MedicationScheduler: React.FC = () => {
     setDose("");
     setSelectedDays(null);
     setTime(new Date());
-    setDosageType("pastillas");
-  }, []);
+    setDosageType(dosageTypes[0]);
+  }, [dosageTypes]);
 
   const handleAddSchedule = useCallback(() => {
     const medicationAPI = medicationsList?.find(

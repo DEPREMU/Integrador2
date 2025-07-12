@@ -31,9 +31,8 @@ const HowToCodeExample: React.FC = () => {
   // setCustomStyles allows for dynamic styling of the modal based on the current theme or user preferences.
   const { openModal, closeModal, setCustomStyles } = useModal();
   // useBackgroundTask provides methods to manage background tasks in the app. It allows adding tasks to a queue and running them sequentially, ensuring that tasks are executed even if the user navigates away from the screen.
-  // addTaskQueue is used to add a task to the queue, runTask executes a task immediately, getCurrentRouteName retrieves the name of the current route/screen, and updateScreen updates the current screen in the navigation stack, with .replace.
-  const { addTaskQueue, runTask, getCurrentRouteName, updateScreen } =
-    useBackgroundTask();
+  // addTaskQueue is used to add a task to the queue, runTask executes a task immediately.
+  const { addTaskQueue, runTask } = useBackgroundTask();
   // useUserContext provides user authentication methods and state management. It includes user information, login/logout functions, and loading state.
   // user is the current user object, isLoggedIn indicates if the user is authenticated, loading shows if the authentication process is ongoing, and login/logout methods handle user sessions.
   const { userSession, isLoggedIn, loading, signUp } = useUserContext();

@@ -86,7 +86,7 @@ const en: typeLanguages = {
     sunday: "Su",
   },
   dosageTypes: '["pills", "mg", "units"]',
-  urgency: '{"low": "Low","medium": "Medium","high": "High",}',
+  urgency: "{\"low\": \"Low\",\"medium\": \"Medium\",\"high\": \"High\"}",
   unknown: "Unknown",
   medicationPlaceholder: "E.g. Loratadine",
   clearMedication: "Clear Medication",

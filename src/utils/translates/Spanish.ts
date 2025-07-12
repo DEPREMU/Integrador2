@@ -86,7 +86,7 @@ const es: typeLanguages = {
     sunday: "Do",
   },
   dosageTypes: '["pastillas", "mg", "unidades"]',
-  urgency: '{"low": "Baja","medium": "Media","high": "Alta"}',
+  urgency: "{\"low\": \"Baja\",\"medium\": \"Media\",\"high\": \"Alta\"}",
   unknown: "Desconocido",
   medicationPlaceholder: "P. ej. Loratadina",
   clearMedication: "Limpiar Medicamento",

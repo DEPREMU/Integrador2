@@ -3,6 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
+import React, { useEffect } from "react";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
 import SigninScreen from "@/screens/auth/SignUpScreen";
@@ -10,11 +11,12 @@ import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import MedicationScheduler from "@screens/Schedule";
-import React, { useEffect } from "react";
+import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
-import { log, setupNotificationHandlers } from "@utils";
+import { navigate, navigationRef } from "./navigationRef";
+import { SchedulableTriggerInputTypes } from "expo-notifications";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import { RootStackParamList, ScreensAvailable } from "./navigationTypes";
+import { sendNotification, setupNotificationHandlers } from "@/utils";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -55,25 +57,16 @@ const screens: Screens = {
 };
 
 const AppNavigator: React.FC = () => {
-  const [initialRouteName, setInitialRouteName] =
-    React.useState<keyof RootStackParamList>("Home");
-
   useEffect(() => {
-    const cleanup = setupNotificationHandlers((screen: ScreensAvailable) => {
-      setTimeout(() => setInitialRouteName(screen), 1000);
-    });
+    const cleanup = setupNotificationHandlers(navigate);
 
     return cleanup;
   }, []);
 
-  useEffect(() => {
-    log("AppNavigator mounted, initial route set to:", initialRouteName);
-  }, [initialRouteName]);
-
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName={initialRouteName}>
+        <Stack.Navigator initialRouteName="Home">
           {Object.entries(screens).map(([name, { component, options }]) => (
             <Stack.Screen
               key={name}
