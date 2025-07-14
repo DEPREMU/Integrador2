@@ -14,9 +14,8 @@ import MedicationScheduler from "@screens/Schedule";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { navigate, navigationRef } from "./navigationRef";
-import { SchedulableTriggerInputTypes } from "expo-notifications";
+import { setupNotificationHandlers } from "@/utils";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import { sendNotification, setupNotificationHandlers } from "@/utils";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

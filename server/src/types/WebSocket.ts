@@ -1,6 +1,13 @@
 import { WebSocket } from "ws";
 import * as Notifications from "expo-notifications";
-import { User, UserConfig } from "./Database";
+import { User, UserConfig } from "./Database.js";
+
+export const reasonNotification = [
+  "Initial Notification",
+  "Medication Reminder",
+] as const;
+
+export type ReasonNotification = (typeof reasonNotification)[number];
 
 export type ScreensAvailable =
   | "Login"
@@ -11,9 +18,26 @@ export type ScreensAvailable =
   | "HowToCode"
   | "Schedule";
 
-export type WebSocketMessage = { type: "init"; userId?: string };
+export type TestsAvailable = "notification" | "ping" | "waitForCapsy";
+
+export type WebSocketMessage =
+  | { type: "init"; userId?: string }
+  | { type: "ping" }
+  | {
+      type: "test";
+      testing: TestsAvailable;
+      data: Record<
+        string,
+        { id: string; type: "interval" | "timeout"; timeout: number }
+      >;
+    }
+  | {
+      type: "capsy";
+      settings: null; //! This is a placeholder, adjust as needed
+    };
 
 export type Notification = {
+  reason: ReasonNotification;
   title: string;
   body: string;
   screen: ScreensAvailable;
@@ -41,10 +65,29 @@ export type WebSocketResponse =
       type: "init-success";
       message: string;
       timestamp: string;
+    }
+  | {
+      type: "pong";
+      timestamp: string;
+    }
+  | {
+      type: "error-capsy";
+      message: string;
+      timestamp: string;
+    }
+  | {
+      type: "capsy";
+      message: string;
+      timestamp: string;
     };
 
 export type UserWebSocket = {
   ws: WebSocket | null;
+  wsCapsy: WebSocket | null;
+  intervalCapsy?: Record<
+    string,
+    { id: NodeJS.Timeout | number | null; type: "interval" | "timeout" }
+  >;
   user: User;
   userConfig: UserConfig | null;
 };

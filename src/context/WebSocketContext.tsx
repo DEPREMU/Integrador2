@@ -81,6 +81,7 @@ const getWebSocket = (
   setSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>,
 ) => {
   const socket = new WebSocket(URL_WEB_SOCKET);
+  const pingInterval = setInterval(() => socket.ping(), 30000);
 
   socket.onopen = () => {
     const message: WebSocketMessage = {
@@ -89,6 +90,20 @@ const getWebSocket = (
     };
     socket.send(JSON.stringify(message));
     log("WebSocket message sent:", message);
+    setTimeout(() => {
+      const message: WebSocketMessage = {
+        type: "test",
+        testing: "waitForCapsy",
+        data: {
+          "test-capsule": {
+            id: "test-capsule",
+            type: "timeout",
+            timeout: 10000,
+          },
+        },
+      };
+      socket.send(JSON.stringify(message));
+    }, 5000);
   };
 
   socket.onmessage = async (event) => {
@@ -114,6 +129,7 @@ const getWebSocket = (
         break;
       case "notification":
         await sendNotification(
+          parsedMessage.notification?.reason,
           parsedMessage.notification?.title,
           parsedMessage.notification?.body,
           parsedMessage.notification?.trigger,
@@ -125,6 +141,9 @@ const getWebSocket = (
         logError("WebSocket error:", parsedMessage.message);
         logError("WebSocket error:", parsedMessage.message);
         break;
+      case "pong":
+        log("WebSocket pong received:", parsedMessage.timestamp);
+        break;
       default:
         log("Unknown message type:", parsedMessage);
     }
@@ -132,11 +151,21 @@ const getWebSocket = (
 
   socket.onerror = (error) => {
     logError("WebSocket error:", error);
+    clearInterval(pingInterval);
     handleReconnectWebSocket(socket, timeOutId, setSocket);
+  };
+
+  socket.ping = () => {
+    if (socket.readyState !== WebSocket.OPEN)
+      return handleReconnectWebSocket(socket, timeOutId, setSocket);
+    const message: WebSocketMessage = { type: "ping" };
+    socket.send(JSON.stringify(message));
+    log("WebSocket ping sent.");
   };
 
   socket.onclose = (event) => {
     log("WebSocket connection closed:", event);
+    clearInterval(pingInterval);
     handleReconnectWebSocket(socket, timeOutId, setSocket);
   };
 
