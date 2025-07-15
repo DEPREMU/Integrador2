@@ -38,13 +38,11 @@ const getFormData = async (images: ImagePicker.ImagePickerAsset[]) => {
   for (let i = 0; i < images.length; i++) {
     const image = images[i];
 
-    // Para web, necesitamos crear un Blob desde la URI
     if (Platform.OS === "web") {
       try {
         const response = await fetch(image.uri);
         const blob = await response.blob();
 
-        // Crear un File object desde el Blob
         const file = new File([blob], image.fileName ?? `upload_${i}.jpg`, {
           type: image.mimeType ?? "image/jpeg",
         });
@@ -54,12 +52,10 @@ const getFormData = async (images: ImagePicker.ImagePickerAsset[]) => {
         console.error(`Error processing image ${i}:`, error);
       }
     } else {
-      // Para React Native nativo
       const formValue = {
         uri: image.uri,
         name: image.fileName ?? `upload_${i}.jpg`,
         type: image.mimeType ?? "image/jpeg",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
       formData.append("images", formValue);
     }

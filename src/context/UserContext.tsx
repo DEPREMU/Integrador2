@@ -306,7 +306,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           new Error(res.error?.message || "Unknown error"),
         );
       }
-      // Preservar campos importantes que no vienen en la respuesta del servidor
       const updatedUser = {
         ...userData, // Mantener datos originales
         ...res.user, // Sobrescribir con datos actualizados
