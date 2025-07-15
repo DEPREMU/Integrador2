@@ -3,7 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
+import Settings from "@/screens/Settings";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
 import SigninScreen from "@/screens/auth/SignUpScreen";
@@ -11,6 +11,7 @@ import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import MedicationScheduler from "@screens/Schedule";
+import React, { useEffect } from "react";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { navigate, navigationRef } from "./navigationRef";
@@ -52,6 +53,9 @@ const screens: Screens = {
   HowToCode: { component: HowToCodeExample },
   Schedule: {
     component: MedicationScheduler,
+  },
+  Settings: {
+    component: Settings,
   },
 };
 

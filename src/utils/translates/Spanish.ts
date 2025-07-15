@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { typeLanguages } from "./typesTranslations";
 
 const es: typeLanguages = {
@@ -85,8 +84,8 @@ const es: typeLanguages = {
     saturday: "Sa",
     sunday: "Do",
   },
-  dosageTypes: '["pastillas", "mg", "unidades"]',
-  urgency: "{\"low\": \"Baja\",\"medium\": \"Media\",\"high\": \"Alta\"}",
+  dosageTypes: JSON.stringify(["pastillas", "mg", "unidades"]),
+  urgency: JSON.stringify({ low: "Baja", medium: "Media", high: "Alta" }),
   unknown: "Desconocido",
   medicationPlaceholder: "P. ej. Loratadina",
   clearMedication: "Limpiar Medicamento",
@@ -97,6 +96,20 @@ const es: typeLanguages = {
   stockPlaceholder: "Ej. 30",
   urgencyText: "Urgencia",
   namePatient: "Nombre: {{interpolateMessage}}",
+  // User Settings Component
+  settings: "Ajustes",
+  save: "Guardar",
+  enableNotifications: "Activar notificaciones",
+  uploadImage: "Subir imagen",
+  description: "Descripción",
+  caregiver: "Cuidador",
+  patient: "Paciente",
+  both: "Ambos",
+  fullName: "Nombre completo",
+  numberPhone: "Número de teléfono",
+  userImage: "Imagen de usuario",
+  noImage: "Sin imagen",
+  role: "Rol",
 } as const;
 
 export default es;
