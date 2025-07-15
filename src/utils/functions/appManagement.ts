@@ -48,6 +48,7 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
       uri: image.uri,
       name: image.fileName ?? "upload.jpg",
       type: image.mimeType ?? "image/jpeg",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
     formData.append("images", formValue);
   }
@@ -66,7 +67,7 @@ const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
  */
 export const uploadImage = async (
   userId: string,
-  pickMultipleImages: boolean = false
+  pickMultipleImages: boolean = false,
 ) => {
   const grant = await requestImagePermission();
   if (!grant) return;
@@ -84,7 +85,7 @@ export const uploadImage = async (
     };
     const data: ResponseUploadImage = await fetch(
       getRouteAPI("/upload"),
-      fetchOptions
+      fetchOptions,
     ).then((r) => r.json());
 
     return { files: data.files, success: data.success };
@@ -110,13 +111,13 @@ export const uploadImage = async (
  * @param delay - The number of milliseconds to delay.
  * @returns A debounced version of the input function.
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
-  delay: number
+  delay: number,
 ): (() => void) => {
   let timeoutId: NodeJS.Timeout;
 
-  return (...args: any[]) => {
+  return (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
@@ -149,37 +150,6 @@ export const interpolateMessage = (message: string, values: string[]) => {
 };
 
 /**
- * Checks if the application has permission to send push notifications.
- *
- * This function first checks if expo-notifications is available (not in Expo Go).
- * If available, it checks the current notification permission status.
- * If permission is not granted, it requests permission from the user.
- * Returns `true` if permission is granted, otherwise `false`.
- * In Expo Go, this will always return `false` since notifications are not supported.
- *
- * @returns {Promise<boolean>} A promise that resolves to `true` if push notification permission is granted, otherwise `false`.
- */
-export const hasPushNotifications = async (): Promise<boolean> => {
-  // Check if expo-notifications is available (not in Expo Go)
-  if (!Notifications) {
-    console.warn("Push notifications not available in Expo Go. Use a development build for full functionality.");
-    return false;
-  }
-
-  try {
-    const { status } = await Notifications.getPermissionsAsync();
-    if (status !== Notifications.PermissionStatus.GRANTED) {
-      const { status: newStatus } = await Notifications.requestPermissionsAsync();
-      return newStatus === Notifications.PermissionStatus.GRANTED;
-    }
-    return status === Notifications.PermissionStatus.GRANTED;
-  } catch (error) {
-    console.warn("Error checking push notification permissions:", error);
-    return false;
-  }
-};
-
-/**
  * Capitalizes the first letter of a string.
  *
  * @param str - The string to capitalize.
@@ -208,7 +178,7 @@ export const capitalize = (str: string): string => {
  * @param value - The value to check.
  * @returns `true` if the value is falsy, otherwise `false`.
  */
-export const isFalsy = (value: any): boolean => {
+export const isFalsy = (value: unknown): boolean => {
   return (
     value === null || value === undefined || value === false || value === ""
   );

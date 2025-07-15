@@ -31,11 +31,11 @@ type ShakeInput = {
 };
 
 const SignUpScreen: React.FC = () => {
-  const navigation = useNavigation<SignUpScreenNavigationProp>();
+  const { t } = useLanguage();
   const { signUp } = useUserContext();
-  const { openModal, closeModal } = useModal();
   const { styles } = stylesLoginScreen();
-  const { translations } = useLanguage();
+  const navigation = useNavigation<SignUpScreenNavigationProp>();
+  const { openModal, closeModal } = useModal();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -62,28 +62,34 @@ const SignUpScreen: React.FC = () => {
       setSigningUp(false);
       openModal(
         //Label
-        translations.successSignUp,
+        t("successSignUp"),
         // Body
-        `${translations.successSignUpMessage}\n${translations.verifyEmail}`,
+        `${t("successSignUpMessage")}\n${t("verifyEmail")}`,
         // Buttons
         <ButtonComponent
-          label={translations.close}
+          label={t("close")}
           handlePress={() => {
             navigation.replace("Login");
             closeModal();
           }}
-        />
+        />,
       );
     });
-  }, [email, password, translations, openModal, closeModal, signUp, signingUp]);
+  }, [
+    t,
+    email,
+    password,
+    openModal,
+    closeModal,
+    signUp,
+    signingUp,
+    navigation,
+  ]);
 
-  const shakeInputs: ShakeInput[] = Array.from({ length: 2 }).map(() => {
-    const shake = useSharedValue(0);
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ translateX: shake.value }],
-    }));
-    return { shake, animatedStyle };
-  });
+  const shakeInputs: ShakeInput[] = [
+    { shake: useSharedValue(0), animatedStyle: {} },
+    { shake: useSharedValue(0), animatedStyle: {} },
+  ];
 
   const triggerShake = (which: "password" | "email") => {
     const valueToMove = 5;
@@ -95,7 +101,7 @@ const SignUpScreen: React.FC = () => {
         withTiming(valueToMove, { duration: duration * 2 }),
         withTiming(-valueToMove, { duration: duration * 2 }),
         withTiming(valueToMove, { duration: duration * 2 }),
-        withTiming(0, { duration })
+        withTiming(0, { duration }),
       );
   };
 
@@ -140,7 +146,7 @@ const SignUpScreen: React.FC = () => {
       <View style={styles.content}>
         <Image source={APP_ICON} style={styles.logo} />
 
-        <Text style={styles.title}>{translations.welcome}</Text>
+        <Text style={styles.title}>{t("welcome")}</Text>
 
         {/* Email space */}
         <Animated.View
@@ -152,7 +158,7 @@ const SignUpScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            label={translations.emailPlaceholder}
+            label={t("emailPlaceholder")}
             underlineColor="#00a69d"
             activeUnderlineColor="#00a69d"
             keyboardType="email-address"
@@ -178,7 +184,7 @@ const SignUpScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            label={translations.passwordPlaceholder}
+            label={t("passwordPlaceholder")}
             underlineColor="#00a69d"
             activeUnderlineColor="#00a69d"
             placeholderTextColor="#999"
@@ -202,7 +208,7 @@ const SignUpScreen: React.FC = () => {
             children={
               <Image
                 source={SHOW_PASSWORD_ICON}
-                style={{ width: 20, height: 20 }}
+                style={styles.iconImageShowPassword}
               />
             }
           />
@@ -211,13 +217,13 @@ const SignUpScreen: React.FC = () => {
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <ButtonComponent
-          label={!signingUp ? translations.signUp : ""}
+          label={!signingUp ? t("signUp") : ""}
           children={
             signingUp ? (
               <ActivityIndicator
                 size="small"
                 color="#fff"
-                style={{ marginRight: 10 }}
+                style={styles.marginRight10}
               />
             ) : null
           }
@@ -232,7 +238,7 @@ const SignUpScreen: React.FC = () => {
 
         <View style={styles.linksContainer}>
           <ButtonComponent
-            label={translations.hasAccount}
+            label={t("hasAccount")}
             touchableOpacity
             handlePress={() => navigation.replace("Login")}
             replaceStyles={{

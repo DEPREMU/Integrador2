@@ -8,7 +8,7 @@ import { useLanguage } from "@context/LanguageContext";
 
 const RenderScheduleItem: React.FC<{
   data: MedicationUser[];
-  styles: any;
+  styles: Record<string, object>;
   deleteSchedule: (medicationId: string) => void;
 }> = ({ data, styles, deleteSchedule }) => {
   const { translations } = useLanguage();
@@ -53,7 +53,7 @@ const RenderScheduleItem: React.FC<{
             }}
             handlePress={() =>
               deleteSchedule(
-                (item._id || item.medicationId) as unknown as string
+                (item._id || item.medicationId) as unknown as string,
               )
             }
             forceReplaceStyles
@@ -76,7 +76,7 @@ const RenderScheduleItemMemo = React.memo(
     const isEqualsFunctions =
       prevProps.deleteSchedule === nextProps.deleteSchedule;
     return isEqualsData && isEqualsStyles && isEqualsFunctions;
-  }
+  },
 );
 
 export default RenderScheduleItemMemo;

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { stylesCardComponent } from "@styles/components/stylesCardComponent";
+import { useStylesCardComponent } from "@styles/components/stylesCardComponent";
 
 interface CardProps {
   /**
@@ -31,7 +31,7 @@ interface CardProps {
  * />
  */
 const CardComponent: React.FC<CardProps> = ({ title, description }) => {
-  const styles = stylesCardComponent();
+  const styles = useStylesCardComponent();
 
   return (
     <View style={styles.card}>

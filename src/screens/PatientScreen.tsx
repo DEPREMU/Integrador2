@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import Header from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
-import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
+import { useStylesPatientScreen } from "@styles/screens/stylesPatientScreen";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@navigation/navigationTypes";
@@ -35,7 +35,7 @@ type PatientScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 const PatientScreen: React.FC = () => {
-  const styles = stylesPatientScreen();
+  const styles = useStylesPatientScreen();
   const { translations } = useLanguage();
   const navigation = useNavigation<PatientScreenNavigationProp>();
   const { isPhone } = useResponsiveLayout();

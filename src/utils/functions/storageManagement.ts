@@ -1,9 +1,4 @@
-import {
-  RequestEncrypt,
-  RequestDecrypt,
-  ResponseEncrypt,
-  ResponseDecrypt,
-} from "@typesAPI";
+import { RequestEncrypt, ResponseEncrypt, ResponseDecrypt } from "@typesAPI";
 import { logError } from "./debug";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,8 +22,8 @@ import { LanguagesSupported, languagesSupported } from "../translates";
  */
 export const saveDataSecure = async <T = undefined>(
   key: KeyStorageValues,
-  value: any,
-  callback: (err?: Error) => T = () => undefined as T
+  value: unknown,
+  callback: (err?: Error) => T = () => undefined as T,
 ): Promise<T> => {
   try {
     const stringifiedValue = stringifyData(value);
@@ -42,7 +37,7 @@ export const saveDataSecure = async <T = undefined>(
       getRouteAPI("/encrypt"),
       fetchOptions("POST", {
         dataToEncrypt: stringifiedValue,
-      } satisfies RequestEncrypt)
+      } satisfies RequestEncrypt),
     );
     const result = (await response.json()) as ResponseEncrypt;
 
@@ -50,7 +45,7 @@ export const saveDataSecure = async <T = undefined>(
       const message =
         result.error?.message || "No encrypted data returned from API";
       logError(
-        `saveDataSecure() => ${message} - ${result.error?.timestamp || ""}`
+        `saveDataSecure() => ${message} - ${result.error?.timestamp || ""}`,
       );
       return callback?.(new Error(message));
     }
@@ -60,7 +55,7 @@ export const saveDataSecure = async <T = undefined>(
   } catch (error) {
     logError(`saveDataSecure() => ${error}`);
     return callback?.(
-      new Error(error instanceof Error ? error.message : String(error))
+      new Error(error instanceof Error ? error.message : String(error)),
     );
   }
 };
@@ -76,33 +71,33 @@ export const saveDataSecure = async <T = undefined>(
  */
 export const loadDataSecure = async <T = string | object | null>(
   key: KeyStorageValues,
-  callback?: (value: T | null, err?: Error) => any
-): Promise<T> => {
+  callback?: (value: T | null, err?: Error) => T,
+): Promise<T | undefined> => {
   if (Platform.OS !== "web") {
     const value = await SecureStore.getItemAsync(key);
     const parsed = parseData<T>(value);
-    if (callback) return callback(parsed);
+    if (callback) return callback?.(parsed);
     return parsed;
   }
 
   const storedValue = localStorage.getItem(key);
-  if (!storedValue) return callback?.(null, new Error("No value found"));
+  if (!storedValue) return callback?.(null, new Error("No value found")) as T;
 
   try {
     const result = await fetch(
       getRouteAPI("/decrypt"),
       fetchOptions("POST", {
         dataToDecrypt: storedValue,
-      })
+      }),
     ).then((res) => res.json() as ResponseDecrypt);
 
     if (result?.error || !result?.dataDecrypted) {
       logError(
-        `loadDataSecure() => ${result.error?.message} - ${result.error?.timestamp}`
+        `loadDataSecure() => ${result.error?.message} - ${result.error?.timestamp}`,
       );
       return callback?.(
         null,
-        new Error(result.error?.message || "Decryption failed")
+        new Error(result.error?.message || "Decryption failed"),
       );
     }
 
@@ -114,7 +109,7 @@ export const loadDataSecure = async <T = string | object | null>(
     logError(`loadDataSecure() => ${error}`);
     return callback?.(
       null,
-      new Error(error instanceof Error ? error.message : String(error))
+      new Error(error instanceof Error ? error.message : String(error)),
     );
   }
 };
@@ -130,7 +125,7 @@ export const loadDataSecure = async <T = string | object | null>(
  */
 export const removeDataSecure = async <T = undefined>(
   key: KeyStorageValues,
-  callback: (err?: Error) => T = () => undefined as T
+  callback: (err?: Error) => T = () => undefined as T,
 ): Promise<T> => {
   try {
     if (Platform.OS === "web") localStorage.removeItem(key);
@@ -138,7 +133,7 @@ export const removeDataSecure = async <T = undefined>(
   } catch (error) {
     logError(`removeDataSecure() => ${error}`);
     return callback?.(
-      new Error(error instanceof Error ? error.message : String(error))
+      new Error(error instanceof Error ? error.message : String(error)),
     );
   }
 
@@ -154,10 +149,10 @@ export const removeDataSecure = async <T = undefined>(
  * @param key - The key to store the value under.
  * @param value - The value to store. Non-string values will be stringified.
  */
-export const saveData = async <T = undefined, K = any>(
+export const saveData = async <T = undefined, K = unknown>(
   key: KeyStorageValues,
   value: K,
-  callback: () => T = () => undefined as T
+  callback: () => T = () => undefined as T,
 ): Promise<T> => {
   const stringValue = stringifyData(value);
 
@@ -177,7 +172,7 @@ export const saveData = async <T = undefined, K = any>(
  */
 export const loadData = async <T = string | null>(
   key: KeyStorageValues,
-  callback?: (value: T) => T
+  callback?: (value: T) => T,
 ): Promise<T> => {
   let value: string | null;
 
@@ -202,7 +197,7 @@ export const loadData = async <T = string | null>(
  */
 export const removeData = async <T = undefined>(
   key: KeyStorageValues,
-  callback: (err?: Error) => T = () => undefined as T
+  callback: (err?: Error) => T = () => undefined as T,
 ): Promise<T> => {
   try {
     if (Platform.OS === "web") localStorage.removeItem(key);
@@ -210,7 +205,7 @@ export const removeData = async <T = undefined>(
   } catch (error) {
     logError(`removeData() => ${error}`);
     return callback(
-      new Error(error instanceof Error ? error.message : String(error))
+      new Error(error instanceof Error ? error.message : String(error)),
     );
   }
   return callback();
@@ -229,7 +224,7 @@ export const removeData = async <T = undefined>(
 export const getLanguageFromStorage =
   async (): Promise<LanguagesSupported | null> => {
     const data = await loadData<LanguagesSupported | null>(
-      KEYS_STORAGE.LANGUAGE_KEY_STORAGE
+      KEYS_STORAGE.LANGUAGE_KEY_STORAGE,
     );
     if (data) {
       const languageAvailable = languagesSupported.includes(data);

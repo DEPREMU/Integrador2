@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useModal } from "@context/ModalContext";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
-import { stylesDayCarousel } from "@styles/components/stylesDayCarousel";
+import { useStylesDayCarousel } from "@styles/components/stylesDayCarousel";
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 import { MedicationUser } from "@types";
@@ -34,7 +34,7 @@ interface DayCarouselProps {
 
 const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDeleteMedication }) => {
   const { translations } = useLanguage();
-  const { styles, customStyles, isPhone, isWeb } = stylesDayCarousel();
+  const { styles, customStyles, isPhone, isWeb } = useStylesDayCarousel();
   const { openModal, closeModal, setCustomStyles } = useModal();
   const cardsToShow = isPhone ? 1 : 3;
 

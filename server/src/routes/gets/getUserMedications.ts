@@ -9,7 +9,7 @@ import { getCollection } from "../../database/functions.js";
 
 export const getUserMedications = async (
   req: Request<{}, {}, TypeBodyGetUserMedications>,
-  res: Response<ResponseGetUserMedications>
+  res: Response<ResponseGetUserMedications>,
 ) => {
   const { userId } = req.body;
   console.log("getUserMedications called with userId:", userId);

@@ -1,6 +1,7 @@
+/* eslint-disable quotes */
 import { typeLanguages } from "./typesTranslations";
 
-export const en: typeLanguages = {
+const en: typeLanguages = {
   addMedication: "Add medication",
   configurePillDispenser: "Configure pill dispenser",
   addPatient: "Add Patient",
@@ -40,7 +41,7 @@ export const en: typeLanguages = {
   verifyEmail:
     "We have sent a verification email to your address. Please check your inbox and verify your email to complete the registration process.",
   wednesday: "Wednesday",
-  welcomeUser: "Welcome, {0}!",
+  welcomeUser: "Welcome, {{name}}!",
   welcome: "Welcome to MediTime",
   emailPlaceholder: "Email",
   passwordPlaceholder: "Password",
@@ -87,12 +88,8 @@ export const en: typeLanguages = {
     saturday: "Sa",
     sunday: "Su",
   },
-  dosageTypes: ["pills", "mg", "units"],
-  urgency: {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-  },
+  dosageTypes: '["pills", "mg", "units"]',
+  urgency: "{\"low\": \"Low\",\"medium\": \"Medium\",\"high\": \"High\"}",
   unknown: "Unknown",
   medicationPlaceholder: "E.g. Loratadine",
   clearMedication: "Clear Medication",
@@ -130,6 +127,7 @@ export const en: typeLanguages = {
   userImage: "User Image",
   noImage: "No Image",
   role: "Role",
+  namePatient: "Name: {{interpolateMessage}}",
   // PDF Report translations
   pdfReportTitle: "Medical Report",
   generateReport: "Generate PDF Report",
@@ -172,3 +170,5 @@ export const en: typeLanguages = {
   afternoon: "Afternoon",
   night: "Night",
 };
+
+export default en;

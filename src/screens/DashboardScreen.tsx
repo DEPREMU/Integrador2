@@ -3,18 +3,12 @@ import { useModal } from "@context/ModalContext";
 import { View, Text } from "react-native";
 import Header from "@components/common/Header";
 import { useLanguage } from "@context/LanguageContext";
-import { useNavigation } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
 import stylesDashboardScreen from "@styles/screens/stylesDashboardScreen";
 import { interpolateMessage } from "@utils";
-import { RootStackParamList } from "@navigation/navigationTypes";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import PatientCarousel, { Patient } from "@components/Dashboard/PatientCarousel";
-
-type DashboardNavProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "Dashboard"
->;
+import PatientCarousel, {
+  Patient,
+} from "@components/Dashboard/PatientCarousel";
 
 /**
  * DashboardScreen component displays the main dashboard UI, including:
@@ -32,8 +26,7 @@ type DashboardNavProp = NativeStackNavigationProp<
  * <DashboardScreen />
  */
 const DashboardScreen: React.FC = () => {
-  const navigation = useNavigation<DashboardNavProp>();
-  const { translations } = useLanguage();
+  const { t } = useLanguage();
   const { openModal, closeModal } = useModal();
   const { stylesDashboardScreen: styles } = stylesDashboardScreen();
   const { userData } = useUserContext();
@@ -42,18 +35,16 @@ const DashboardScreen: React.FC = () => {
     <View style={styles.container}>
       <Header />
       <Text style={styles.greeting}>
-        {interpolateMessage(translations.greeting, [
-          userData?.name || translations.dearUser,
-        ])}
+        {interpolateMessage(t("greeting"), [userData?.name || t("dearUser")])}
       </Text>
       <View style={styles.userImagePlaceholder} />
       <PatientCarousel
         data={data}
         styles={styles}
         translations={{
-          addPatient: translations.addPatient,
-          addPatientForm: translations.addPatientForm,
-          close: translations.close,
+          addPatient: t("addPatient"),
+          addPatientForm: t("addPatientForm"),
+          close: t("close"),
         }}
         openModal={openModal}
         closeModal={closeModal}

@@ -3,13 +3,13 @@ import { useResponsiveLayout } from "@context/LayoutContext";
 import { useMemo } from "react";
 
 /**
- * Returns responsive styles for the PatientScreen component.
+ * Custom hook that returns responsive styles for the PatientScreen component.
  * Adjusts layout and button width for mobile and small web screens.
  *
  * @returns {object} StyleSheet object for PatientScreen
  */
-export const stylesPatientScreen = () => {
-  const { isPhone, width, height, isWeb } = useResponsiveLayout();
+export const useStylesPatientScreen = () => {
+  const { isPhone } = useResponsiveLayout();
 
   const styles = useMemo(() => StyleSheet.create({
     container: {

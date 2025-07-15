@@ -1,6 +1,6 @@
-import React from 'react';
-import { useStylesPatientCard } from '@styles/components/stylesPatientCard';
-import { View, Text, Image, Pressable, ViewStyle } from 'react-native';
+import React from "react";
+import { useStylesPatientCard } from "@styles/components/stylesPatientCard";
+import { View, Text, Image, Pressable, ViewStyle } from "react-native";
 
 interface PatientCardProps {
   name: string;
@@ -31,8 +31,14 @@ interface PatientCardProps {
  *   onPress={() => console.log("Card pressed")}
  * />
  */
-const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, onPress, style }) => {
- const styles = useStylesPatientCard();
+const PatientCard: React.FC<PatientCardProps> = ({
+  name,
+  photoUrl,
+  pills,
+  onPress,
+  style,
+}) => {
+  const styles = useStylesPatientCard();
 
   return (
     <Pressable style={[styles.card, style]} onPress={onPress}>
@@ -49,6 +55,6 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, onPres
       </View>
     </Pressable>
   );
-}
+};
 
 export default PatientCard;

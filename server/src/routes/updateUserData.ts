@@ -4,7 +4,7 @@ import { ResponseUpdateUserData, TypeBodyUpdateUserData, User } from "../types";
 
 export const updateUserDataHandler = async (
   req: Request<{}, {}, TypeBodyUpdateUserData>,
-  res: Response<ResponseUpdateUserData>
+  res: Response<ResponseUpdateUserData>,
 ) => {
   const { userId, userData } = req.body;
 

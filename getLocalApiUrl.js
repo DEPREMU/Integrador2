@@ -27,10 +27,15 @@ const getLocalIPAddress = () => {
 
 const localIP = getLocalIPAddress();
 const apiUrl = `http://${localIP}:8080/api/v1`;
+const apiUrlWeb = "http://localhost:8080/api/v1";
 
-const output = `// This file is auto-generated. Do not edit it manually if it's not necessary.
+const output = `
+// This file is auto-generated. Do not edit it manually if it's not necessary.
 // Generated on ${new Date().toISOString()}
-export const API_URL = "${apiUrl}";
+import { Platform } from "react-native";
+export const API_URL = Platform.OS === "web" ? "${apiUrlWeb}" : "${apiUrl}";
+export const URL_WEB_SOCKET = Platform.OS === "web" ? "ws://localhost:8080/" : "ws://${localIP}:8080/";
+
 `;
 
 fs.writeFileSync("./src/utils/constants/API_URL.ts", output, "utf-8");

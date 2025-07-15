@@ -31,6 +31,6 @@ export const env: Env = {
 
 if (!Object.values(env).every((value) => value)) {
   throw new Error(
-    "One or more environment variables are missing. Please check .env file."
+    "One or more environment variables are missing. Please check .env file.",
   );
 }

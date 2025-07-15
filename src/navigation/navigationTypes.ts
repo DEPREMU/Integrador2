@@ -5,7 +5,6 @@ export type ScreensAvailable =
   | "Dashboard"
   | "Patient"
   | "HowToCode"
-  | "Schedule"
-  | "Settings";
+  | "Schedule";
 
 export type RootStackParamList = Record<ScreensAvailable, undefined>;

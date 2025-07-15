@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import Animated, {
   runOnJS,
   withTiming,
@@ -5,8 +6,8 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { Text, View } from "react-native";
-import { stylesCarouselComponent } from "@styles/components/stylesCarouselComponent";
-import React, { useEffect, useState, useRef } from "react";
+import { useStylesCarouselComponent } from "@styles/components/stylesCarouselComponent";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 interface CarouselProps {
   /**
@@ -37,16 +38,16 @@ const CarouselComponent: React.FC<CarouselProps> = ({
   items,
   interval = 4000,
 }) => {
-  const { styles, width } = stylesCarouselComponent();
+  const { styles, width } = useStylesCarouselComponent();
   const [index, setIndex] = useState<number>(0);
 
   // Shared values for opacity and scale of each slide
   // First slide visible (opacity=1, scale=1), others hidden (opacity=0, scale=0.8)
   const opacityRef = useRef(
-    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0))
+    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0)),
   );
   const scaleRef = useRef(
-    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0.8))
+    items.map((_, i) => useSharedValue(i === 0 ? 1 : 0.8)),
   );
 
   useEffect(() => {
@@ -58,15 +59,15 @@ const CarouselComponent: React.FC<CarouselProps> = ({
     });
   }, [index]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const next = index === items.length - 1 ? 0 : index + 1;
     runOnJS(setIndex)(next);
-  };
+  }, [index, items.length]);
 
   useEffect(() => {
     const timer = setInterval(handleNext, interval);
     return () => clearInterval(timer);
-  }, [index, interval]);
+  }, [index, interval, handleNext]);
 
   return (
     <View style={styles.container}>

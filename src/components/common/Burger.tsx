@@ -4,7 +4,7 @@ import Animated, {
 } from "react-native-reanimated";
 import React from "react";
 import ButtonComponent from "@components/common/Button";
-import { stylesBurger } from "@styles/components/stylesBurgerComponent";
+import { useStylesBurger } from "@styles/components/stylesBurgerComponent";
 import { View, Pressable } from "react-native";
 
 type typeBurger = {
@@ -23,15 +23,12 @@ type typeBurger = {
  * This hook handles the animation of the burger icon lines using `useAnimatedStyle` and `withTiming`.
  * It also manages the overlay that appears when the menu is open, and triggers the provided `open` and `close` callbacks.
  */
-const burger = (): typeBurger => {
-  const { styles, widthLine } = stylesBurger();
+const useBurger = (): typeBurger => {
+  const { styles, widthLine } = useStylesBurger();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const toggleMenu = () => {
     setIsOpen((prev) => {
-      if (isOpen) close();
-      else open();
-
       return !prev;
     });
   };
@@ -69,8 +66,8 @@ const burger = (): typeBurger => {
           children={
             <View style={styles.iconContainer}>
               <Animated.View style={[styles.line, line1Style]} />
-              <Animated.View style={[styles.line, { top: 18 }, line2Style]} />
-              <Animated.View style={[styles.line, { top: 18 }, line3Style]} />
+              <Animated.View style={[styles.line, styles.top18, line2Style]} />
+              <Animated.View style={[styles.line, styles.top18, line3Style]} />
               <Animated.View style={[styles.line, line4Style]} />
             </View>
           }
@@ -80,4 +77,4 @@ const burger = (): typeBurger => {
   };
 };
 
-export default burger;
+export default useBurger;

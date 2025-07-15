@@ -32,19 +32,19 @@ type UserContextType = {
     email: string,
     password: string,
     rememberMe?: boolean,
-    callback?: (session: UserSession | null, err?: Error) => T
+    callback?: (session: UserSession | null, err?: Error) => T,
   ) => Promise<T>;
   signUp: <T = void>(
     email: string,
     password: string,
-    callback?: (err?: Error) => T
+    callback?: (err?: Error) => T,
   ) => Promise<T>;
   logout: (callback?: (message: string) => void) => Promise<void>;
   setUserSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
   refreshToken: (refreshToken: string) => Promise<void>;
   updateUserData: (
     userData: User,
-    callback?: (success: boolean, error?: Error) => void
+    callback?: (success: boolean, error?: Error) => void,
   ) => Promise<void | undefined>;
 };
 
@@ -64,7 +64,7 @@ const UserContext = createContext<UserContextType | null>(null);
 const saveSession = async (
   session: UserSession,
   rememberMe: boolean,
-  keepOldExpiry: boolean = false
+  keepOldExpiry: boolean = false,
 ): Promise<void> => {
   const newSession: UserSession = {
     ...session,
@@ -101,7 +101,7 @@ const getSession = async (): Promise<UserSession | null> => {
   }
 
   const session = await loadDataSecure<UserSession>(
-    KEYS_STORAGE.USER_SESSION_STORAGE
+    KEYS_STORAGE.USER_SESSION_STORAGE,
   );
   if (session) return session;
 
@@ -244,12 +244,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     },
     [saveSessionCallback]
   );
-
   const signUp = useCallback(
     async <T = void,>(
       email: string,
       password: string,
-      callback: (err?: Error) => T = (_) => null as T
+      callback: (err?: Error) => T = (_) => null as T,
     ) => {
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -279,7 +278,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           description: "",
           name: "",
           phone: "",
-        })
+        }),
       )
         .then((res) => {
           log("User signed up successfully", res);
@@ -306,7 +305,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       return callback?.();
     },
-    []
+    [],
   );
 
   const login = useCallback(
@@ -315,7 +314,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       password: string,
       rememberMe: boolean = false,
       callback: (session: UserSession | null, err?: Error) => T = (_, __) =>
-        null as T
+        null as T,
     ) => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -339,7 +338,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           uuid: session?.user?.id,
           language,
           pushNotifications,
-        })
+        }),
       )
         .then((res) => res.json())
         .catch((error) => {
@@ -380,22 +379,22 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       log("User logged out successfully");
       callback?.("User logged out successfully");
     },
-    [isLoggedIn, userSession]
+    [isLoggedIn, userSession],
   );
 
   const updateUserData = useCallback(
     async (
-      newData?: { [key: string]: any },
-      callback?: (success: boolean, error?: Error) => void
+      newData?: { [key: string]: unknown },
+      callback?: (success: boolean, error?: Error) => void,
     ) => {
       if (!userData || !newData)
         return callback?.(false, new Error("No user data to update"));
       const res: ResponseUpdateUserData = await fetch(
         getRouteAPI("/updateUserData"),
         fetchOptions<TypeBodyUpdateUserData>("POST", {
-          userId: userData?.userId || "",
+          userId: userData.userId || "",
           userData: (newData as User) || {},
-        })
+        }),
       )
         .then((res) => res.json())
         .catch((error) => {
@@ -413,19 +412,81 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (res.error || !res.success) {
         logError(
           "Error updating user data",
-          res.error?.message || "Unknown error"
+          res.error?.message || "Unknown error",
         );
         return callback?.(
           false,
-          new Error(res.error?.message || "Unknown error")
+          new Error(res.error?.message || "Unknown error"),
         );
       }
       setUserData(res.user || null);
       log("User data updated successfully");
       return callback?.(true);
     },
-    [userData]
+    [userData],
   );
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+
+      if (!session || !session?.access_token || !session?.user?.id) return;
+
+      setIsLoggedIn(true);
+      setUserSession(session);
+    };
+
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (!userSession || !userSession.user?.id) return;
+
+    const getUserData = async () => {
+      const [language, pushNotifications] = await Promise.all([
+        checkLanguage(),
+        hasPushNotifications(),
+      ]);
+
+      const { data, error }: ResponseAuth = await fetch(
+        getRouteAPI("/login"),
+        fetchOptions<TypeBodyLogin>("POST", {
+          uuid: userSession.user.id,
+          language,
+          pushNotifications,
+        }),
+      )
+        .then((res) => res.json())
+        .catch((error) => {
+          logError("Error fetching user data", error.message);
+          setLoading(false);
+          return {
+            data: null,
+            error: {
+              message: error.message,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        });
+
+      if (error || !data) {
+        logError("Error fetching user data", error?.message);
+        setUserData(null);
+      } else {
+        setUserData(data.user);
+        setLoading(false);
+      }
+    };
+
+    getUserData();
+  }, [userSession]);
+
+  useEffect(() => {
+    if (!userSession || !userData || !isLoggedIn) return;
+    if (userSession.user?.id !== userData.userId) return;
+
+    updateUserData(userData);
+  }, [userSession, userData, isLoggedIn, updateUserData]);
 
   const contextValue = useMemo(() => ({
     signUp,

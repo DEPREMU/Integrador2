@@ -2,7 +2,7 @@ import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
 import { useMemo } from "react";
 
-export const stylesDayCarousel = () => {
+export const useStylesDayCarousel = () => {
   const { isPhone, isWeb, width } = useResponsiveLayout();
 
   const styles = useMemo(() => StyleSheet.create({

@@ -11,7 +11,7 @@ import { useResponsiveLayout } from "@context/LayoutContext";
  * const styles = stylesMenuComponent();
  * <View style={styles.menu}>...</View>
  */
-export const stylesMenuComponent = () => {
+export const useStylesMenuComponent = () => {
   const { isPhone } = useResponsiveLayout();
 
   return StyleSheet.create({

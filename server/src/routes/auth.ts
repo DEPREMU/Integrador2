@@ -27,7 +27,7 @@ import { getDatabase } from "../database/functions.js";
  */
 export const loginHandler = async (
   req: Request<{}, {}, TypeBodyLogin>,
-  res: Response<ResponseAuth>
+  res: Response<ResponseAuth>,
 ) => {
   const body: TypeBodyLogin | null = req.body;
 
@@ -82,7 +82,7 @@ export const loginHandler = async (
       "\nexistingUser:",
       existingUser,
       "\nexistingUserConfig",
-      existingUserConfig
+      existingUserConfig,
     );
     res.json({
       data: null,
@@ -118,7 +118,7 @@ export const loginHandler = async (
  */
 export const signUpHandler = async (
   req: Request<{}, {}, TypeBodySignup>,
-  res: Response<ResponseAuth>
+  res: Response<ResponseAuth>,
 ) => {
   try {
     const body: TypeBodySignup | null = req.body;
@@ -188,7 +188,7 @@ export const signUpHandler = async (
     if (inserted.some((s) => !s || s === null)) {
       console.warn(
         "One column or two were not uploaded successfully:",
-        inserted
+        inserted,
       );
       res.json({
         data: {

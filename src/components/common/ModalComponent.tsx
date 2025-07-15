@@ -65,12 +65,13 @@ const ModalComponent: React.FC<ModalProps> = ({
     return () => {
       if (idTimeout.current) clearTimeout(idTimeout.current);
     };
-  }, [isOpen]);
+  }, [isOpen, height, position, setHideModal]);
 
   return (
     <Animated.View
       style={[
         styles.overlay,
+        // eslint-disable-next-line react-native/no-inline-styles
         { display: hideModal ? "none" : "flex" },
         customStyles?.overlay,
         animatedStyle,

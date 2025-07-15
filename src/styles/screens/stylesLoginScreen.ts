@@ -5,7 +5,7 @@ import { StyleSheet } from "react-native";
  * @function stylesLoginScreen
  * @returns {{ styles: object, height: number, width: number }}
  */
-const stylesLoginScreen = () => {
+const useStylesLoginScreen = () => {
   const { width, height } = useResponsiveLayout();
 
   const styles = StyleSheet.create({
@@ -135,9 +135,14 @@ const stylesLoginScreen = () => {
       width: 20,
       height: 20,
     },
+    iconImageShowPassword: {
+      width: 20,
+      height: 20,
+    },
+    marginRight10: { marginRight: 10 },
   });
 
   return { styles, height, width };
 };
 
-export default stylesLoginScreen;
+export default useStylesLoginScreen;

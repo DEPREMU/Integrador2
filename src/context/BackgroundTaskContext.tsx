@@ -1,12 +1,12 @@
-import {
-  ScreensAvailable,
-  RootStackParamList,
-} from "@navigation/navigationTypes";
+import React, {
+  useRef,
+  useState,
+  useContext,
+  useCallback,
+  createContext,
+} from "react";
+import { logError } from "@utils";
 import { StatusBar } from "react-native";
-import { log, logError } from "@utils";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation, useNavigationState } from "@react-navigation/native";
-import React, { createContext, useContext, useRef, useState } from "react";
 
 type BackgroundTask = () => void | Promise<void>;
 
@@ -19,12 +19,10 @@ type BackgroundTask = () => void | Promise<void>;
  *
  * @property runTask - Executes a given background task immediately, bypassing the queue.
  * @property addTaskQueue - Adds a background task to the queue for sequential execution.
- * @property updateScreen - Updates or replaces the current screen in the navigation stack.
- * @property getCurrentRouteName - Retrieves the name of the current route.
  * @property setBgColorStatusBar - Sets the background color of the status bar.
  * @property setTranslucentStatusBar - Sets the translucency of the status bar.
  */
-interface BackgroundTaskContextType {
+type BackgroundTaskContextType = {
   /**
    * Runs a given task immediately.
    *
@@ -106,44 +104,6 @@ interface BackgroundTaskContextType {
   addTaskQueue: (task: BackgroundTask) => void;
 
   /**
-   * Updates the current screen in the navigation stack.
-   *
-   * @param screen - The screen to navigate to.
-   * @param force - If true, replaces the current screen regardless of the current route.
-   *
-   * @remarks
-   * - If `force` is true, the current screen is replaced with the specified screen.
-   * - If `force` is false and the specified screen is the current screen, it is replaced.
-   * - If `force` is false and the specified screen is not the current screen, a message is logged.
-   *
-   * @example
-   * ```tsx
-   * updateScreen("Home");
-   * ```
-   *
-   * Practical example:
-   * ```tsx
-   * const { updateScreen, addTaskQueue, getCurrentRouteName } = useContext(BackgroundTaskContext);
-   * const updateDB = async () => {
-   * // Simulate a background task
-   * // After the task is done, update the screen
-   * // This is just in case the data on the screen must be updated
-   * updateScreen(getCurrentRouteName());
-   * };
-   *
-   * addTaskQueue(updateDB);
-   * ```
-   */
-  updateScreen: (screen: ScreensAvailable, force?: boolean) => void;
-
-  /**
-   * Retrieves the name of the current route from the navigation state.
-   *
-   * @returns {ScreensAvailable} The name of the current route as a `ScreensAvailable` type.
-   */
-  getCurrentRouteName: () => ScreensAvailable;
-
-  /**
    * Sets the background color of the status bar.
    *
    * @param color - The color to set for the status bar background.
@@ -156,7 +116,7 @@ interface BackgroundTaskContextType {
    * @param translucent - If true, the status bar will be translucent; otherwise, it will not be.
    */
   setTranslucentStatusBar: React.Dispatch<React.SetStateAction<boolean>>;
-}
+};
 
 interface BackgroundTaskProviderProps {
   children: React.ReactNode;
@@ -169,11 +129,10 @@ interface BackgroundTaskProviderProps {
  * updating the current screen in the navigation stack.
  *
  * @context
- * @returns {BackgroundTaskContextType} The context value containing the `runTask`,
- * `addTaskQueue`, `updateScreen`, and `getCurrentRouteName` methods.
+ * @returns {BackgroundTaskContextType} The context value containing the `runTask` and `addTaskQueue`.
  */
 const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
-  null
+  null,
 );
 
 /**
@@ -227,8 +186,6 @@ const BackgroundTaskContext = createContext<BackgroundTaskContextType | null>(
 export const BackgroundTaskProvider: React.FC<BackgroundTaskProviderProps> = ({
   children,
 }) => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [bgColorStatusBar, setBgColorStatusBar] =
     useState<string>("transparent");
   const [translucentStatusBar, setTranslucentStatusBar] =
@@ -237,32 +194,20 @@ export const BackgroundTaskProvider: React.FC<BackgroundTaskProviderProps> = ({
   const taskQueueRef = useRef<BackgroundTask[]>([]);
   const isProcessingRef = useRef<boolean>(false);
 
-  const getCurrentRouteName = () => {
-    return useNavigationState((state) => {
-      const route = state.routes[state.index];
-      return route.name as ScreensAvailable;
-    });
-  };
-
   const addTaskQueue = (task: BackgroundTask) => {
     taskQueueRef.current.push(task);
     processQueue();
   };
 
-  const runTask = async (task: BackgroundTask) => {
+  const runTask = useCallback(async (task: BackgroundTask) => {
     try {
       await task();
-    } catch {}
-  };
+    } catch {
+      logError("Error running task:", task);
+    }
+  }, []);
 
-  const updateScreen = (screen: ScreensAvailable, force?: boolean) => {
-    const currentRouteName = getCurrentRouteName();
-
-    if (force || currentRouteName === screen) navigation.replace(screen);
-    else log("The screen given is not the current screen");
-  };
-
-  const processQueue = async () => {
+  const processQueue = useCallback(async () => {
     if (isProcessingRef.current) return;
 
     isProcessingRef.current = true;
@@ -279,15 +224,13 @@ export const BackgroundTaskProvider: React.FC<BackgroundTaskProviderProps> = ({
     }
 
     isProcessingRef.current = false;
-  };
+  }, [isProcessingRef, taskQueueRef]);
 
   return (
     <BackgroundTaskContext.Provider
       value={{
         runTask,
         addTaskQueue,
-        updateScreen,
-        getCurrentRouteName,
         setBgColorStatusBar,
         setTranslucentStatusBar,
       }}
@@ -313,7 +256,7 @@ export const useBackgroundTask = (): BackgroundTaskContextType => {
   const context = useContext(BackgroundTaskContext);
   if (!context) {
     throw new Error(
-      "useBackgroundTask must be used within a BackgroundTaskProvider"
+      "useBackgroundTask must be used within a BackgroundTaskProvider",
     );
   }
   return context;

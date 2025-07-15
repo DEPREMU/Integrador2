@@ -1,5 +1,5 @@
+import { StyleSheet } from "react-native";
 import { useResponsiveLayout } from "@/context/LayoutContext";
-import { StatusBar, StyleSheet } from "react-native";
 
 /**
  * Generates styles for the Header component.
@@ -11,8 +11,8 @@ import { StatusBar, StyleSheet } from "react-native";
  * const styles = stylesHeaderComponent();
  * <View style={styles.container}>...</View>
  */
-export const stylesHeaderComponent = () => {
-  const { isPhone, isWeb, height, width } = useResponsiveLayout();
+export const useStylesHeaderComponent = () => {
+  const { isPhone } = useResponsiveLayout();
 
   return StyleSheet.create({
     container: {

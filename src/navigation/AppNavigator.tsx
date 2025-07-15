@@ -1,26 +1,28 @@
 import {
+  NativeStackNavigationProp,
   createNativeStackNavigator,
   NativeStackNavigationOptions,
-  NativeStackNavigationProp,
 } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useEffect } from "react";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
 import SigninScreen from "@/screens/auth/SignUpScreen";
 import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
+import MedicationScheduler from "@screens/Schedule";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
+import { navigate, navigationRef } from "./navigationRef";
+import { setupNotificationHandlers } from "@/utils";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import MedicationScheduler from "@/screens/Schedule";
-import Settings from "@/screens/Settings";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type Screens = Record<
   keyof RootStackParamList,
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     component: React.ComponentType<any>;
     options?:
       | NativeStackNavigationOptions
@@ -51,30 +53,35 @@ const screens: Screens = {
   Schedule: {
     component: MedicationScheduler,
   },
-  Settings: {
-    component: Settings,
-  },
 };
 
-const AppNavigator: React.FC = () => (
-  <NavigationContainer>
-    <BackgroundTaskProvider>
-      <Stack.Navigator initialRouteName="Patient">
-        {Object.entries(screens).map(([name, { component, options }]) => (
-          <Stack.Screen
-            key={name}
-            name={name as keyof RootStackParamList}
-            component={component}
-            options={
-              (options as NativeStackNavigationOptions) ?? {
-                headerShown: false,
+const AppNavigator: React.FC = () => {
+  useEffect(() => {
+    const cleanup = setupNotificationHandlers(navigate);
+
+    return cleanup;
+  }, []);
+
+  return (
+    <NavigationContainer ref={navigationRef}>
+      <BackgroundTaskProvider>
+        <Stack.Navigator initialRouteName="Patient">
+          {Object.entries(screens).map(([name, { component, options }]) => (
+            <Stack.Screen
+              key={name}
+              name={name as keyof RootStackParamList}
+              component={component}
+              options={
+                (options as NativeStackNavigationOptions) ?? {
+                  headerShown: false,
+                }
               }
-            }
-          />
-        ))}
-      </Stack.Navigator>
-    </BackgroundTaskProvider>
-  </NavigationContainer>
-);
+            />
+          ))}
+        </Stack.Navigator>
+      </BackgroundTaskProvider>
+    </NavigationContainer>
+  );
+};
 
 export default AppNavigator;

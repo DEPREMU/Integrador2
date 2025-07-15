@@ -85,8 +85,8 @@ export type typeLanguages = {
   hour: string;
   hours: string;
   days: DaysOfWeek;
-  dosageTypes: string[];
-  urgency: Record<UrgencyType, string>;
+  dosageTypes: string;
+  urgency: string | Record<UrgencyType, string>;
   unknown: string;
   medicationPlaceholder: string;
   clearMedication: string;
@@ -99,6 +99,7 @@ export type typeLanguages = {
   requiredDosesPlaceholder: string;
   requiredDosesDescription: string;
   urgencyText: string;
+<<<<<<< HEAD
   settings: string;
   enableNotifications: string;
   searchMedications: string;
@@ -165,4 +166,7 @@ export type typeLanguages = {
   morning: string;
   afternoon: string;
   night: string;
+=======
+  namePatient: string;
+>>>>>>> 665b55bc139760836941c0ca911ac16a92a794a8
 };
