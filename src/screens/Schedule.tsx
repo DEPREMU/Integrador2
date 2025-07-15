@@ -72,15 +72,21 @@ const MedicationScheduler: React.FC = () => {
     saturday: translations.days.saturday,
     sunday: translations.days.sunday,
   }), [translations.days]);
-  const dosageTypes: string[] = useMemo(() => translations.dosageTypes, [translations.dosageTypes]);
+  const dosageTypes: string[] = useMemo(() => JSON.parse(translations.dosageTypes), [translations.dosageTypes]);
 
   const [dose, setDose] = useState<string>("");
   const [time, setTime] = useState<Date>(new Date());
   const [intervalHours, setIntervalHours] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
   const [requiredDoses, setRequiredDoses] = useState<number>(0);
+  const urgencyOptions = useMemo(() => {
+    return typeof translations.urgency === 'string' 
+      ? JSON.parse(translations.urgency) as Record<UrgencyType, string>
+      : translations.urgency;
+  }, [translations.urgency]);
+
   const [urgency, setUrgency] = useState<Partial<Record<UrgencyType, string>>>({
-    low: translations.urgency.low,
+    low: urgencyOptions.low,
   });
   const [patients, setPatients] = useState<User[]>([]);
   const [schedules, setSchedules] = useState<MedicationUser[]>([]);
@@ -119,7 +125,7 @@ const MedicationScheduler: React.FC = () => {
     setIntervalHours(0);
     setStock(0);
     setRequiredDoses(0);
-    setUrgency({ low: translations.urgency.low });
+    setUrgency({ low: urgencyOptions.low });
     setTime(new Date());
     // Reset validation states when form is reset
     setHasAttemptedSubmit(false);
@@ -130,7 +136,7 @@ const MedicationScheduler: React.FC = () => {
       intervalHours: false,
       urgency: false,
     });
-  }, [translations.urgency.low]);
+  }, [urgencyOptions.low]);
 
   const validateFields = useCallback(() => {
     const doseValue = parseFloat(dose);
@@ -377,7 +383,7 @@ const MedicationScheduler: React.FC = () => {
       stock,
       requiredDoses,
       urgency: (Object.values(urgency)[0] ||
-        translations.urgency.low) as UrgencyType,
+        urgencyOptions.low) as UrgencyType,
     };
 
     console.log("📝 New schedule data:", newSchedule);
@@ -419,7 +425,7 @@ const MedicationScheduler: React.FC = () => {
       alert(`Network error: ${error}`);
       setIsSubmitting(false);
     }
-  }, [medication, dose, selectedDays, time, dosageType, intervalHours, stock, urgency, selectedPatient, medicationsList, translations.unknown, translations.urgency.low, resetForm, animateButtonPress, navigation, validateFields]);
+  }, [medication, dose, selectedDays, time, dosageType, intervalHours, stock, urgency, selectedPatient, medicationsList, translations.unknown, urgencyOptions.low, resetForm, animateButtonPress, navigation, validateFields]);
 
   const toggleDay = useCallback((day: DayOfWeek) => {
     setSelectedDays((prev) => {
