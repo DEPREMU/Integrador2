@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { typeLanguages } from "./typesTranslations";
 
 const en: typeLanguages = {
@@ -88,8 +87,8 @@ const en: typeLanguages = {
     saturday: "Sa",
     sunday: "Su",
   },
-  dosageTypes: '["pills", "mg", "units"]',
-  urgency: "{\"low\": \"Low\",\"medium\": \"Medium\",\"high\": \"High\"}",
+  dosageTypes: JSON.stringify(["pills", "mg", "units"]),
+  urgency: JSON.stringify({ low: "Low", medium: "Medium", high: "High" }),
   unknown: "Unknown",
   medicationPlaceholder: "E.g. Paracetamol, Ibuprofen",
   clearMedication: "Clear Medication",

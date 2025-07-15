@@ -166,4 +166,18 @@ export type typeLanguages = {
   afternoon: string;
   night: string;
   namePatient: string;
+  // User Settings Component
+  settings: string;
+  enableNotifications: string;
+  save: string;
+  uploadImage: string;
+  description: string;
+  caregiver: string;
+  patient: string;
+  both: string;
+  fullName: string;
+  numberPhone: string;
+  userImage: string;
+  noImage: string;
+  role: string;
 };

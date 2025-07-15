@@ -57,11 +57,14 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
 
   if (!visible) return null;
 
-  const handlePress = (option: string) => {
+  const handlePress = (option: "Language" | "Login" | "Settings") => {
     if (option === "Language") {
       setShowLanguageSelector(true);
     } else if (option === "Login") {
       navigation.replace("Login");
+      setShowLanguageSelector(false);
+    } else if (option === "Settings") {
+      navigation.replace("Settings");
       setShowLanguageSelector(false);
     }
   };
@@ -114,6 +117,15 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             <ButtonComponent
               handlePress={() => handlePress("Language")}
               label={translations.languages}
+              touchableOpacity
+              replaceStyles={{
+                button: styles.button,
+                textButton: styles.textButton,
+              }}
+            />
+            <ButtonComponent
+              handlePress={() => handlePress("Settings")}
+              label={t("settings")}
               touchableOpacity
               replaceStyles={{
                 button: styles.button,

@@ -1,5 +1,5 @@
-import { useResponsiveLayout } from "@/context/LayoutContext";
 import { StyleSheet } from "react-native";
+import { useResponsiveLayout } from "@context/LayoutContext";
 
 /**
  * Custom hook that returns responsive styles for the PatientCard component.
