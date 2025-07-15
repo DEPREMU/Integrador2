@@ -7,6 +7,7 @@ import { loginHandler, signUpHandler } from "./auth.js";
 import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
 import { addUserMedicationHandler } from "./addUserMedication.js";
+import { deleteUserMedicationHandler } from "./deleteUserMedication.js";
 import {
   getAllMedications,
   getUserMedications,
@@ -40,6 +41,7 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
   "/addUserMedication": { handler: addUserMedicationHandler },
+  "/deleteUserMedication": { handler: deleteUserMedicationHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

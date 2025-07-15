@@ -12,7 +12,8 @@ export type RoutesAPI =
   | "/getUserPatients"
   | "/getUserMedications"
   | "/getAllMedications"
-  | "/addUserMedication";
+  | "/addUserMedication"
+  | "/deleteUserMedication";
 
 export type ResponseEncrypt = {
   dataEncrypted?: string;

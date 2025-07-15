@@ -83,6 +83,7 @@ export type typeLanguages = {
   schedulesNotScheduled: string;
   addMedicationsOnTop: string;
   hour: string;
+  hours: string;
   days: DaysOfWeek;
   dosageTypes: string[];
   urgency: Record<UrgencyType, string>;
@@ -94,9 +95,24 @@ export type typeLanguages = {
   intervalHoursPlaceholder: string;
   stock: string;
   stockPlaceholder: string;
+  requiredDoses: string;
+  requiredDosesPlaceholder: string;
+  requiredDosesDescription: string;
   urgencyText: string;
   settings: string;
   enableNotifications: string;
+  searchMedications: string;
+  medicationNotFound: string;
+  noMedicationsFoundMessage: string;
+  loadingMedications: string;
+  medicationRequired: string;
+  dosageRequired: string;
+  daysRequired: string;
+  intervalRequired: string;
+  urgencyRequired: string;
+  formValidationTitle: string;
+  formValidationMessage: string;
+  searchHint: string;
   save: string;
   uploadImage: string;
   description: string;
@@ -108,4 +124,45 @@ export type typeLanguages = {
   userImage: string;
   noImage: string;
   role: string;
+  // PDF Report types
+  pdfReportTitle: string;
+  generateReport: string;
+  pdfGeneratedTitle: string;
+  pdfGeneratedMessage: string;
+  pdfSavedMessage: string;
+  pdfErrorMessage: string;
+  noMedicationsTitle: string;
+  noMedicationsReportMessage: string;
+  errorTitle: string;
+  generating: string;
+  
+  // PDF Content translations
+  pdfMedicalReportTitle: string;
+  pdfGeneratedOn: string;
+  pdfPatientInformation: string;
+  pdfPatientLabel: string;
+  pdfTotalMedicationsLabel: string;
+  pdfActiveTreatmentsLabel: string;
+  pdfLastUpdateLabel: string;
+  pdfGeneralStatistics: string;
+  pdfAverageAdherence: string;
+  pdfActiveMedications: string;
+  pdfDailyAverage: string;
+  pdfPreferredTime: string;
+  pdfMedicationDetails: string;
+  pdfNoMedicationsRegistered: string;
+  pdfDosageLabel: string;
+  pdfScheduleLabel: string;
+  pdfDaysLabel: string;
+  pdfAdherenceLabel: string;
+  pdfNotSpecified: string;
+  pdfNotSpecifiedDays: string;
+  pdfMedicationDefault: string;
+  pdfFooterText1: string;
+  pdfFooterText2: string;
+  
+  // Time periods for PDF
+  morning: string;
+  afternoon: string;
+  night: string;
 };

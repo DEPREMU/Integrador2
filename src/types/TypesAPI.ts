@@ -1,4 +1,4 @@
-// Types related to API responses and requests
+
 
 export type UrgencyType = "low" | "medium" | "high";
 export type RoleType = "caregiver" | "patient" | "both";
@@ -55,8 +55,10 @@ export type MedicationUser = {
   days: string[];
   startHour: string;
   stock: number;
+  requiredDoses?: number;
   urgency: UrgencyType;
   name: string;
+  createdAt?: string;
 };
 
 export type ResponseGetUserMedications = {
@@ -94,6 +96,15 @@ export type TypeBodyAddUserMedication = {
 export type ResponseAddUserMedication = {
   success?: boolean;
   medication?: MedicationUser;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyDeleteUserMedication = {
+  medicationId: string;
+};
+
+export type ResponseDeleteUserMedication = {
+  success?: boolean;
   error?: { message: string; timestamp: string };
 };
 

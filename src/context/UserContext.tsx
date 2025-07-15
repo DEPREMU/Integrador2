@@ -58,7 +58,7 @@ const UserContext = createContext<UserContextType | null>(null);
  * Saves the user session data securely and sets the session expiry date.
  *
  * @param session - The user session object to be saved.
- * @param rememberMe - If true, sets the session expiry to 15 days from now; otherwise, sets expiry to 0.
+ * @param rememberMe - If true, sets the session expiry to 15 days from now; otherwise, sets expiry to 8 hours.
  * @returns A promise that resolves when the session data and expiry date have been saved.
  */
 const saveSession = async (

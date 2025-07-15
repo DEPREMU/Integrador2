@@ -4,12 +4,16 @@ import { Text } from "react-native-paper";
 import { capitalize, log } from "@/utils";
 import Button from "@components/common/Button";
 import { MedicationUser } from "@types";
+import { useLanguage } from "@context/LanguageContext";
 
 const RenderScheduleItem: React.FC<{
   data: MedicationUser[];
   styles: any;
   deleteSchedule: (medicationId: string) => void;
-}> = ({ data, styles, deleteSchedule }) => (
+}> = ({ data, styles, deleteSchedule }) => {
+  const { translations } = useLanguage();
+  
+  return (
   <>
     {data.map((item) => {
       log(item);
@@ -23,6 +27,9 @@ const RenderScheduleItem: React.FC<{
             <Text style={styles.doseText}>
               {item.grams}-{item.dosage || "mg"} {item.startHour} -{" "}
               {item.intervalHours}
+            </Text>
+            <Text style={styles.requiredDosesText}>
+              {translations.requiredDoses || "Required Doses"}: {item.requiredDoses || 0}
             </Text>
           </View>
           <View style={styles.daysIndicator}>
@@ -56,7 +63,8 @@ const RenderScheduleItem: React.FC<{
       );
     })}
   </>
-);
+  );
+};
 
 const RenderScheduleItemMemo = React.memo(
   RenderScheduleItem,

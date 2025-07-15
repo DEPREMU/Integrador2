@@ -66,8 +66,10 @@ export type MedicationUser = {
   days: string[];
   startHour: string;
   stock: number;
+  requiredDoses?: number;
   urgency: UrgencyType;
   name: string;
+  createdAt?: string;
 };
 
 export type ImagePath = {
@@ -81,7 +83,7 @@ export type UserConfig = {
   userId: string;
   language: string;
   pushNotifications: boolean;
-  timeZone: string;
+ 
 };
 
 export { ObjectId };

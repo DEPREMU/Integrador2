@@ -2,6 +2,7 @@ import {
   ResponseGetUserMedications,
   TypeBodyGetUserMedications,
   MedicationUser,
+  User,
 } from "../../types";
 import { Request, Response } from "express";
 import { getCollection } from "../../database/functions.js";
@@ -25,9 +26,24 @@ export const getUserMedications = async (
   }
 
   try {
-    const coll = await getCollection<MedicationUser>("medicationsUser");
+    // First, get the user to find their patientUserIds
+    const usersColl = await getCollection<User>("users");
+    const user = await usersColl?.findOne({ userId });
     
-    if (!coll) {
+    if (!user) {
+      res.status(404).json({
+        medications: [],
+        error: {
+          message: "User not found",
+          timestamp: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
+    const medicationsColl = await getCollection<MedicationUser>("medicationsUser");
+    
+    if (!medicationsColl) {
       res.status(500).json({
         medications: [],
         error: {
@@ -38,13 +54,23 @@ export const getUserMedications = async (
       return;
     }
 
-    // Get all medications for the specific user
-    const medications = await coll
-      .find({ userId })
+    // Get medications for the user and all their patients
+    let userIdsToQuery = [userId];
+    
+    // Add patient user IDs if they exist
+    if (user.patientUserIds && user.patientUserIds.length > 0) {
+      userIdsToQuery = [...userIdsToQuery, ...user.patientUserIds];
+    }
+
+    console.log(`Querying medications for user IDs: ${userIdsToQuery.join(', ')}`);
+
+    // Get all medications for the user and their patients
+    const medications = await medicationsColl
+      .find({ userId: { $in: userIdsToQuery } })
       .sort({ createdAt: -1 }) // Most recent first
       .toArray();
 
-    console.log(`Found ${medications?.length || 0} medications for user ${userId}`);
+    console.log(`Found ${medications?.length || 0} medications for users ${userIdsToQuery.join(', ')}`);
 
     res.json({
       medications: medications || [],
