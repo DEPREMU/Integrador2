@@ -6,15 +6,15 @@ import { APP_ICON, APP_NAME } from "@utils";
 import { useStylesHeaderComponent } from "@styles/components/stylesHeaderComponent";
 
 /**
- * Header renders a header bar with a menu toggle button, app icon, and app name.
+ * HeaderComponent renders a header bar with a menu toggle button, app icon, and app name.
  * It manages the visibility of the Menu component internally.
  *
  * @returns {JSX.Element} The header component UI.
  *
  * @example
- * <Header />
+ * <HeaderComponent />
  */
-const Header: React.FC = () => {
+const HeaderComponent: React.FC = () => {
   const styles = useStylesHeaderComponent();
 
   const { burgerComponent, toggleMenu, isOpen: menuVisible } = burger();
@@ -32,4 +32,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header;
+export default HeaderComponent;

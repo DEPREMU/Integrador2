@@ -4,77 +4,91 @@ import React, {
   ReactNode,
   useContext,
   createContext,
-  useMemo,
 } from "react";
-import { i18n } from "@utils";
-import { useTranslation } from "react-i18next";
 import {
-  checkLanguage,
   saveData,
+  languages,
   KEYS_STORAGE,
+  typeLanguages,
+  checkLanguage,
   LanguagesSupported,
 } from "@utils";
-import { typeLanguages } from "@utils";
 
 interface LanguageContextProps {
   language: LanguagesSupported;
-  changeLanguage: (lang: LanguagesSupported) => Promise<void>;
-  t: (key: keyof typeLanguages, options?: object) => string;
+  setLanguage: (language: LanguagesSupported) => void;
+  translations: typeLanguages;
 }
 
 interface LanguageProviderProps {
   children: ReactNode;
 }
 
+/**
+ * LanguageContext provides the current language and translations for the application.
+ *
+ * It allows components to access and update the current language and provides
+ * translations based on the selected language.
+ *
+ * @context
+ * @returns {LanguageContextProps} The context value containing the current language,
+ * setLanguage function, and translations.
+ */
 const LanguageContext = createContext<LanguageContextProps | undefined>(
-  undefined,
+  undefined
 );
 
+/**
+ * LanguageProvider component wraps the application and provides the LanguageContext.
+ *
+ * It initializes the current language and translations based on user preferences
+ * or default settings.
+ *
+ * @component
+ * @param {LanguageProviderProps} props - The props for the LanguageProvider.
+ * @param {ReactNode} props.children - The child components to be wrapped by the provider.
+ *
+ * @returns {JSX.Element} The LanguageProvider component with context value.
+ */
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
   const [language, setLanguage] = useState<LanguagesSupported>("en");
-  const { t: i18nextT } = useTranslation();
 
   useEffect(() => {
     const loadLanguage = async () => {
-      const storedLang = await checkLanguage();
-      setLanguage(storedLang);
-      await i18n.changeLanguage(storedLang);
+      const data = await checkLanguage();
+      setLanguage(data);
     };
 
     loadLanguage();
   }, []);
 
-  const changeLanguage = async (lang: LanguagesSupported) => {
-    await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, lang);
-    await i18n.changeLanguage(lang);
-    setLanguage(lang);
-  };
+  useEffect(() => {
+    const saveNewLanguage = async () => {
+      await saveData(KEYS_STORAGE.LANGUAGE_KEY_STORAGE, language);
+    };
 
-  const contextValue = useMemo(() => ({
-    language,
-    setLanguage,
-    translations,
-  }), [language, translations]);
+    saveNewLanguage();
+  }, [language]);
+
+  const translations = languages[language || "en"];
 
   return (
-<<<<<<< HEAD
-    <LanguageContext.Provider value={contextValue}>
-=======
-    <LanguageContext.Provider
-      value={{
-        language,
-        changeLanguage,
-        t: i18nextT as (key: keyof typeLanguages, options?: object) => string,
-      }}
-    >
->>>>>>> 665b55bc139760836941c0ca911ac16a92a794a8
+    <LanguageContext.Provider value={{ language, setLanguage, translations }}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
+/**
+ * Custom hook to use the LanguageContext.
+ *
+ * @returns {LanguageContextProps} The context value containing the current language,
+ * setLanguage function, and translations.
+ *
+ * @throws {Error} If used outside of a LanguageProvider.
+ */
 export const useLanguage = (): LanguageContextProps => {
   const context = useContext(LanguageContext);
   if (!context) {

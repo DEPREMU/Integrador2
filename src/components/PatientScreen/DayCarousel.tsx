@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useModal } from "@context/ModalContext";
-import ButtonComponent from "@components/common/Button";
+import Button from "@components/common/Button";
 import { useLanguage } from "@context/LanguageContext";
 import { useStylesDayCarousel } from "@styles/components/stylesDayCarousel";
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
@@ -65,8 +65,12 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
       'unidades': 2
     };
     
+    const dosageTypes = typeof translations.dosageTypes === 'string' 
+      ? JSON.parse(translations.dosageTypes) 
+      : translations.dosageTypes;
+    
     const index = dosageMap[dosageType.toLowerCase()];
-    return index !== undefined ? translations.dosageTypes[index] || dosageType : dosageType;
+    return index !== undefined ? dosageTypes[index] || dosageType : dosageType;
   };
 
   const translateUrgency = (urgencyLevel: string): string => {
@@ -74,26 +78,25 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
     
     const normalizedUrgency = urgencyLevel.toLowerCase().trim();
     
+    // Parse the urgency translations if they're a JSON string
+    const urgencyTranslations = typeof translations.urgency === 'string' 
+      ? JSON.parse(translations.urgency) 
+      : translations.urgency;
+    
     // Map different possible values to the translation keys
-    const urgencyMap: { [key: string]: keyof typeof translations.urgency } = {
-      'high': 'high',
-      'alta': 'high',
-      'alto': 'high',
-      'medium': 'medium',
-      'media': 'medium',
-      'medio': 'medium',
-      'low': 'low',
-      'baja': 'low',
-      'bajo': 'low'
+    const urgencyMap: { [key: string]: string } = {
+      'high': urgencyTranslations.high || 'High',
+      'alta': urgencyTranslations.high || 'High',
+      'alto': urgencyTranslations.high || 'High',
+      'medium': urgencyTranslations.medium || 'Medium',
+      'media': urgencyTranslations.medium || 'Medium',
+      'medio': urgencyTranslations.medium || 'Medium',
+      'low': urgencyTranslations.low || 'Low',
+      'baja': urgencyTranslations.low || 'Low',
+      'bajo': urgencyTranslations.low || 'Low'
     };
     
-    const mappedKey = urgencyMap[normalizedUrgency];
-    if (mappedKey && translations.urgency[mappedKey]) {
-      return translations.urgency[mappedKey];
-    }
-    
-    // Fallback to original value
-    return urgencyLevel;
+    return urgencyMap[normalizedUrgency] || urgencyLevel;
   };
 
   const getUrgencyColor = (urgency: string): string => {
@@ -390,7 +393,7 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
 
   return (
     <View style={styles.container}>
-      <ButtonComponent
+      <Button
         handlePress={handlePrev}
         disabled={startIndex === 0}
         customStyles={{
@@ -407,7 +410,7 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
       />
       <View style={styles.cardsRow}>
         {visibleDays.map((day, index) => (
-          <ButtonComponent
+          <Button
             key={day.name}
             label={day.name}
             touchableOpacityIntensity={0.8}
@@ -454,7 +457,7 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
           />
         ))}
       </View>
-      <ButtonComponent
+      <Button
         handlePress={handleNext}
         disabled={startIndex >= days.length - cardsToShow}
         customStyles={{
