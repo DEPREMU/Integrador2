@@ -110,6 +110,18 @@ const es: typeLanguages = {
   userImage: "Imagen de usuario",
   noImage: "Sin imagen",
   role: "Rol",
+
+  
+  nameRequired: "El nombre es obligatorio",
+  phoneRequired: "El número de teléfono es obligatorio",
+  phoneFormatError: "El número de teléfono debe tener 10 dígitos",
+  dataUpdated: "Datos actualizados correctamente",
+  errorUserImage: "Error al subir la imagen del usuario",
+  errorIdUser: "Error al obtener el identificador del usuario",
+  imageUploadSuccess: "Imagen subida correctamente",
+  dashboard: "Panel de usuario",
+  home: "Inicio",
+  pillboxSettings: "Configuración del pastillero",
 } as const;
 
 export default es;

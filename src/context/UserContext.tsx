@@ -306,7 +306,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           new Error(res.error?.message || "Unknown error"),
         );
       }
-      setUserData(res.user || null);
+      // Preservar campos importantes que no vienen en la respuesta del servidor
+      const updatedUser = {
+        ...userData, // Mantener datos originales
+        ...res.user, // Sobrescribir con datos actualizados
+        userId: userData.userId, // Asegurar que userId se preserve
+        _id: userData._id, // Asegurar que _id se preserve
+        createdAt: userData.createdAt, // Asegurar que createdAt se preserve
+      };
+      setUserData(updatedUser);
       setUpdatedInfo(true);
       log("User data updated successfully");
       return callback?.(true);

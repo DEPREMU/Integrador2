@@ -94,7 +94,6 @@ export type typeLanguages = {
   stockPlaceholder: string;
   urgencyText: string;
   namePatient: string;
-  // User Settings Component
   settings: string;
   enableNotifications: string;
   save: string;
@@ -108,4 +107,14 @@ export type typeLanguages = {
   userImage: string;
   noImage: string;
   role: string;
+  phoneFormatError: string;
+  dataUpdated: string;
+  nameRequired: string;
+  phoneRequired: string;
+  errorUserImage: string;
+  errorIdUser: string;
+  imageUploadSuccess: string;
+  dashboard: string;
+  home: string;
+  pillboxSettings: string;
 };

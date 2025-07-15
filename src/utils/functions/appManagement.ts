@@ -2,6 +2,7 @@ import { logError } from "./debug";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
 import { ResponseUploadImage } from "@typesAPI";
+import { Platform } from "react-native";
 
 /**
  * Requests permission to access the media library.
@@ -31,17 +32,39 @@ export const pickImage = async (pickMultipleImages: boolean) => {
  * @param images - An array of image assets to be included in the FormData.
  * @returns A FormData object containing the images.
  */
-const getFormData = (images: ImagePicker.ImagePickerAsset[]) => {
+const getFormData = async (images: ImagePicker.ImagePickerAsset[]) => {
   const formData = new FormData();
-  for (const image of images) {
-    const formValue = {
-      uri: image.uri,
-      name: image.fileName ?? "upload.jpg",
-      type: image.mimeType ?? "image/jpeg",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-    formData.append("images", formValue);
+
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+
+    // Para web, necesitamos crear un Blob desde la URI
+    if (Platform.OS === "web") {
+      try {
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+
+        // Crear un File object desde el Blob
+        const file = new File([blob], image.fileName ?? `upload_${i}.jpg`, {
+          type: image.mimeType ?? "image/jpeg",
+        });
+
+        formData.append("images", file);
+      } catch (error) {
+        console.error(`Error processing image ${i}:`, error);
+      }
+    } else {
+      // Para React Native nativo
+      const formValue = {
+        uri: image.uri,
+        name: image.fileName ?? `upload_${i}.jpg`,
+        type: image.mimeType ?? "image/jpeg",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+      formData.append("images", formValue);
+    }
   }
+
   return formData;
 };
 
@@ -65,7 +88,7 @@ export const uploadImage = async (
   const pickerResult = await pickImage(pickMultipleImages);
   if (pickerResult.canceled) return;
 
-  const formData = getFormData(pickerResult.assets);
+  const formData = await getFormData(pickerResult.assets);
   formData.append("userId", userId);
 
   try {
@@ -73,10 +96,9 @@ export const uploadImage = async (
       method: "POST",
       body: formData,
     };
-    const data: ResponseUploadImage = await fetch(
-      getRouteAPI("/upload"),
-      fetchOptions,
-    ).then((r) => r.json());
+    const response = await fetch(getRouteAPI("/upload"), fetchOptions);
+
+    const data: ResponseUploadImage = await response.json();
 
     return { files: data.files, success: data.success };
   } catch (error) {
