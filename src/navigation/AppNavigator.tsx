@@ -69,8 +69,8 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Patient">
-          {Object.entries(screens).map(([name, { component, options }]) => (
+        <Stack.Navigator initialRouteName="Home">
+          {Object.entries(screens).map(([name,{ component, options }]) => (
             <Stack.Screen
               key={name}
               name={name as keyof RootStackParamList}

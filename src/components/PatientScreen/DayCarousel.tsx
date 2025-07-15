@@ -433,9 +433,6 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
                         <Text style={styles.medicationTime}>
                           {formatTime(med.startHour)}
                         </Text>
-                        <Text style={styles.medicationDoses}>
-                          {translations.requiredDoses || 'Required Doses'}: {med.requiredDoses || 0}
-                        </Text>
                       </View>
                     ))}
                     {day.medications.length > 3 && (
