@@ -122,7 +122,7 @@ const en: typeLanguages = {
   patient: "Patient",
   both: "Both",
   fullName: "Full Name",
-  mumberPhone: "Phone Number",
+  numberPhone: "Phone Number",
   userImage: "User Image",
   noImage: "No Image",
   role: "Role",

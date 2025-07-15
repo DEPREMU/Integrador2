@@ -125,7 +125,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             />
             <ButtonComponent
               handlePress={() => handlePress("Settings")}
-              label={t("settings")}
+              label={translations.settings}
               touchableOpacity
               replaceStyles={{
                 button: styles.button,
