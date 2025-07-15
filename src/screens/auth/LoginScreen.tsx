@@ -33,7 +33,7 @@ type ShakeInput = {
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { styles } = stylesLoginScreen();
-  const { t } = useLanguage();
+  const { translations } = useLanguage();
   const { login, isLoggedIn } = useUserContext();
   const { openModal, closeModal } = useModal();
 
@@ -76,28 +76,28 @@ const LoginScreen: React.FC = () => {
       }
       if (!session) {
         openModal(
-          t("errorNoSession"),
-          t("errorNoSessionMessage"),
+          translations.errorNoSession,
+          translations.errorNoSessionMessage,
           <Button
-            label={t("close")}
+            label={translations.close}
             handlePress={closeModal}
           />
         );
         setLoggingIn(false);
-        return log(t("errorNoSession"), email, password);
+        return log(translations.errorNoSession, email, password);
       }
 
       setLoggingIn(false);
       openModal(
         //Label
-        t("successSignUp"),
+        translations.successSignUp,
         // Body
-        `${t("successSignUpMessage")}\n${t("verifyEmail")}`,
+        `${translations.successSignUpMessage}\n${translations.verifyEmail}`,
         // Buttons
-        <Button label={t("close")} handlePress={closeModal} />
+        <Button label={translations.close} handlePress={closeModal} />
       );
     });
-  }, [email, password, rememberMe, openModal, t, closeModal, login, loggingIn]);
+  }, [email, password, rememberMe, openModal, translations, closeModal, login, loggingIn]);
 
   const triggerShake = (which: "password" | "email") => {
     const valueToMove = 5;
@@ -158,7 +158,7 @@ const LoginScreen: React.FC = () => {
       <View style={styles.content}>
         <Image source={APP_ICON} style={styles.logo} />
 
-        <Text style={styles.title}>{t("welcome")}</Text>
+        <Text style={styles.title}>{translations.welcome}</Text>
 
         {/* Email space */}
         <Animated.View
@@ -170,7 +170,7 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            label={t("emailPlaceholder")}
+            label={translations.emailPlaceholder}
             placeholderTextColor="#999"
             underlineColor="#00a69d"
             activeUnderlineColor="#00a69d"
@@ -197,7 +197,7 @@ const LoginScreen: React.FC = () => {
         >
           <TextInput
             style={styles.input}
-            label={t("passwordPlaceholder")}
+            label={translations.passwordPlaceholder}
             underlineColor="#00a69d"
             activeUnderlineColor="#00a69d"
             placeholderTextColor="#999"
@@ -230,7 +230,7 @@ const LoginScreen: React.FC = () => {
         {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <Button
-          label={!loggingIn ? t("loginButton") : ""}
+          label={!loggingIn ? translations.loginButton : ""}
           touchableOpacity
           disabled={loggingIn}
           children={
@@ -251,7 +251,7 @@ const LoginScreen: React.FC = () => {
 
         <View style={styles.linksContainer}>
           <View style={styles.rememberMeContainer}>
-            <Text style={styles.rememberMeText}>{t("rememberMe")}</Text>
+            <Text style={styles.rememberMeText}>{translations.rememberMe}</Text>
             <Switch
               color="#7cced4"
               value={rememberMe}
@@ -259,7 +259,7 @@ const LoginScreen: React.FC = () => {
             />
           </View>
           <Button
-            label={t("forgotPassword")}
+            label={translations.forgotPassword}
             touchableOpacity
             handlePress={() => setShowPassword((prev) => !prev)}
             replaceStyles={{
@@ -268,7 +268,7 @@ const LoginScreen: React.FC = () => {
             }}
           />
           <Button
-            label={t("createAccount")}
+            label={translations.createAccount}
             touchableOpacity
             handlePress={() => navigation.replace("SignUp")}
             replaceStyles={{
