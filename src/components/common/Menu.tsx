@@ -48,7 +48,7 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
 const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   const styles = useStylesMenuComponent();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { language, t, changeLanguage } = useLanguage();
+  const { language, translations, setLanguage } = useLanguage();
   const { isLoggedIn, logout } = useUserContext();
   const { openModal, closeModal } = useModal();
 
@@ -69,7 +69,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   const selectLanguage = async (language: LanguagesSupported) => {
     log("Language selected:", language);
     onClose();
-    await changeLanguage(language);
+    setLanguage(language);
     setShowLanguageSelector(false);
   };
 
@@ -77,9 +77,9 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
     await logout((message) => {
       log(message);
       openModal(
-        t("successLogout"),
-        t("successLogoutMessage"),
-        <ButtonComponent label={t("close")} handlePress={closeModal} />,
+        translations.successLogout,
+        translations.successLogoutMessage,
+        <ButtonComponent label={translations.close} handlePress={closeModal} />,
       );
     });
   };
@@ -92,7 +92,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             {!isLoggedIn && (
               <ButtonComponent
                 handlePress={() => handlePress("Login")}
-                label={t("login")}
+                label={translations.login}
                 touchableOpacity
                 replaceStyles={{
                   button: styles.button,
@@ -103,7 +103,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             {isLoggedIn && (
               <ButtonComponent
                 handlePress={handlePressLogout}
-                label={t("logOut")}
+                label={translations.logOut}
                 touchableOpacity
                 replaceStyles={{
                   button: styles.button,
@@ -113,7 +113,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
             )}
             <ButtonComponent
               handlePress={() => handlePress("Language")}
-              label={t("languages")}
+              label={translations.languages}
               touchableOpacity
               replaceStyles={{
                 button: styles.button,

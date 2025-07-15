@@ -58,8 +58,8 @@ const MedicationScheduler: React.FC = () => {
       surface: "#ecebea",
       onSurface: "#333333",
       primary: "#00a69d",
-      onSurfaceVariant: "#666666",
-      placeholder: "#666666",
+      onSurfaceVariant: "#999999",
+      placeholder: "#aaaaaa",
     }
   };
 
@@ -978,8 +978,13 @@ const MedicationScheduler: React.FC = () => {
           <TextInput
             style={[styles.input, fieldErrors.intervalHours && hasAttemptedSubmit && styles.inputError]}
             keyboardType="numeric"
-            value={intervalHours.toString()}
-            onChangeText={(text) => setIntervalHours(Number(text) || 0)}
+            value={intervalHours > 0 ? intervalHours.toString() : ""}
+            onChangeText={(text) => {
+              const numericValue = text === '' ? 0 : Number(text);
+              if (!isNaN(numericValue) && numericValue >= 0) {
+                setIntervalHours(numericValue);
+              }
+            }}
             placeholder={translations.intervalHoursPlaceholder}
             mode="flat"
             underlineColor="transparent"
@@ -993,8 +998,13 @@ const MedicationScheduler: React.FC = () => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={stock ? stock.toString() : ""}
-            onChangeText={(text) => setStock(Number(text))}
+            value={stock > 0 ? stock.toString() : ""}
+            onChangeText={(text) => {
+              const numericValue = text === '' ? 0 : Number(text);
+              if (!isNaN(numericValue) && numericValue >= 0) {
+                setStock(numericValue);
+              }
+            }}
             placeholder={translations.stockPlaceholder}
             mode="flat"
             underlineColor="transparent"
@@ -1017,7 +1027,7 @@ const MedicationScheduler: React.FC = () => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={requiredDoses ? requiredDoses.toString() : ""}
+            value={requiredDoses > 0 ? requiredDoses.toString() : ""}
             onChangeText={(text) => {
               const numericValue = Number(text) || 0;
               if (numericValue >= 0) {
@@ -1045,7 +1055,7 @@ const MedicationScheduler: React.FC = () => {
             <Text style={styles.errorText}>{translations.urgencyRequired}</Text>
           )}
           <View style={styles.urgencyButtons}>
-            {Object.entries(translations.urgency).map(([key, label]) => (
+            {Object.entries(urgencyOptions).map(([key, label]) => (
               <Pressable
                 key={key}
                 style={[

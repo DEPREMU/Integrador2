@@ -1,5 +1,5 @@
 import { Falsy } from "react-native";
-import { MedicationApi, User, UserConfig } from "./Database";
+import { MedicationApi, User, UserConfig, MedicationUser } from "./Database";
 
 export type RoutesAPI =
   | "/login"

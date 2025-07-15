@@ -11,6 +11,8 @@ import {
   getUserMedications,
   getUserPatients,
 } from "./gets/index.js";
+import { addUserMedicationHandler } from "./addUserMedication.js";
+import { deleteUserMedicationHandler } from "./deleteUserMedication.js";
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -38,6 +40,8 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/getUserPatients": { handler: getUserPatients },
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
+  "/addUserMedication": { handler: addUserMedicationHandler },
+  "/deleteUserMedication": { handler: deleteUserMedicationHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {
