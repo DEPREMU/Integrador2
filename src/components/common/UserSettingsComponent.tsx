@@ -7,31 +7,57 @@ import { useUserContext } from "@context/UserContext";
 import { RoleType, User } from "@typesAPI";
 import { Text, TextInput } from "react-native-paper";
 import { getRouteImage, logError, uploadImage } from "@/utils";
+import SnackbarAlert from "./SnackbarAlert";
 
 const roles: RoleType[] = ["caregiver", "patient", "both"];
 
 /**
- * UserSettingsComponent is a React functional component that provides a user interface
- * for viewing and editing user profile settings such as role, name, phone number,
- * description, and profile image. It loads the current user data from context on mount,
- * allows the user to update their information, and validates input before saving.
+ * UserSettingsComponent provides a comprehensive user interface for managing user profile settings.
  *
  * Features:
- * - Role selection with visual feedback.
- * - Editable fields for name, phone, and description.
- * - Profile image display and upload functionality.
- * - Input validation for required fields and phone format.
- * - Uses translations for multi-language support.
- * - Responsive styles for different device types.
+ * - Role selection with visual feedback (caregiver, patient, both)
+ * - Editable profile fields: name, phone number, description
+ * - Profile image display with upload functionality and preview
+ * - Real-time input validation with user feedback
+ * - Multi-language support through translation system
+ * - Snackbar notifications for success/error messages
+ * - Responsive design for different device types
+ * - Smart image handling for various URI formats (file://, content://, blob:, server paths)
+ * - Sequential update protection to prevent data loss
  *
- * Contexts & Hooks:
- * - Uses `useUserContext` for accessing and updating user data.
- * - Uses `useLanguage` for translations.
- * - Uses `stylesSettings` for responsive styling.
+ * Validation Rules:
+ * - Name: Required, non-empty string
+ * - Phone: Required, exactly 10 digits
+ * - User ID: Required for all operations
+ * - Image: Optional, supports multiple formats
+ *
+ * State Management:
+ * - Loads current user data from UserContext on component mount
+ * - Preserves user ID across updates to prevent data loss
+ * - Tracks image upload status for proper user feedback
+ * - Manages snackbar notifications for user actions
+ *
+ * Error Handling:
+ * - Validates all required fields before saving
+ * - Provides specific error messages for different validation failures
+ * - Handles image upload errors gracefully
+ * - Shows appropriate feedback for network/server errors
  *
  * @component
- * @returns {JSX.Element} The rendered user settings form.
+ * @returns {JSX.Element} The rendered user settings form with all interactive elements.
+ *
+ * @example
+ * // Basic usage in a settings screen
+ * <UserSettingsComponent />
+ *
+ * @example
+ * // Usage within a larger settings layout
+ * <View style={styles.settingsContainer}>
+ *   <Header title="Profile Settings" />
+ *   <UserSettingsComponent />
+ * </View>
  */
+
 const UserSettingsComponent: React.FC = () => {
   const { t } = useLanguage();
   const { styles } = useStylesSettings();
@@ -42,10 +68,78 @@ const UserSettingsComponent: React.FC = () => {
   const [phone, setPhone] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [imageId, setImageId] = useState<string>("");
+  const [userId, setUserId] = useState<string>(""); 
+  const [imageWasUploaded, setImageWasUploaded] = useState<boolean>(false); 
+  const [snackbar, setSnackbar] = useState<{
+    visible: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ visible: false, message: "", type: "success" });
 
-  const handlerUploadImage = () => {
-    if (!userData) return;
-    uploadImage(userData.userId);
+  /**
+   * Handles image upload functionality with comprehensive error handling.
+   * Validates user ID, processes upload result, and updates component state.
+   * Shows appropriate snackbar messages for success/error cases.
+   */
+  const handlerUploadImage = async () => {
+    const currentUserId = userId || userData?.userId;
+
+    if (!currentUserId) {
+      setSnackbar({
+        visible: true,
+        message: t("errorIdUser"),
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      const result = await uploadImage(currentUserId);
+
+      if (result?.success && result.files && result.files.length > 0) {
+        const fileInfo = result.files[0];
+        let newImageId: string;
+
+        if (typeof fileInfo === "string") {
+          newImageId = fileInfo;
+        } else if (
+          fileInfo &&
+          typeof fileInfo === "object" &&
+          "path" in fileInfo
+        ) {
+          newImageId = (fileInfo as any).path;
+        } else {
+          setSnackbar({
+            visible: true,
+            message: t("errorUserImage"),
+            type: "error",
+          });
+          return;
+        }
+
+        setImageId(newImageId);
+        setImageWasUploaded(true);
+
+        setSnackbar({
+          visible: true,
+          message: t("imageUploadSuccess"),
+          type: "success",
+        });
+      } else {
+        setSnackbar({
+          visible: true,
+          message: result?.error?.message || t("errorUserImage"),
+          type: "error",
+        });
+      }
+    } catch (error) {
+      logError("Error en handlerUploadImage:", error);
+      setSnackbar({
+        visible: true,
+        message: t("errorUserImage"),
+        type: "error",
+      });
+    }
   };
 
   useEffect(() => {
@@ -56,26 +150,57 @@ const UserSettingsComponent: React.FC = () => {
     setPhone(userData.phone);
     setDescription(userData.description);
     setImageId(userData.imageId);
-  }, [userData]);
+    setImageWasUploaded(false);
 
+    if (userData.userId) {
+      setUserId(userData.userId);
+    }
+  }, [userData, userId]);
+
+  /**
+   * Handles saving user data with comprehensive validation and error handling.
+   * Validates required fields, phone format, and user ID before updating.
+   * Provides specific feedback messages for different validation failures.
+   * Preserves user ID to prevent data loss during sequential updates.
+   */
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert("Error", "El nombre es obligatorio");
+      setSnackbar({
+        visible: true,
+        message: t("nameRequired"),
+        type: "error",
+      });
       return;
     }
     if (!phone?.trim()) {
-      Alert.alert("Error", "El teléfono es obligatorio");
+      setSnackbar({
+        visible: true,
+        message: t("phoneRequired"),
+        type: "error",
+      });
       return;
     }
     if (!/^\d{10}$/.test(phone)) {
-      Alert.alert(
-        "Error",
-        "El teléfono debe contener solo números y tener 10 dígitos",
-      );
+      setSnackbar({
+        visible: true,
+        message: t("phoneFormatError"),
+        type: "error",
+      });
+      return;
+    }
+    if (!userData?.userId && !userId) {
+      setSnackbar({
+        visible: true,
+        message: t("errorIdUser"),
+        type: "error",
+      });
       return;
     }
 
+    const currentUserId = userId || userData?.userId;
+
     const updatedUserData: User = {
+      userId: currentUserId,
       role,
       name,
       phone,
@@ -84,11 +209,38 @@ const UserSettingsComponent: React.FC = () => {
     } as User;
 
     await updateUserData(updatedUserData, (success, error) => {
-      if (error) logError(error);
-      if (success) Alert.alert("Éxito", "Datos actualizados correctamente");
+      if (error) {
+        if (imageWasUploaded) {
+          setSnackbar({
+            visible: true,
+            message: t("imageUploadSuccess"),
+            type: "success",
+          });
+          setImageWasUploaded(false);
+          logError(error);
+          setSnackbar({
+            visible: true,
+            message: error.message,
+            type: "error",
+          });
+        }
+      }
+      if (success) {
+        setSnackbar({
+          visible: true,
+          message: t("dataUpdated"),
+          type: "success",
+        });
+        setImageWasUploaded(false); 
+      }
     });
   };
 
+  /**
+   * Renders role selection buttons with visual feedback.
+   * Shows all available roles (caregiver, patient, both) with active state styling.
+   * @returns {JSX.Element} The role selection component
+   */
   const renderRoleButtons = () => {
     return (
       <View style={styles.roleContainer}>
@@ -113,11 +265,29 @@ const UserSettingsComponent: React.FC = () => {
   };
 
   const renderImage = () => {
+    let imageUri = null;
+
+    if (imageId && typeof imageId === "string" && imageId.trim() !== "") {
+      if (
+        imageId.startsWith("file://") ||
+        imageId.startsWith("content://") ||
+        imageId.startsWith("blob:")
+      ) {
+        imageUri = imageId;
+      } else {
+        try {
+          imageUri = getRouteImage(imageId);
+        } catch (error) {
+          imageUri = null;
+        }
+      }
+    }
+
     return (
       <View style={styles.imageContainer}>
-        {imageId ? (
+        {imageUri ? (
           <Image
-            source={{ uri: getRouteImage(imageId) }}
+            source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="cover"
           />
@@ -140,51 +310,65 @@ const UserSettingsComponent: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.label}>{t("role")}</Text>
-      {renderRoleButtons()}
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <Text style={styles.label}>{t("role")}</Text>
+        {renderRoleButtons()}
 
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        label={t("fullName")}
-        autoCapitalize="words"
-        underlineColor="#00a69d"
-        activeUnderlineColor="#00a69d"
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          label={t("fullName")}
+          autoCapitalize="words"
+          underlineColor="#00a69d"
+          activeUnderlineColor="#00a69d"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={phone}
+          onChangeText={setPhone}
+          label={t("numberPhone")}
+          keyboardType="phone-pad"
+          underlineColor="#00a69d"
+          activeUnderlineColor="#305856ff"
+        />
+
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={description}
+          onChangeText={setDescription}
+          label={t("description")}
+          multiline
+          numberOfLines={2}
+          underlineColor="#00a69d"
+          activeUnderlineColor="#00a69d"
+        />
+
+        <Text style={styles.label}>{t("userImage")}</Text>
+        {renderImage()}
+
+        <ButtonComponent
+          replaceStyles={{
+            button: styles.button,
+            textButton: styles.textButton,
+          }}
+          label={t("save")}
+          handlePress={handleSave}
+          touchableOpacity
+        />
+      </ScrollView>
+      <SnackbarAlert
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
       />
-
-      <TextInput
-        style={styles.input}
-        value={phone}
-        onChangeText={setPhone}
-        label={t("numberPhone")}
-        keyboardType="phone-pad"
-        underlineColor="#00a69d"
-        activeUnderlineColor="#305856ff"
-      />
-
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        value={description}
-        onChangeText={setDescription}
-        label={t("description")}
-        multiline
-        numberOfLines={2}
-        underlineColor="#00a69d"
-        activeUnderlineColor="#00a69d"
-      />
-
-      <Text style={styles.label}>{t("userImage")}</Text>
-      {renderImage()}
-
-      <ButtonComponent
-        replaceStyles={{ button: styles.button, textButton: styles.textButton }}
-        label={t("save")}
-        handlePress={handleSave}
-        touchableOpacity
-      />
-    </ScrollView>
+    </View>
   );
 };
 

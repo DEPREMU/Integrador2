@@ -110,6 +110,16 @@ const en: typeLanguages = {
   userImage: "User Image",
   noImage: "No Image",
   role: "Role",
+  nameRequired: "Name is required",
+  phoneRequired: "Phone number is required",
+  phoneFormatError: "Phone number must be at least 10 digits",
+  dataUpdated: "Data updated successfully",
+  errorUserImage: "Error uploading user image",
+  errorIdUser: "Error getting user ID",
+  imageUploadSuccess: "Image uploaded successfully",
+  dashboard: "Dashboard",
+  home: "Home",  
+  pillboxSettings: "Pillbox Settings",
 } as const;
 
 export default en;
