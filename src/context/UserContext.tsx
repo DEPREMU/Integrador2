@@ -307,11 +307,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         );
       }
       const updatedUser = {
-        ...userData, // Mantener datos originales
-        ...res.user, // Sobrescribir con datos actualizados
-        userId: userData.userId, // Asegurar que userId se preserve
-        _id: userData._id, // Asegurar que _id se preserve
-        createdAt: userData.createdAt, // Asegurar que createdAt se preserve
+        ...userData, 
+        ...res.user,
+        userId: userData.userId, 
+        _id: userData._id, 
+        createdAt: userData.createdAt, 
       };
       setUserData(updatedUser);
       setUpdatedInfo(true);
