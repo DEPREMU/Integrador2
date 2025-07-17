@@ -1,10 +1,50 @@
 import { Notifications } from "@types";
 import { log, logError } from "./debug";
+import { stringifyData } from "./appManagement";
 import * as notifications from "expo-notifications";
-import { ScreensAvailable } from "@/navigation/navigationTypes";
-import { loadData, saveData } from "./storageManagement";
+import { ScreensAvailable } from "@navigation/navigationTypes";
+import { loadData, loadDataSecure, saveData } from "./storageManagement";
 import { ReasonNotification } from "../constants/notifications";
 import { KEYS_STORAGE, reasonNotification } from "../constants";
+
+/**
+ * Initializes the notifications storage with default values.
+ * This function ensures that the notifications storage is set up correctly
+ * before any notifications are scheduled or managed.
+ */
+export const initializeNotificationsStorage = async () => {
+  const [hasNotifications, notificationsData] = await Promise.all([
+    loadData<boolean | null>(KEYS_STORAGE.NOTIFICATIONS_ENABLED),
+    loadData<Notifications>(
+      KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+      (n) => n ?? ({} as Notifications),
+    ),
+  ]);
+  if (hasNotifications === null) {
+    const { status } = await notifications.getPermissionsAsync();
+    if (status !== notifications.PermissionStatus.GRANTED) {
+      await notifications.requestPermissionsAsync();
+    }
+    const { status: newStatus } = await notifications.getPermissionsAsync();
+    if (newStatus !== notifications.PermissionStatus.GRANTED) {
+      await saveData(KEYS_STORAGE.NOTIFICATIONS_ENABLED, false);
+      return;
+    }
+    await saveData(KEYS_STORAGE.NOTIFICATIONS_ENABLED, true);
+  }
+
+  const lenNotificationsSaved = Object.keys(notificationsData).length;
+  if (lenNotificationsSaved === reasonNotification.length) return;
+
+  reasonNotification.forEach((reason) => {
+    notificationsData[reason] = null;
+  });
+
+  await saveData(
+    KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+    stringifyData(notificationsData),
+  );
+};
 
 /**
  * Checks if the application has permission to send push notifications.
@@ -17,10 +57,21 @@ import { KEYS_STORAGE, reasonNotification } from "../constants";
  */
 export const hasPushNotifications = async (): Promise<boolean> => {
   const { status } = await notifications.getPermissionsAsync();
-  if (status === notifications.PermissionStatus.GRANTED) return true;
+  const [notificationsEnabled, notificationsData] = await Promise.all([
+    loadData<boolean>(KEYS_STORAGE.NOTIFICATIONS_ENABLED, (n) =>
+      n === null ? false : n,
+    ),
+    loadData<Notifications | null>(KEYS_STORAGE.NOTIFICATIONS_STORAGE),
+  ]);
+  if (notificationsData === null) await initializeNotificationsStorage();
+
+  if (status === notifications.PermissionStatus.GRANTED)
+    return notificationsEnabled;
 
   const { status: newStatus } = await notifications.requestPermissionsAsync();
-  return newStatus === notifications.PermissionStatus.GRANTED;
+  if (newStatus !== notifications.PermissionStatus.GRANTED) return false;
+
+  return notificationsEnabled;
 };
 
 /**
@@ -45,7 +96,7 @@ export const handleCancelNotification = async (
       notificationsData[reason] = null;
       await saveData(
         KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-        JSON.stringify(notificationsData),
+        stringifyData(notificationsData),
       );
     }
     log(`Notification with reason "${reason}" canceled successfully.`);
@@ -63,28 +114,15 @@ export const sendNotification = async (
   data?: Record<string, unknown>,
 ): Promise<void> => {
   try {
+    const [notificationsEnabled, sessionExpiry] = await Promise.all([
+      hasPushNotifications(),
+      loadDataSecure<number | null>(KEYS_STORAGE.SESSION_EXPIRY),
+    ]);
+    if (!notificationsEnabled || sessionExpiry === null) return;
+
     const notificationsData = await loadData<Notifications>(
       KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-      (value) => (value ? value : ({} as Notifications)),
     );
-
-    const lenNotificationsSaved = Object.keys(notificationsData).length;
-
-    if (
-      lenNotificationsSaved === 0 ||
-      lenNotificationsSaved !== reasonNotification.length
-    ) {
-      log(
-        "No saved notifications found, initializing empty notifications data.",
-      );
-      reasonNotification.forEach((reason) => {
-        if (!notificationsData[reason]) notificationsData[reason] = null;
-      });
-      await saveData(
-        KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-        JSON.stringify(notificationsData),
-      );
-    }
 
     await handleCancelNotification(notificationsData, reason);
 

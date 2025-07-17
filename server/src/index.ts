@@ -1,6 +1,6 @@
 import app from "./app.js";
-import { port } from "./config.js";
 import { createServer } from "http";
+import { port, hostname } from "./config.js";
 import { setupWebSocket } from "./websocket.js";
 import { backupDatabase } from "./backupDB.js";
 
@@ -10,9 +10,9 @@ const server = createServer(app);
 
 setupWebSocket(server);
 
-server.listen(port, () => {
-  console.log(`HTTP Server listening on port ${port}`);
-  console.log(`WebSocket server running on ws://localhost:${port}`);
+server.listen(port, hostname, () => {
+  console.log(`HTTP Server listening on http://${hostname}:${port}`);
+  console.log(`WebSocket server running on ws://${hostname}:${port}`);
 });
 
 server.on("error", (error) => {

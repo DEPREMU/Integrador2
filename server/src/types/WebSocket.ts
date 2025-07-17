@@ -16,7 +16,8 @@ export type ScreensAvailable =
   | "Dashboard"
   | "Patient"
   | "HowToCode"
-  | "Schedule";
+  | "Schedule"
+  | "Settings";
 
 export type TestsAvailable = "notification" | "ping" | "waitForCapsy";
 

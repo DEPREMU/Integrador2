@@ -13,14 +13,16 @@ import { stringifyData } from "./appManagement";
 export const fetchOptions = <T = RequestBody>(
   method: "POST" | "GET",
   body?: T,
-) => ({
-  method,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  },
-  body: stringifyData(body) ?? undefined,
-});
+) => {
+  return {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: stringifyData(body) ?? undefined,
+  };
+};
 
 /**
  * Constructs a full API route URL by appending the given route to the base API URL.

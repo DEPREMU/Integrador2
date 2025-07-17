@@ -1,4 +1,5 @@
 import {
+  log,
   supabase,
   logError,
   KEYS_STORAGE,
@@ -9,10 +10,12 @@ import {
   fetchOptions,
   checkLanguage,
   hasPushNotifications,
-  log,
+  reasonNotification,
+  handleCancelNotification,
+  loadData,
+  saveData,
+  stringifyData,
 } from "@utils";
-import { UserSession } from "@types";
-import React, { createContext, useState, useEffect, useCallback } from "react";
 import {
   User,
   ResponseAuth,
@@ -21,6 +24,8 @@ import {
   TypeBodyUpdateUserData,
   ResponseUpdateUserData,
 } from "@typesAPI";
+import { Notifications, UserSession } from "@types";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 
 type UserContextType = {
   userSession: UserSession | null;
@@ -78,7 +83,7 @@ const saveSession = async (
 
   const expiryDate = rememberMe
     ? new Date().getTime() + 15 * 24 * 60 * 60 * 1000
-    : 0;
+    : -1;
   await saveDataSecure(KEYS_STORAGE.SESSION_EXPIRY, expiryDate.toString());
 };
 
@@ -259,12 +264,25 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (!userSession || !isLoggedIn)
         return callback?.("No user session to log out");
 
-      await Promise.all([supabase.auth.signOut(), clearSession()]);
+      const [, , notificationsData] = await Promise.all([
+        supabase.auth.signOut(),
+        clearSession(),
+        loadData<Notifications>(KEYS_STORAGE.NOTIFICATIONS_STORAGE),
+      ]);
+      reasonNotification.forEach(async (reason) => {
+        if (!notificationsData[reason]) return;
+        notificationsData[reason] = null;
+        await handleCancelNotification(notificationsData, reason);
+      });
       setUserData(null);
       setIsLoggedIn(false);
       setUserSession(null);
       log("User logged out successfully");
       callback?.("User logged out successfully");
+      await saveData(
+        KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+        stringifyData(notificationsData),
+      );
     },
     [isLoggedIn, userSession],
   );
@@ -307,11 +325,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         );
       }
       const updatedUser = {
-        ...userData, 
+        ...userData,
         ...res.user,
-        userId: userData.userId, 
-        _id: userData._id, 
-        createdAt: userData.createdAt, 
+        userId: userData.userId,
+        _id: userData._id,
+        createdAt: userData.createdAt,
       };
       setUserData(updatedUser);
       setUpdatedInfo(true);

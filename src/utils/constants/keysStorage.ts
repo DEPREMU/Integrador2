@@ -4,6 +4,7 @@ export const KEYS_STORAGE = {
   SESSION_EXPIRY: "_sessionExpiry",
   USER_SESSION_STORAGE: "_userSessionStorage",
   LANGUAGE_KEY_STORAGE: "@languageKeyStorage",
+  NOTIFICATIONS_ENABLED: "@notificationsEnabled",
   NOTIFICATIONS_STORAGE: "@notificationsStorage",
 } as const;
 

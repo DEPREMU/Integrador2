@@ -1,12 +1,18 @@
 {
   "cSpell.language": "en,es-ES,es-MX",
   "cSpell.words": [
+    "alejandroluis",
     "Capsy",
     "capsys",
+    "karso",
+    "Legarda",
     "meditime",
     "Pressable",
+    "Rivero",
     "supabase",
-    "SUPABASE"
+    "SUPABASE",
+    "Trejo",
+    "Zaid"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

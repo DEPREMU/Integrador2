@@ -43,6 +43,7 @@ const getFormData = async (images: ImagePicker.ImagePickerAsset[]) => {
         const response = await fetch(image.uri);
         const blob = await response.blob();
 
+        // eslint-disable-next-line no-undef
         const file = new File([blob], image.fileName ?? `upload_${i}.jpg`, {
           type: image.mimeType ?? "image/jpeg",
         });
@@ -56,6 +57,7 @@ const getFormData = async (images: ImagePicker.ImagePickerAsset[]) => {
         uri: image.uri,
         name: image.fileName ?? `upload_${i}.jpg`,
         type: image.mimeType ?? "image/jpeg",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
       formData.append("images", formValue);
     }
@@ -156,16 +158,17 @@ export const stringifyData = (value: unknown): string => {
  * @param delay - The number of milliseconds to delay.
  * @returns A debounced version of the input function.
  */
-export const debounce = <T extends (...args: unknown[]) => unknown>(
+export const debounce = <T extends (...args: unknown[]) => unknown, K = void>(
   func: T,
   delay: number,
-): (() => void) => {
+): (() => K) => {
   let timeoutId: NodeJS.Timeout;
-
-  return (...args: unknown[]) => {
+  const debouncedFunc = (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
+
+  return debouncedFunc as unknown as () => K;
 };
 
 /**

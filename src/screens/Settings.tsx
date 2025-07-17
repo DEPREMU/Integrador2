@@ -1,14 +1,22 @@
+import {
+  saveData,
+  loadData,
+  logError,
+  KEYS_STORAGE,
+  stringifyData,
+  reasonNotification,
+  handleCancelNotification,
+} from "@utils";
 import { View } from "react-native";
 import { useLanguage } from "@context/LanguageContext";
-import ButtonComponent from "@components/common/Button";
 import HeaderComponent from "@components/common/Header";
 import { Text, Switch } from "react-native-paper";
 import useStylesSettings from "@styles/screens/stylesSettingsScreen";
+import { Notifications } from "@types";
 import { useUserContext } from "@context/UserContext";
-import UserSettingsComponent from "@/components/common/UserSettingsComponent";
+import { useBackgroundTask } from "@context/BackgroundTaskContext";
+import UserSettingsComponent from "@components/common/UserSettingsComponent";
 import React, { useState, useEffect } from "react";
-import { saveData, loadData, KEYS_STORAGE } from "@utils";
-import { Notifications } from "@/types/TypesNotifications";
 
 interface SettingsProps {}
 
@@ -54,11 +62,11 @@ interface SettingsProps {}
  * // Usage with navigation
  * navigation.navigate('Settings');
  */
-
 const Settings: React.FC<SettingsProps> = () => {
   const { isLoggedIn } = useUserContext();
   const { styles } = useStylesSettings();
   const { t } = useLanguage();
+  const { addTaskQueue } = useBackgroundTask();
 
   const [notificationsEnabled, setNotificationsEnabled] =
     useState<boolean>(false);
@@ -66,14 +74,10 @@ const Settings: React.FC<SettingsProps> = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const notificationsData = await loadData<Notifications>(
-          KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-          (value) => (value ? value : ({} as Notifications)),
+        const hasEnabledNotifications = await loadData<boolean>(
+          KEYS_STORAGE.NOTIFICATIONS_ENABLED,
         );
 
-        const hasEnabledNotifications = Object.values(notificationsData).some(
-          (notification) => notification !== null,
-        );
         setNotificationsEnabled(hasEnabledNotifications);
       } catch (error) {
         console.warn("Error loading settings:", error);
@@ -82,47 +86,34 @@ const Settings: React.FC<SettingsProps> = () => {
     loadSettings();
   }, []);
 
-  /**
-   * Handles notification toggle and manages the notification system state.
-   *
-   * This function:
-   * - Updates the UI state immediately for responsive feedback
-   * - Loads existing notification configurations from storage
-   * - When enabled: Preserves any existing notification schedules
-   * - When disabled: Clears all notifications by setting them to null
-   * - Saves the updated configuration using the proper Notifications format
-   * - Provides error handling with state reversion on failure
-   *
-   * @param value - The new notification setting value (true = enabled, false = disabled)
-   */
-  const handleNotificationChange = async (value: boolean) => {
-    try {
-      setNotificationsEnabled(value);
-
-      const notificationsData = await loadData<Notifications>(
-        KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-        (val) => (val ? val : ({} as Notifications)),
-      );
-
-      if (value) {
-        console.log("Notifications enabled");
-      } else {
-        const clearedNotifications: Notifications = {
-          "Initial Notification": null,
-          "Medication Reminder": null,
-        };
-
-        await saveData(
+  useEffect(() => {
+    const func = async () => {
+      try {
+        if (notificationsEnabled)
+          return await saveData(KEYS_STORAGE.NOTIFICATIONS_ENABLED, true);
+        const notificationsData = await loadData<Notifications>(
           KEYS_STORAGE.NOTIFICATIONS_STORAGE,
-          JSON.stringify(clearedNotifications),
+          (n) => n ?? ({} as Notifications),
         );
-        console.log("Notifications disabled - all notifications cleared");
+
+        reasonNotification.forEach(async (reason) => {
+          await handleCancelNotification(notificationsData, reason, false);
+          notificationsData[reason] = null;
+        });
+        await Promise.all([
+          saveData(KEYS_STORAGE.NOTIFICATIONS_ENABLED, notificationsEnabled),
+          saveData(
+            KEYS_STORAGE.NOTIFICATIONS_STORAGE,
+            stringifyData(notificationsData),
+          ),
+        ]);
+      } catch (error) {
+        logError("Error saving settings:", error);
       }
-    } catch (error) {
-      console.warn("Error saving notification settings:", error);
-      setNotificationsEnabled(!value);
-    }
-  };
+    };
+
+    addTaskQueue(func);
+  }, [notificationsEnabled, addTaskQueue]);
 
   return (
     <>
@@ -135,7 +126,7 @@ const Settings: React.FC<SettingsProps> = () => {
           <Switch
             color="#7cced4"
             value={notificationsEnabled}
-            onValueChange={handleNotificationChange}
+            onValueChange={setNotificationsEnabled}
           />
         </View>
 

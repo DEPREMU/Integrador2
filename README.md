@@ -1,8 +1,18 @@
-# Project Name: Integrador2
+# MediTime - Smart Medication Management System
 
 ## Overview
 
-This project is the Tetra 5 integrative.
+MediTime is a comprehensive healthcare solution that combines a React Native mobile application with a Node.js backend server. This system is designed to help patients and caregivers - Use feature branches for new functionality and merge them into the main branch via pull requests.
+
+**Key Features:**
+
+- 📱 Cross-platform mobile app (iOS, Android, Web)
+- 🔔 Smart notification system with background tasks
+- 💊 Medication scheduling and tracking
+- 👥 Multi-role support (Patient, Caregiver, Both)
+- 🌐 Real-time WebSocket communication
+- 🔐 Secure authentication with Supabase
+- 🌍 Multi-language support (English/Spanish)
 
 ---
 
@@ -13,6 +23,7 @@ This project is the Tetra 5 integrative.
 - [Setup Instructions](#setup-instructions)
 - [How to Run](#how-to-run)
 - [Project Structure](#project-structure)
+- [Architecture & Technical Features](#architecture--technical-features)
 - [Import Aliasing (`@`)](#import-aliasing-)
 - [Best Practices for an Expo React Native Project](#best-practices-for-an-expo-react-native-project)
 - [Recommended VS Code Extensions](#recommended-vs-code-extensions)
@@ -42,6 +53,9 @@ This project is the Tetra 5 integrative.
     - [react-native-safe-area-context](#react-native-safe-area-context)
     - [react-native-screens](#react-native-screens)
     - [react-native-web](#react-native-web)
+- [Additional Resources](#additional-resources)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -49,90 +63,123 @@ This project is the Tetra 5 integrative.
 
 Before starting, ensure you have the following installed:
 
-- Node.js >= V22.0.0
-- npm
+- [Node.js](https://nodejs.org/) >= 22.0.0
+- [npm](https://www.npmjs.com/)
+- [Expo Go](https://expo.dev/client) (for mobile development)
+- [Git](https://git-scm.com/)
+- (Optional) [Android Studio](https://developer.android.com/studio) or [Xcode](https://developer.apple.com/xcode/) for device testing
 
 ## Setup Instructions
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/DEPREMU/Integrador2
+   git clone https://github.com/DEPREMU/Integrador2.git
    ```
 2. Navigate to the project directory:
    ```bash
    cd Integrador2
    ```
-3. Install dependencies:
-
+3. Install all dependencies:
    ```bash
-   npm install
+   npm run install-all
    ```
-
-4. Install tsc to compile ts to js
+4. Install [Expo CLI](https://docs.expo.dev/workflow/expo-cli/) globally if you haven't already:
    ```bash
-   npm install -g tsc
+   npm install -g expo-cli
    ```
+5. Configure environment variables:
+   - Edit `.env` file in the `/server` directory with your own credentials
+   - Add your [Supabase](https://supabase.com/docs/guides/getting-started) credentials and other settings
 
 ## How to Run
 
-1. Execute the main script or start the server:
-   ```bash
-   npm start
-   ```
-2. Open the app in expo or open your browser and navigate to:
-   ```
-   http://localhost:8081
-   ```
+### 1. Start the backend server
+
+```bash
+# Navigate to server directory
+cd server
+
+# Build TypeScript and start production server
+npm start
+```
+
+### 2. Start the mobile app (Expo)
+
+```bash
+# In the root directory
+npm run app
+# Then press 'i' to open iOS simulator, 'a' for Android, or scan the QR code in Expo Go
+```
+
+📱 **Download Expo Go**: [iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+### 3. Web preview (optional)
+
+```bash
+# After run the app, press 'w' to open in web browser
+# Or navigate to: http://localhost:8081
+```
 
 ---
 
 ## Project Structure
 
 - `/src`: Contains the source code.
-
-  - `/api`: API clients and service layer.
-  - `/components`: Reusable UI components.
-  - `/constants`: App-wide constants (e.g., colors, config).
-  - `/context`: React contexts (e.g., authentication, theme).
+  - `/components`: Reusable UI components organized by feature.
+    - `/common`: Shared components like Button, Header, Modal.
+    - `/Dashboard`: Components specific to Dashboard screen.
+    - `/Home`: Components for Home screen.
+    - `/PatientScreen`: Patient-specific components.
+    - `/Schedule`: Scheduling-related components.
+  - `/context`: React contexts for global state management.
+    - `AppProviders.tsx`: Main provider wrapper.
+    - `LanguageContext.tsx`: Multi-language support.
+    - `UserContext.tsx`: User authentication and data.
+    - `WebSocketContext.tsx`: Real-time communication.
+    - `BackgroundTaskContext.tsx`: Background task management.
   - `/hooks`: Custom React hooks.
   - `/navigation`: Navigation logic and types (using React Navigation).
-  - `/screens`: App screens like `LoginScreen` and `HomeScreen`.
-  - `/store`: Global state management (e.g., Zustand, Redux).
+  - `/screens`: App screens like `LoginScreen`, `HomeScreen`, `DashboardScreen`.
+    - `/auth`: Authentication screens (Login, SignUp, etc.).
+  - `/styles`: Centralized styling for components and screens.
   - `/types`: TypeScript types and models.
-  - `/utils`: Utility functions and helpers.
+  - `/utils`: Utility functions, constants, and helpers.
+    - `/translates`: Multi-language translation files.
+    - `/functions`: Reusable utility functions.
+    - `/constants`: App constants and configuration.
   - `App.tsx`: App entry point and root navigator wrapper.
 
 - `/assets`: Contains all static assets.
-
   - `/images`: Image assets.
-  - `/fonts`: Custom fonts.
-  - `/icons`: Icon files.
+  - `/icons`: Icon files organized by feature.
 
-- `/server`: Contains the backend
+- `/server`: Contains the Node.js backend.
+  - `/dist`: Compiled JavaScript files (generated after build).
+  - `/src`: Backend source code in TypeScript.
+    - `/database`: Database connection and functions.
+    - `/routes`: API endpoints and WebSocket handlers.
+    - `/translates`: Server-side translations.
+    - `/types`: Backend TypeScript types.
+    - `app.ts`: Express app configuration.
+    - `index.ts`: Server entry point.
+    - `websocket.ts`: WebSocket server setup.
+  - `/backups`: Database backup files.
+  - `package.json`: Server dependencies and scripts.
+  - `tsconfig.json`: TypeScript configuration for server.
 
-  - `/dist`: After compilation, here will be all files .js compiled from ts (not available directly in the repository).
-  - `/src`: Contains all source code in ts.
-    - `/routes`: Contains all routes in the server.
-    - `app.ts`: Contains the configuration (security) for the server.
-    - `config.ts`: Contains all configuration will use the server.
-    - `index.ts`: Contains the server running.
-    - `supabase.ts`: Contains the supabase client.
-    - `types.ts`: Contains all the types used in the server
-  - `.env`: Environment variables.
-  - `package.json`: Dependencies and scripts.
-  - `tsconfig.json`: TypeScript configuration (compile the ts code to js).
-
-- `app.json`: Expo project configuration.
-- `tsconfig.json`: TypeScript configuration (with path aliasing using `@`).
-- `babel.config.js`: Babel configuration (with `@` alias support).
-- `package.json`: Dependencies and scripts.
+- `app.config.js`: Expo app configuration.
+- `tsconfig.json`: TypeScript configuration with path aliasing.
+- `babel.config.js`: Babel configuration with alias support.
+- `package.json`: Client dependencies and scripts.
 - `README.md`: Project documentation.
 
 ---
 
 ## Import Aliasing (`@`)
 
-This project uses the `@` symbol as a path alias to refer to the `/src` folder. This makes imports cleaner and easier to manage:
+This project uses the `@` symbol as a path alias to refer to the `/src` folder. This makes imports cleaner and easier to manage.
+
+📖 **Learn more**: [Babel Module Resolver](https://github.com/tleunen/babel-plugin-module-resolver) | [TypeScript Path Mapping](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping)
 
 ### Instead of:
 
@@ -205,10 +252,12 @@ To ensure this project is maintainable, scalable, and efficient, here’s how I 
 - Commit changes frequently with clear messages. For example, “Add login screen” is better than “Fix stuff.”
 - Use feature branches for new functionality and merge them into the main branch via pull requests.
 
+- 📖 **Git Best Practices**: [Conventional Commits](https://www.conventionalcommits.org/) | [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)
+
 ### 11. **Keep Dependencies Updated**
 
-- Regularly check for updates to the Expo SDK and other dependencies. Run `npx expo install --check` to see what’s available (**TIP**: Do not use this with all your changes).
-- After updating, test the app thoroughly to ensure everything works as expected.
+- Regularly check for updates to the [Expo SDK](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/) and other dependencies. Run `npx expo install --check` to see what's available (**TIP**: Do not use this with all your changes).
+- After updating, test the app thoroughly to ensure everything works as expected. medication schedules, track adherence, and receive timely reminders through an intelligent pillbox integration.
 
 ---
 
@@ -347,6 +396,8 @@ const add = (a: number, b: number): number => a + b;
 
 Arrow functions are a concise way to write functions in JavaScript. They are especially useful for writing shorter function expressions and maintaining the `this` context in certain scenarios.
 
+📖 **Learn more**: [MDN Arrow Functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions) | [JavaScript.info](https://javascript.info/arrow-functions-basics)
+
 ### Syntax
 
 An arrow function uses the `=>` syntax:
@@ -435,6 +486,8 @@ This function can be use in other parts of the code, this function should be in 
 
 camelCase is a widely used naming convention in programming where the first word is written in lowercase, and each subsequent word starts with an uppercase letter. This style improves readability and helps distinguish between words in variable, function, and property names.
 
+📖 **Learn more**: [Naming Conventions](<https://en.wikipedia.org/wiki/Naming_convention_(programming)>) | [JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html#naming)
+
 ### Examples
 
 ```typescript
@@ -468,6 +521,8 @@ const user: User = {
 ## **Only English**
 
 Write functions, variable names, documentation and any other thing only in english.
+
+📖 **Why English?**: [Clean Code Principles](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) | [Naming Best Practices](https://refactoring.guru/refactoring/smells/mysterious-name)
 
 **Do not**
 
@@ -576,3 +631,83 @@ This project uses the following dependencies to provide functionality and enhanc
     [Learn more](https://necolas.github.io/react-native-web/)
 
 ---
+
+## Architecture & Technical Features
+
+### Frontend (React Native with Expo)
+
+- **Framework**: [Expo SDK](https://docs.expo.dev/) for cross-platform development
+- **Navigation**: [React Navigation](https://reactnavigation.org/) with type-safe routing
+- **State Management**: [React Context API](https://react.dev/reference/react/createContext) with custom hooks
+- **Styling**: [React Native Paper](https://callstack.github.io/react-native-paper/) + custom [StyleSheet](https://reactnative.dev/docs/stylesheet) components
+- **Real-time Communication**: [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) client for live updates
+- **Background Tasks**: [Expo Background Fetch](https://docs.expo.dev/versions/latest/sdk/background-fetch/) for medication reminders
+- **Notifications**: [Expo Notifications](https://docs.expo.dev/versions/latest/sdk/notifications/) for local and push notifications
+- **Storage**: [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) for app data, [SecureStore](https://docs.expo.dev/versions/latest/sdk/securestore/) for sensitive data
+- **Internationalization**: Custom translation system (English/Spanish)
+
+### Backend (Node.js with TypeScript)
+
+- **Runtime**: [Node.js](https://nodejs.org/) with [Express.js](https://expressjs.com/) framework
+- **Database**: [MongoDB](https://www.mongodb.com/) with native driver
+- **Authentication**: [Supabase Auth](https://supabase.com/docs/guides/auth) integration
+- **Real-time**: [WebSocket](https://www.npmjs.com/package/ws) server for live communication
+- **API**: RESTful endpoints with [TypeScript](https://www.typescriptlang.org/) types
+- **Security**: [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS), rate limiting, and request validation
+- **File Upload**: Image handling for user profiles
+- **Background Jobs**: Medication reminder scheduling
+
+### Key Integrations
+
+- **[Supabase](https://supabase.com/)**: Authentication and user management
+- **[MongoDB](https://www.mongodb.com/)**: Primary database for app data
+- **[WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)**: Bidirectional real-time communication
+- **Smart Pillbox (Capsy)**: IoT device integration for medication tracking
+
+---
+
+## Additional Resources
+
+### 📚 **Documentation & Guides**
+
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Navigation](https://reactnavigation.org/docs/getting-started)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+
+### 🛠️ **Development Tools**
+
+- [React Native Debugger](https://github.com/jhen0409/react-native-debugger)
+- [Flipper](https://fbflipper.com/) - Mobile app debugger
+- [MongoDB Compass](https://www.mongodb.com/products/compass) - Database GUI
+- [Supabase Dashboard](https://supabase.com/dashboard) - Backend management
+
+### 🎨 **Design Resources**
+
+- [React Native Paper Components](https://callstack.github.io/react-native-paper/docs/components/ActivityIndicator)
+- [Material Design Guidelines](https://material.io/design)
+- [iOS Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
+
+### 🚀 **Deployment**
+
+- [Expo Application Services (EAS)](https://docs.expo.dev/eas/)
+- [App Store Connect](https://appstoreconnect.apple.com/)
+- [Google Play Console](https://play.google.com/console/)
+
+### 💡 **Community & Support**
+
+- [React Native Community](https://github.com/react-native-community)
+- [Expo Forums](https://forums.expo.dev/)
+- [Stack Overflow - React Native](https://stackoverflow.com/questions/tagged/react-native)
+- [Discord - Reactiflux](https://discord.gg/reactiflux)
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ by the MediTime Team [CONTRIBUTORS.md](CONTRIBUTORS.md)**
