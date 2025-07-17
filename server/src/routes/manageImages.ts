@@ -6,7 +6,10 @@ import { getDatabase } from "../database/functions.js";
 import { Request, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
 
-const IMAGES_DIR = path.join(__dirname, "..", "..", "images");
+let IMAGES_DIR = path.join(__dirname, "..", "..", "images");
+if (!IMAGES_DIR.includes("server"))
+  IMAGES_DIR = path.join(__dirname, "..", "images");
+if (!IMAGES_DIR.includes("server")) IMAGES_DIR = path.join(__dirname, "images");
 
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
@@ -113,3 +116,5 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
     files: fileInfos,
   });
 };
+
+export { IMAGES_DIR };
