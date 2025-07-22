@@ -11,7 +11,15 @@ export const __dirname = path.dirname(__filename);
  * @constant
  * @type {string}
  */
-export const mainUrl: string = "http://localhost:8081";
+export const mainUrl: string = "*";
+
+/**
+ * The hostname on which the server will listen.
+ *
+ * @remarks
+ * Setting the hostname to "0.0.0.0" allows the server to accept connections on all IPv4 network interfaces.
+ */
+export const hostname: string = "0.0.0.0";
 
 /**
  * The port number on which the server will listen for incoming connections.

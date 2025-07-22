@@ -15,14 +15,14 @@ import { Text, TextInput } from "react-native-paper";
 import { ActivityIndicator } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useCallback, useState } from "react";
 import { isValidEmail, isValidPassword } from "@utils";
 import { View, Image, Keyboard, Platform } from "react-native";
 import { APP_ICON, log, SHOW_PASSWORD_ICON } from "@utils";
-import React, { useCallback, useEffect, useState } from "react";
 
 type SignUpScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Login"
+  "SignUp"
 >;
 
 type ShakeInput = {
@@ -49,9 +49,15 @@ const SignUpScreen: React.FC = () => {
     isPasswordValid: true,
   });
 
-  const handlePressSignUp = useCallback(() => {
-    setSigningUp(true);
+  const handlePressSignUp = () => {
     if (signingUp) return;
+    handlerBlurInputEmail();
+    handlerBlurInputPassword();
+    if (!isValidEmail(email)) return;
+    if (!isValidPassword(password)) return;
+
+    setSigningUp(true);
+
     signUp(email, password, (err) => {
       if (err) {
         setError(err.message);
@@ -75,16 +81,7 @@ const SignUpScreen: React.FC = () => {
         />,
       );
     });
-  }, [
-    t,
-    email,
-    password,
-    openModal,
-    closeModal,
-    signUp,
-    signingUp,
-    navigation,
-  ]);
+  };
 
   const shakeInputs: ShakeInput[] = [
     { shake: useSharedValue(0), animatedStyle: {} },
@@ -137,9 +134,10 @@ const SignUpScreen: React.FC = () => {
     triggerShake("password");
   };
 
-  useEffect(() => {
-    log(JSON.stringify(validations, null, 2), email, password);
-  }, [validations, email, password]);
+  const handlerOnFocus = useCallback(() => {
+    if (Platform.OS !== "android") return;
+    if (typeof Keyboard.emit === "function") Keyboard?.emit("keyboardDidShow");
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -165,11 +163,7 @@ const SignUpScreen: React.FC = () => {
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
-            onFocus={() => {
-              if (Platform.OS !== "android") return;
-              if (typeof Keyboard.emit === "function")
-                Keyboard?.emit("keyboardDidShow");
-            }}
+            onFocus={handlerOnFocus}
             onBlur={handlerBlurInputEmail}
           />
         </Animated.View>
@@ -191,11 +185,7 @@ const SignUpScreen: React.FC = () => {
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
-            onFocus={() => {
-              if (Platform.OS !== "android") return;
-              if (typeof Keyboard.emit === "function")
-                Keyboard?.emit("keyboardDidShow");
-            }}
+            onFocus={handlerOnFocus}
             onBlur={handlerBlurInputPassword}
           />
           <ButtonComponent

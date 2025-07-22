@@ -125,6 +125,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   const handlePressLogout = async () => {
     await logout((message) => {
       log(message);
+      navigation.replace("Home");
       openModal(
         t("successLogout"),
         t("successLogoutMessage"),

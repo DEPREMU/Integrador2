@@ -52,7 +52,6 @@ const useStylesLoginScreen = () => {
       borderRadius: 10,
       marginBottom: 15,
       width: "90%",
-      height: 50,
     },
     icon: {
       marginRight: 10,
@@ -60,10 +59,8 @@ const useStylesLoginScreen = () => {
     input: {
       flex: 1,
       color: "#333",
-      height: "100%",
-      paddingHorizontal: 15,
+      borderRadius: 10,
     },
-
     showPasswordButton: {
       width: 30,
       height: 30,

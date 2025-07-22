@@ -66,8 +66,8 @@ const LoginScreen: React.FC = () => {
   ];
 
   const handlePressLogin = useCallback(() => {
-    setLoggingIn(true);
     if (loggingIn) return;
+    setLoggingIn(true);
     login(email, password, rememberMe, (session, err) => {
       if (err) {
         setError(err.message);
@@ -145,10 +145,6 @@ const LoginScreen: React.FC = () => {
     }));
     triggerShake("password");
   };
-
-  useEffect(() => {
-    log(JSON.stringify(validations, null, 2), email, password);
-  }, [validations, email, password]);
 
   return (
     <View style={styles.container}>

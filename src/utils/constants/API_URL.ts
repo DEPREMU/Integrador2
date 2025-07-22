@@ -1,7 +1,15 @@
 
 // This file is auto-generated. Do not edit it manually if it's not necessary.
-// Generated on 2025-07-14T15:42:38.576Z
+// Generated on 2025-07-16T21:13:33.961Z
 import { Platform } from "react-native";
-export const API_URL = Platform.OS === "web" ? "http://localhost:8080/api/v1" : "http://192.168.4.196:8080/api/v1";
-export const URL_WEB_SOCKET = Platform.OS === "web" ? "ws://localhost:8080/" : "ws://192.168.4.196:8080/";
-
+const isDev = process.env.NODE_ENV === "development";
+export const API_URL = !isDev
+  ? "http://141.148.162.194:8080/api/v1"
+  : Platform.OS === "web"
+    ? "http://localhost:8080/api/v1"
+    : "http://192.168.1.186:8080/api/v1";
+export const URL_WEB_SOCKET = !isDev
+  ? "ws://141.148.162.194:8080"
+  : Platform.OS === "web"
+    ? "ws://localhost:8080/"
+    : "ws://192.168.1.186:8080/";
