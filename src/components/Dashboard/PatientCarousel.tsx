@@ -1,42 +1,40 @@
+// /src/components/Dashboard/PatientCarousel.tsx
 import React from "react";
 import PatientCard from "@components/Dashboard/PatientCard";
 import { ADD_ICON } from "@utils";
 import ButtonComponent from "@components/common/Button";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "@navigation/navigationTypes";
-import { View, FlatList, Image } from "react-native";
+import { View, FlatList, Image, ActivityIndicator } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 /**
- * Patient type definition.
+ * Patient type definition for the carousel component.
  * @typedef {Object} Patient
- * @property {string} id - Unique identifier for the patient.
- * @property {string} name - Patient's name.
- * @property {string} photo - URL of the patient's photo.
- * @property {string[]} pills - List of pills/tags associated with the patient.
+ * @property {string} id - Unique identifier for the patient
+ * @property {string} name - Patient's name
+ * @property {string} photo - URL of the patient's photo
+ * @property {string[]} pills - List of pills/tags associated with the patient
+ * @property {string} description - Patient's description or medical notes
  */
 export type Patient = {
   id: string;
   name: string;
   photo: string;
   pills: string[];
+  description: string;
 };
 
+/**
+ * Type definition for navigation prop used in the carousel.
+ * @typedef {Object} NavProp
+ */
 type NavProp = NativeStackNavigationProp<RootStackParamList, "Dashboard">;
 
 /**
- * Props for the PatientCarousel component.
- * @typedef {Object} PatientCarouselProps
- * @property {Patient[]} data - Array of patient objects, including a special 'add' item.
- * @property {any} styles - Styles object for customizing the carousel and its elements.
- * @property {Object} translations - Object containing translation strings.
- * @property {string} translations.AddPatient - Label for the add patient button/modal.
- * @property {string} translations.AddPatientForm - Content for the add patient modal.
- * @property {string} translations.CloseModal - Label for the close modal button.
- * @property {(title: string, body: React.ReactNode, buttons: React.ReactNode) => void} openModal - Function to open the modal.
- * @property {() => void} closeModal - Function to close the modal.
+ * Available style keys for the PatientCarousel component.
+ * @typedef {string} stylesPatientCarousel
  */
-
 export type stylesPatientCarousel =
   | "listContent"
   | "addCard"
@@ -46,6 +44,21 @@ export type stylesPatientCarousel =
   | "closeText"
   | "marginRight";
 
+/**
+ * Props interface for the PatientCarousel component.
+ * @interface PatientCarouselProps
+ * @property {Patient[]} data - Array of patient objects, including a special 'add' item
+ * @property {Record<stylesPatientCarousel, object>} styles - Styles object for customizing the carousel and its elements
+ * @property {Object} translations - Object containing translation strings
+ * @property {string} translations.addPatient - Label for the add patient button/modal
+ * @property {string} translations.addPatientForm - Content for the add patient modal
+ * @property {string} translations.close - Label for the close modal button
+ * @property {() => void} openModal - Function to open the modal
+ * @property {() => void} closeModal - Function to close the modal
+ * @property {(patientId: string) => void} [onDeletePatient] - Optional callback for deleting a patient
+ * @property {(patientId: string) => void} [onEditPatient] - Optional callback for editing a patient
+ * @property {boolean} [loading] - Optional loading state flag
+ */
 interface PatientCarouselProps {
   data: Patient[];
   styles: Record<stylesPatientCarousel, object>;
@@ -54,33 +67,51 @@ interface PatientCarouselProps {
     addPatientForm: string;
     close: string;
   };
-  openModal: (
-    title: string,
-    body: React.ReactNode,
-    buttons: React.ReactNode,
-  ) => void;
+  openModal: () => void;
   closeModal: () => void;
+  onDeletePatient?: (patientId: string) => void;
+  onEditPatient?: (patientId: string) => void;
+  loading?: boolean;
 }
 
 /**
  * PatientCarousel component displays a horizontal list of PatientCards and an add-patient button.
  * When the add button is pressed, it opens a modal for adding a new patient.
  *
+ * Features:
+ * - Horizontal scrollable list of patient cards
+ * - Add new patient button with icon
+ * - Loading state with spinner
+ * - Navigation to patient details screen
+ * - Edit and delete patient functionality
+ * - Responsive design with custom styling
+ *
  * @component
- * @param {PatientCarouselProps} props - Props for the PatientCarousel.
- * @returns {JSX.Element} The rendered patient carousel.
+ * @param {PatientCarouselProps} props - Props for the PatientCarousel
+ * @param {Patient[]} props.data - Array of patient objects to display
+ * @param {Record<stylesPatientCarousel, object>} props.styles - Styles object for customization
+ * @param {Object} props.translations - Translation strings for UI text
+ * @param {() => void} props.openModal - Function to open the add patient modal
+ * @param {() => void} props.closeModal - Function to close the modal
+ * @param {(patientId: string) => void} [props.onDeletePatient] - Optional delete callback
+ * @param {(patientId: string) => void} [props.onEditPatient] - Optional edit callback
+ * @param {boolean} [props.loading] - Loading state flag
+ * @returns {JSX.Element} The rendered patient carousel
  *
  * @example
  * <PatientCarousel
  *   data={patients}
  *   styles={styles}
  *   translations={{
- *     AddPatient: "Add Patient",
- *     AddPatientForm: "Form goes here",
- *     CloseModal: "Close"
+ *     addPatient: "Add Patient",
+ *     addPatientForm: "Form goes here",
+ *     close: "Close"
  *   }}
  *   openModal={openModal}
  *   closeModal={closeModal}
+ *   onDeletePatient={handleDelete}
+ *   onEditPatient={handleEdit}
+ *   loading={false}
  * />
  */
 const PatientCarousel: React.FC<PatientCarouselProps> = ({
@@ -89,8 +120,19 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
   openModal,
   closeModal,
   translations,
+  onDeletePatient,
+  onEditPatient,
+  loading = false,
 }) => {
   const navigation = useNavigation<NavProp>();
+
+  if (loading) {
+    return (
+      <View style={[styles.listContent, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#00a69d" />
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -105,20 +147,7 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
             <View style={styles.addCard}>
               <ButtonComponent
                 touchableOpacity
-                handlePress={() =>
-                  openModal(
-                    translations.addPatient,
-                    translations.addPatientForm,
-                    <ButtonComponent
-                      label={translations.close}
-                      handlePress={closeModal}
-                      customStyles={{
-                        button: styles.closeButton,
-                        textButton: styles.closeText,
-                      }}
-                    />,
-                  )
-                }
+                handlePress={openModal}
                 customStyles={{ button: styles.addButton, textButton: {} }}
                 children={<Image source={ADD_ICON} style={styles.image} />}
               />
@@ -130,8 +159,11 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
             name={item.name}
             photoUrl={item.photo}
             pills={item.pills}
-            onPress={() => navigation.replace("Login")}
-            style={styles.marginRight}
+            description={item.description}
+            onPress={() => navigation.navigate("Patient")}
+            onDelete={onDeletePatient ? () => onDeletePatient(item.id) : undefined}
+            onEdit={onEditPatient ? () => onEditPatient(item.id) : undefined}
+            style={{ marginRight: 15 }}
           />
         );
       }}

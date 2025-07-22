@@ -4,13 +4,25 @@ import { logsHandler } from "./logs.js";
 import { RequestHandler } from "express";
 import { updateUserDataHandler } from "./updateUserData.js";
 import { loginHandler, signUpHandler } from "./auth.js";
-import { upload, handleReceiveImages } from "./manageImages.js";
+import {
+  upload,
+  handleReceiveImages,
+  handleReceiveImagesOnly,
+} from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
 import {
   getAllMedications,
   getUserMedications,
   getUserPatients,
 } from "./gets/index.js";
+import {
+  createPatientHandler,
+  deletePatientHandler,
+  addExistingPatientHandler,
+  unassignPatientHandler,
+} from "./patientManagement.js";
+import { searchUserHandler } from "./searchUser.js";
+import { validatePatientUniquenessHandler } from "./validatePatientUniqueness.js";
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -33,11 +45,21 @@ const routes: Record<RoutesAPI, RouteConfig> = {
     handler: handleReceiveImages,
     middlewares: [upload.array("images")],
   },
+  "/uploadOnly": {
+    handler: handleReceiveImagesOnly,
+    middlewares: [upload.array("images")],
+  },
   "/signup": { handler: signUpHandler },
   "/updateUserData": { handler: updateUserDataHandler },
   "/getUserPatients": { handler: getUserPatients },
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
+  "/createPatient": { handler: createPatientHandler },
+  "/deletePatient": { handler: deletePatientHandler },
+  "/unassignPatient": { handler: unassignPatientHandler },
+  "/addExistingPatient": { handler: addExistingPatientHandler },
+  "/searchUser": { handler: searchUserHandler },
+  "/validatePatientUniqueness": { handler: validatePatientUniquenessHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

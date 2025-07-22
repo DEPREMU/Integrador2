@@ -6,12 +6,19 @@ export type RoutesAPI =
   | "/encrypt"
   | "/decrypt"
   | "/upload"
+  | "/uploadOnly"
   | "/logs"
   | "/signup"
   | "/updateUserData"
   | "/getUserPatients"
   | "/getUserMedications"
-  | "/getAllMedications";
+  | "/getAllMedications"
+  | "/createPatient"
+  | "/deletePatient"
+  | "/unassignPatient"
+  | "/addExistingPatient"
+  | "/searchUser"
+  | "/validatePatientUniqueness";
 
 export type ResponseEncrypt = {
   dataEncrypted?: string;
@@ -107,4 +114,84 @@ export type ResponseGetAllMedications = {
 export type TypeBodyGetAllMedications = {
   onlyGetTheseColumns?: (keyof MedicationApi)[];
   onlyGetTheseMedicationsById?: string[];
+};
+
+// Patient management types
+export type TypeBodyCreatePatient = {
+  caregiverId: string;
+  patientData: {
+    name: string;
+    phone: string;
+    email: string;
+    age: number;
+    description: string;
+    conditions: string[];
+    allergies: string[];
+    imageId: string;
+    medications: any[];
+    caregiverId: string;
+  };
+};
+
+export type ResponseCreatePatient = {
+  success: boolean;
+  patient?: User;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyDeletePatient = {
+  patientId: string;
+  caregiverId: string;
+};
+
+export type ResponseDeletePatient = {
+  success: boolean;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyUnassignPatient = {
+  patientId: string;
+  caregiverId: string;
+};
+
+export type ResponseUnassignPatient = {
+  success: boolean;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyAddExistingPatient = {
+  patientUserId: string;
+  caregiverId: string;
+};
+
+export type ResponseAddExistingPatient = {
+  success: boolean;
+  patient?: User;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodySearchUser = {
+  email?: string;
+  phone?: string;
+};
+
+export type ResponseSearchUser = {
+  user?: User;
+  message?: string;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyValidatePatientUniqueness = {
+  email?: string;
+  phone?: string;
+  excludeUserId?: string;
+};
+
+export type ResponseValidatePatientUniqueness = {
+  isUnique: boolean;
+  conflicts?: {
+    email: boolean;
+    phone: boolean;
+  };
+  error?: { message: string; timestamp: string };
 };

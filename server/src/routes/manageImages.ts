@@ -6,7 +6,11 @@ import { getDatabase } from "../database/functions.js";
 import { Request, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
 
-const IMAGES_DIR = path.join(__dirname, "..", "..", "images");
+let IMAGES_DIR = path.join(__dirname, "..", "..", "images");
+if (!IMAGES_DIR.includes("server"))
+  IMAGES_DIR = path.join(__dirname, "..", "images");
+if (!IMAGES_DIR.includes("server")) IMAGES_DIR = path.join(__dirname, "images");
+
 
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
@@ -113,3 +117,42 @@ export const handleReceiveImages = async (req: Request, res: Response) => {
     files: fileInfos,
   });
 };
+
+/**
+ * Handles the reception of uploaded images WITHOUT updating user profile.
+ * This is specifically for patient images or temporary uploads.
+ *
+ * @param req - Express request object, expected to contain uploaded files.
+ * @param res - Express response object used to send the response.
+ */
+export const handleReceiveImagesOnly = async (req: Request, res: Response) => {
+  const files = req.files as Express.Multer.File[];
+  const body = req.body as { userId: string };
+
+  if (!files || files.length === 0) {
+    console.error("No images uploaded:", files, "\nBody:", body);
+    res.status(400).json({ message: "No images uploaded." });
+    return;
+  }
+
+  const fileInfos = files.map((file) => ({
+    filename: file.filename,
+    path: `/images/${file.filename}`,
+    userId: body.userId,
+  }));
+
+  const db = await getDatabase();
+  // Solo insertar en imagePaths, NO actualizar el perfil del usuario
+  await db.collection<ImagePath>("imagePaths").insertMany(fileInfos);
+
+  console.log(
+    "Images uploaded successfully (without profile update):",
+    fileInfos,
+  );
+  res.status(201).json({
+    success: true,
+    message: "Images uploaded successfully.",
+    files: fileInfos,
+  });
+};
+export { IMAGES_DIR };
