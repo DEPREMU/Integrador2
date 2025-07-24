@@ -10,8 +10,8 @@
 import cors from "cors";
 import router from "./routes/index.js";
 import express from "express";
-import { mainUrl, __dirname } from "./config.js";
-import path from "path";
+import { mainUrl } from "./config.js";
+import { IMAGES_DIR } from "./routes/manageImages.js";
 
 /**
  * The main Express application instance.
@@ -27,7 +27,7 @@ app.use(
   }),
 );
 
-app.use("/images", express.static(path.join(__dirname, "..", "..", "images")));
+app.use("/images", express.static(IMAGES_DIR));
 
 app.use(express.json());
 

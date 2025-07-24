@@ -11,7 +11,6 @@ if (!IMAGES_DIR.includes("server"))
   IMAGES_DIR = path.join(__dirname, "..", "images");
 if (!IMAGES_DIR.includes("server")) IMAGES_DIR = path.join(__dirname, "images");
 
-
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
 /**
