@@ -1,27 +1,32 @@
-import express from "express";
-import { RoutesAPI } from "../types/TypesAPI.js";
-import { logsHandler } from "./logs.js";
-import { RequestHandler } from "express";
-import { updateUserDataHandler } from "./updateUserData.js";
-import { loginHandler, signUpHandler } from "./auth.js";
 import {
   upload,
   handleReceiveImages,
   handleReceiveImagesOnly,
 } from "./manageImages.js";
-import { decryptHandler, encryptHandler } from "./encryption.js";
 import {
+  getUserPatients,
   getAllMedications,
   getUserMedications,
-  getUserPatients,
 } from "./gets/index.js";
+import {
+  sendMessageHandler,
+  clearHistoryHandler,
+  getConversationsHandler,
+} from "./chatbot/chatbot.js";
 import {
   createPatientHandler,
   deletePatientHandler,
   addExistingPatientHandler,
   unassignPatientHandler,
 } from "./patientManagement.js";
+import express from "express";
+import { RoutesAPI } from "../types/TypesAPI.js";
+import { logsHandler } from "./logs.js";
+import { RequestHandler } from "express";
 import { searchUserHandler } from "./searchUser.js";
+import { updateUserDataHandler } from "./updateUserData.js";
+import { loginHandler, signUpHandler } from "./auth.js";
+import { decryptHandler, encryptHandler } from "./encryption.js";
 import { validatePatientUniquenessHandler } from "./validatePatientUniqueness.js";
 
 /**
@@ -60,6 +65,9 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/unassignPatient": { handler: unassignPatientHandler },
   "/searchUser": { handler: searchUserHandler },
   "/validatePatientUniqueness": { handler: validatePatientUniquenessHandler },
+  "/chatbot/getConversations": { handler: getConversationsHandler },
+  "/chatbot/sendMessage": { handler: sendMessageHandler },
+  "/chatbot/clearHistory": { handler: clearHistoryHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {

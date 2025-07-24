@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Image, Pressable, ScrollView, View } from "react-native";
+import { Image, Pressable, ScrollView, View } from "react-native";
 import ButtonComponent from "@components/common/Button";
 import { useLanguage } from "@/context/LanguageContext";
 import useStylesSettings from "@styles/components/stylesSettingsComponent";
@@ -68,8 +68,8 @@ const UserSettingsComponent: React.FC = () => {
   const [phone, setPhone] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [imageId, setImageId] = useState<string>("");
-  const [userId, setUserId] = useState<string>(""); 
-  const [imageWasUploaded, setImageWasUploaded] = useState<boolean>(false); 
+  const [userId, setUserId] = useState<string>("");
+  const [imageWasUploaded, setImageWasUploaded] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     visible: boolean;
     message: string;
@@ -107,6 +107,7 @@ const UserSettingsComponent: React.FC = () => {
           typeof fileInfo === "object" &&
           "path" in fileInfo
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           newImageId = (fileInfo as any).path;
         } else {
           setSnackbar({
@@ -231,7 +232,7 @@ const UserSettingsComponent: React.FC = () => {
           message: t("dataUpdated"),
           type: "success",
         });
-        setImageWasUploaded(false); 
+        setImageWasUploaded(false);
       }
     });
   };
@@ -277,7 +278,7 @@ const UserSettingsComponent: React.FC = () => {
       } else {
         try {
           imageUri = getRouteImage(imageId);
-        } catch (error) {
+        } catch {
           imageUri = null;
         }
       }
@@ -310,10 +311,10 @@ const UserSettingsComponent: React.FC = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.flex1}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.paddingBottom32}
       >
         <Text style={styles.label}>{t("role")}</Text>
         {renderRoleButtons()}

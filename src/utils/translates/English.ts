@@ -193,6 +193,19 @@ const en: typeLanguages = {
   changeImage: "Change image",
   selectImage: "Select image",
   removeImage: "Remove",
+  initialBotMessage:
+    "Hello! I'm your virtual assistant. How can I help you today?",
+  history: "History",
+  newConversation: "New conversation",
+  clearHistory: "Clear history",
+  askYourQuestion: "Ask your question here...",
+  selectConversation: "Select a conversation",
+  typing: "Typing...",
+  send: "Send",
+  chatbotTitle: "Health Virtual Assistant",
+  loginRequired: "Login required",
+  loginRequiredMessage: "Please log in to access this feature.",
+  chatbot: "MediBot",
 } as const;
 
 export default en;

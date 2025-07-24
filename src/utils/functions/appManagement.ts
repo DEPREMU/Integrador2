@@ -1,8 +1,9 @@
 import { logError } from "./debug";
+import { Platform } from "react-native";
 import { getRouteAPI } from "./APIManagement";
 import * as ImagePicker from "expo-image-picker";
+import * as Localization from "expo-localization";
 import { ResponseUploadImage } from "@typesAPI";
-import { Platform } from "react-native";
 
 /**
  * Requests permission to access the media library.
@@ -15,6 +16,26 @@ export const requestImagePermission = async () => {
 
   return permissionResult.granted;
 };
+
+export const getFormattedDate = (
+  date: Date,
+  locale?: string,
+  options?: Intl.DateTimeFormatOptions,
+): string => {
+  if (!locale) {
+    const locales = Localization.getLocales()[0];
+    locale = locales.languageTag || "es-MX";
+  }
+  if (!options)
+    options = {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: "America/Mexico_City",
+    };
+
+  return new Intl.DateTimeFormat(locale, options).format(date);
+};
+
 
 export const pickImage = async (pickMultipleImages: boolean) => {
   const result = await ImagePicker.launchImageLibraryAsync({

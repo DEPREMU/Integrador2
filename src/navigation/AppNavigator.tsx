@@ -3,6 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
+import Chatbot from "@screens/Chatbot";
 import Settings from "@/screens/Settings";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
@@ -57,7 +58,25 @@ const screens: Screens = {
   Settings: {
     component: Settings,
   },
+  Chatbot: {
+    component: Chatbot,
+  },
 };
+
+const allScreens = Object.entries(screens).map(
+  ([name, { component, options }]) => (
+    <Stack.Screen
+      key={name}
+      name={name as keyof RootStackParamList}
+      component={component}
+      options={
+        (options as NativeStackNavigationOptions) ?? {
+          headerShown: false,
+        }
+      }
+    />
+  ),
+);
 
 const AppNavigator: React.FC = () => {
   useEffect(() => {
@@ -69,20 +88,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Home">
-          {Object.entries(screens).map(([name, { component, options }]) => (
-            <Stack.Screen
-              key={name}
-              name={name as keyof RootStackParamList}
-              component={component}
-              options={
-                (options as NativeStackNavigationOptions) ?? {
-                  headerShown: false,
-                }
-              }
-            />
-          ))}
-        </Stack.Navigator>
+        <Stack.Navigator initialRouteName="Home">{allScreens}</Stack.Navigator>
       </BackgroundTaskProvider>
     </NavigationContainer>
   );

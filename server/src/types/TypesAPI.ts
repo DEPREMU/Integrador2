@@ -18,7 +18,10 @@ export type RoutesAPI =
   | "/unassignPatient"
   | "/addExistingPatient"
   | "/searchUser"
-  | "/validatePatientUniqueness";
+  | "/validatePatientUniqueness"
+  | "/chatbot/getConversations"
+  | "/chatbot/sendMessage"
+  | "/chatbot/clearHistory";
 
 export type ResponseEncrypt = {
   dataEncrypted?: string;
@@ -128,7 +131,7 @@ export type TypeBodyCreatePatient = {
     conditions: string[];
     allergies: string[];
     imageId: string;
-    medications: any[];
+    medications: unknown[];
     caregiverId: string;
   };
 };
@@ -193,5 +196,55 @@ export type ResponseValidatePatientUniqueness = {
     email: boolean;
     phone: boolean;
   };
+  error?: { message: string; timestamp: string };
+};
+
+// Chatbot types
+export type RequestSendMessage = {
+  userId: string;
+  message: string;
+  language: "es" | "en";
+  userName?: string;
+  conversationId?: string;
+};
+
+export type ResponseSendMessage = {
+  conversation: {
+    id: string;
+    date: string;
+    messages: {
+      id: string;
+      text: string;
+      sender: "user" | "bot";
+      timestamp: Date;
+    }[];
+  };
+  error?: { message: string; timestamp: string };
+};
+
+export type RequestGetConversations = {
+  userId: string;
+};
+
+export type ResponseGetConversations = {
+  conversations: {
+    id: string;
+    date: string;
+    messages: {
+      id: string;
+      text: string;
+      sender: "user" | "bot";
+      timestamp: Date;
+    }[];
+  }[];
+  error?: { message: string; timestamp: string };
+};
+
+export type RequestClearHistory = {
+  userId: string;
+};
+
+export type ResponseClearHistory = {
+  success: boolean;
   error?: { message: string; timestamp: string };
 };

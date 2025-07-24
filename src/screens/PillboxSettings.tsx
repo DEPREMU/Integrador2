@@ -10,9 +10,6 @@ const PillboxSettings: React.FC<SettingsProps> = () => {
   const { isLoggedIn } = useUserContext();
   const { translations } = useLanguage();
 
-
-
-
   return (
     <>
       <HeaderComponent />
