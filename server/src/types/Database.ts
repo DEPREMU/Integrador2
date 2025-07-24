@@ -22,6 +22,7 @@ export type User = {
   imageId: string;
   createdAt: string;
   phone: string;
+  email?: string;
   caregiverId?: string;
   medicationIds?: ObjectId[];
   medications?: MedicationUser[];

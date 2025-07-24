@@ -12,7 +12,7 @@ const es: typeLanguages = {
   error: "Error",
   errorSignUp: "Error al registrarse, por favor intente más tarde.",
   friday: "Viernes",
-  greeting: "Hola, Usuario Administrador",
+  greeting: "Hola, {0}",
   headerTitle: "Encabezado",
   languages: "Lenguajes",
   logOut: "Cerrar sesión",
@@ -110,8 +110,6 @@ const es: typeLanguages = {
   userImage: "Imagen de usuario",
   noImage: "Sin imagen",
   role: "Rol",
-
-  
   nameRequired: "El nombre es obligatorio",
   phoneRequired: "El número de teléfono es obligatorio",
   phoneFormatError: "El número de teléfono debe tener 10 dígitos",
@@ -122,6 +120,82 @@ const es: typeLanguages = {
   dashboard: "Panel de usuario",
   home: "Inicio",
   pillboxSettings: "Configuración del pastillero",
+  // Patient management translations
+  searchExisting: "Buscar existente",
+  createNew: "Crear nuevo",
+  searchPlaceholder: "Buscar por nombre o correo",
+  search: "Buscar",
+  changePhoto: "Cambiar foto",
+  addPhoto: "Agregar foto",
+  searchByEmailOrPhone: "Buscar por correo o teléfono",
+  userNotFound: "Usuario no encontrado",
+  required: "Obligatorio",
+  optional: "Opcional",
+  deletePatient: "Eliminar Paciente",
+  confirmDeletePatient: "¿Estás seguro de que quieres eliminar este paciente?",
+  delete: "Eliminar",
+  cancel: "Cancelar",
+  patientCreatedSuccessfully: "Paciente creado exitosamente",
+  patientDeletedSuccessfully: "Paciente eliminado exitosamente",
+  errorCreatingPatient: "Error al crear paciente",
+  errorDeletingPatient: "Error al eliminar paciente",
+  fieldRequired: "Este campo es obligatorio",
+  separateWithCommas: "Separar con comas",
+  creating: "Creando...",
+  createPatient: "Crear Paciente",
+  adding: "Agregando...",
+  phone: "Teléfono",
+  // Edit patient translations
+  editPatient: "Editar Paciente",
+  editPatientInfo: "Editar Información del Paciente",
+  updating: "Actualizando...",
+  updatePatient: "Actualizar Paciente",
+  patientUpdatedSuccessfully: "Paciente actualizado exitosamente",
+  errorUpdatingPatient: "Error al actualizar paciente",
+  // Unassign patient translations
+  unassignPatient: "Desasignar Paciente",
+  confirmUnassignPatient:
+    "¿Estás seguro de que quieres desasignar a {0} de tu cuidado? El paciente no será eliminado, solo dejará de estar bajo tu cuidado.",
+  unassign: "Desasignar",
+  patientUnassignedSuccessfully: "{0} ha sido desasignado exitosamente.",
+  errorUnassigningPatient: "Error al desasignar paciente",
+  networkError: "Error de red",
+  serverError: "Error de conexión al servidor",
+  // Caregiver validation translations
+  caregiverCannotBePatient:
+    "Los cuidadores no pueden ser asignados como pacientes",
+  roleCaregiver: "Cuidador",
+  rolePatient: "Paciente",
+  patientAlreadyAssigned: "El paciente ya está asignado a este cuidador",
+  roleLabel: "Rol",
+  // Validation error messages
+  invalidName: "El nombre solo puede contener letras y espacios",
+  invalidPhone: "El teléfono debe tener exactamente 10 dígitos",
+  invalidEmail: "Por favor ingrese una dirección de correo válida",
+  invalidAge: "La edad debe ser un número entre 1 y 99",
+  phoneAlreadyExists:
+    "Este número de teléfono ya está registrado por otro usuario",
+  emailAlreadyExists:
+    "Este correo electrónico ya está registrado por otro usuario",
+  // Additional error messages
+  userDataNotAvailable: "Datos de usuario no disponibles",
+  permissionDenied: "Permiso denegado",
+  imageUploadedSuccessfully: "Imagen subida exitosamente",
+  failedToUploadImage: "Error al subir la imagen",
+  errorUploadingImage: "Error al subir la imagen",
+  networkErrorOccurred: "Error de red",
+  // Patient Create Form additional translations
+  permissionCameraRequired:
+    "¡Se requiere permiso para acceder a la galería de fotos!",
+  imageSelectedWillUpload:
+    "Imagen seleccionada. Se subirá al crear el paciente.",
+  errorSelectingImage: "Error al seleccionar imagen",
+  errorUploadingImagePatientCreated:
+    "Error al subir imagen. El paciente se creará sin imagen.",
+  failedToCreatePatient: "Error al crear paciente",
+  changeImage: "Cambiar imagen",
+  selectImage: "Seleccionar imagen",
+  removeImage: "Quitar",
 } as const;
 
 export default es;
