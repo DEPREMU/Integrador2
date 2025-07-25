@@ -208,6 +208,7 @@ const es: typeLanguages = {
   chatbotTitle: "Asistente Virtual de Salud",
   loginRequired: "Inicio de sesión requerido",
   loginRequiredMessage: "Por favor, inicia sesión para acceder a esta función.",
+  chatbot: "MediBot",
 } as const;
 
 export default es;

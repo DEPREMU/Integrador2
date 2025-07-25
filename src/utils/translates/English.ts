@@ -205,6 +205,7 @@ const en: typeLanguages = {
   chatbotTitle: "Health Virtual Assistant",
   loginRequired: "Login required",
   loginRequiredMessage: "Please log in to access this feature.",
+  chatbot: "MediBot",
 } as const;
 
 export default en;

@@ -1,3 +1,5 @@
+/* eslint-disable indent */
+import React from "react";
 import { log } from "@utils";
 import { View } from "react-native";
 import { useModal } from "@context/ModalContext";
@@ -5,8 +7,10 @@ import { useLanguage } from "@context/LanguageContext";
 import ButtonComponent from "@components/common/Button";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useUserContext } from "@/context/UserContext";
-import React, { useState } from "react";
-import { RootStackParamList } from "@/navigation/navigationTypes";
+import {
+  RootStackParamList,
+  ScreensAvailable,
+} from "@/navigation/navigationTypes";
 import { useStylesMenuComponent } from "@styles/components/stylesMenuComponent";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { languagesNames, LanguagesSupported } from "@utils";
@@ -21,12 +25,24 @@ interface MenuProps {
    * Callback function invoked to close the menu.
    */
   onClose: () => void;
+
+  /**
+   * State setter to control the visibility of the language selector.
+   */
+  setShowLanguageSelector: React.Dispatch<React.SetStateAction<boolean>>;
+
+  /**
+   * Indicates whether the language selector is currently shown.
+   */
+  showLanguageSelector: boolean;
 }
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Home"
 >;
+
+const buttonsIsLoggedIn = ["Home", "Dashboard", "Settings", "Chatbot"] as const;
 
 /**
  * Menu component that displays a navigation menu with smart screen detection.
@@ -67,19 +83,19 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
  *   onClose={() => setMenuVisible(false)}
  * />
  */
-
-const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
+const Menu: React.FC<MenuProps> = ({
+  visible,
+  onClose,
+  setShowLanguageSelector,
+  showLanguageSelector,
+}) => {
+  const route = useRoute();
   const styles = useStylesMenuComponent();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const route = useRoute();
-  const { language, t, changeLanguage } = useLanguage();
   const { isLoggedIn, logout } = useUserContext();
   const { openModal, closeModal } = useModal();
-
-  const [showLanguageSelector, setShowLanguageSelector] =
-    useState<boolean>(false);
-
-  const currentScreen = route.name;
+  const { language, t, changeLanguage } = useLanguage();
+  const currentScreen = route.name as ScreensAvailable;
 
   if (!visible) return null;
 
@@ -87,24 +103,21 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
    * Handles navigation and menu actions.
    * @param option - The menu option selected by the user
    */
-  const handlePress = (
-    option: "Language" | "Login" | "Settings" | "Home" | "Dashboard",
-  ) => {
-    if (option === "Language") {
-      setShowLanguageSelector(true);
-    } else if (option === "Login") {
-      navigation.replace("Login");
-      setShowLanguageSelector(false);
-    } else if (option === "Settings") {
-      navigation.replace("Settings");
-      setShowLanguageSelector(false);
-    } else if (option === "Home") {
-      navigation.replace("Home");
-      setShowLanguageSelector(false);
-    } else if (option === "Dashboard") {
-      navigation.replace("Dashboard");
-      setShowLanguageSelector(false);
+  const handlePress = (option: ScreensAvailable | "Language") => {
+    switch (option) {
+      case "Language":
+        setShowLanguageSelector((prev) => !prev);
+        return;
+      case "Login":
+      case "Settings":
+      case "Home":
+      case "Dashboard":
+      case "Chatbot":
+        if (currentScreen === option) return;
+        navigation.replace(option);
+        break;
     }
+    setShowLanguageSelector(false);
   };
 
   /**
@@ -114,8 +127,8 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
   const selectLanguage = async (language: LanguagesSupported) => {
     log("Language selected:", language);
     onClose();
-    await changeLanguage(language);
     setShowLanguageSelector(false);
+    await changeLanguage(language);
   };
 
   /**
@@ -139,39 +152,21 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
       <View style={styles.menu}>
         {!showLanguageSelector && (
           <>
-            {isLoggedIn && currentScreen !== "Home" && (
-              <ButtonComponent
-                handlePress={() => handlePress("Home")}
-                label={t("home")}
-                touchableOpacity
-                replaceStyles={{
-                  button: styles.button,
-                  textButton: styles.textButton,
-                }}
-              />
-            )}
-            {isLoggedIn && currentScreen !== "Dashboard" && (
-              <ButtonComponent
-                handlePress={() => handlePress("Dashboard")}
-                label={t("dashboard")}
-                touchableOpacity
-                replaceStyles={{
-                  button: styles.button,
-                  textButton: styles.textButton,
-                }}
-              />
-            )}
-            {isLoggedIn && currentScreen !== "Settings" && (
-              <ButtonComponent
-                handlePress={() => handlePress("Settings")}
-                label={t("settings")}
-                touchableOpacity
-                replaceStyles={{
-                  button: styles.button,
-                  textButton: styles.textButton,
-                }}
-              />
-            )}
+            {isLoggedIn &&
+              buttonsIsLoggedIn.map((screen) => {
+                if (currentScreen === screen) return null;
+                return (
+                  <ButtonComponent
+                    handlePress={() => handlePress(screen)}
+                    label={t(screen.toLowerCase() as keyof typeof t)}
+                    touchableOpacity
+                    replaceStyles={{
+                      button: styles.button,
+                      textButton: styles.textButton,
+                    }}
+                  />
+                );
+              })}
             <ButtonComponent
               handlePress={() => handlePress("Language")}
               label={t("languages")}
@@ -181,28 +176,17 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
                 textButton: styles.textButton,
               }}
             />
-            {!isLoggedIn && (
-              <ButtonComponent
-                handlePress={() => handlePress("Login")}
-                label={t("login")}
-                touchableOpacity
-                replaceStyles={{
-                  button: styles.button,
-                  textButton: styles.textButton,
-                }}
-              />
-            )}
-            {isLoggedIn && (
-              <ButtonComponent
-                handlePress={handlePressLogout}
-                label={t("logOut")}
-                touchableOpacity
-                replaceStyles={{
-                  button: styles.button,
-                  textButton: styles.textButton,
-                }}
-              />
-            )}
+            <ButtonComponent
+              handlePress={
+                isLoggedIn ? handlePressLogout : () => handlePress("Login")
+              }
+              label={t(isLoggedIn ? "logOut" : "login")}
+              touchableOpacity
+              replaceStyles={{
+                button: styles.button,
+                textButton: styles.textButton,
+              }}
+            />
           </>
         )}
         {showLanguageSelector && (

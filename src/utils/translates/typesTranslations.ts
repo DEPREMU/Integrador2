@@ -193,4 +193,5 @@ export type typeLanguages = {
   chatbotTitle: string;
   loginRequired: string;
   loginRequiredMessage: string;
+  chatbot: string;
 };

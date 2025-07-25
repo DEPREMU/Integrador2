@@ -63,6 +63,21 @@ const screens: Screens = {
   },
 };
 
+const allScreens = Object.entries(screens).map(
+  ([name, { component, options }]) => (
+    <Stack.Screen
+      key={name}
+      name={name as keyof RootStackParamList}
+      component={component}
+      options={
+        (options as NativeStackNavigationOptions) ?? {
+          headerShown: false,
+        }
+      }
+    />
+  ),
+);
+
 const AppNavigator: React.FC = () => {
   useEffect(() => {
     const cleanup = setupNotificationHandlers(navigate);
@@ -73,20 +88,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Chatbot">
-          {Object.entries(screens).map(([name, { component, options }]) => (
-            <Stack.Screen
-              key={name}
-              name={name as keyof RootStackParamList}
-              component={component}
-              options={
-                (options as NativeStackNavigationOptions) ?? {
-                  headerShown: false,
-                }
-              }
-            />
-          ))}
-        </Stack.Navigator>
+        <Stack.Navigator initialRouteName="Home">{allScreens}</Stack.Navigator>
       </BackgroundTaskProvider>
     </NavigationContainer>
   );

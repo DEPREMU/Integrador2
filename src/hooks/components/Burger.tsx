@@ -24,13 +24,18 @@ type typeBurger = {
  * This hook handles the animation of the burger icon lines using `useAnimatedStyle` and `withTiming`.
  * It also manages the overlay that appears when the menu is open, and triggers the provided `open` and `close` callbacks.
  */
-const useBurger = (): typeBurger => {
+const useBurger = (
+  setShowLanguageSelector: React.Dispatch<React.SetStateAction<boolean>>,
+): typeBurger => {
   const { styles, widthLine } = useStylesBurger();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
+    setIsOpen((prev) => {
+      setShowLanguageSelector(prev);
+      return !prev;
+    });
+  }, [setShowLanguageSelector]);
 
   const line1Style = useAnimatedStyle(() => ({
     top: withTiming(isOpen ? 18 : 0),
