@@ -3,6 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
+import Chatbot from "@screens/Chatbot";
 import Settings from "@/screens/Settings";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
@@ -57,6 +58,9 @@ const screens: Screens = {
   Settings: {
     component: Settings,
   },
+  Chatbot: {
+    component: Chatbot,
+  },
 };
 
 const AppNavigator: React.FC = () => {
@@ -69,7 +73,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Home">
+        <Stack.Navigator initialRouteName="Chatbot">
           {Object.entries(screens).map(([name, { component, options }]) => (
             <Stack.Screen
               key={name}

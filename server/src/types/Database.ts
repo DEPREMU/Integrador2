@@ -6,7 +6,10 @@ export type CollectionName =
   | "imagePaths"
   | "userConfig"
   | "medicationsApi"
-  | "medicationsUser";
+  | "medicationsUser"
+  | "conversations"
+  | "topics_es"
+  | "topics_en";
 
 // types.ts
 
@@ -82,6 +85,24 @@ export type UserConfig = {
   userId: string;
   language: string;
   pushNotifications: boolean;
+};
+
+export type Message = {
+  id: string;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
+};
+
+export type Conversation = {
+  _id?: ObjectId;
+  userId: string;
+  id: string;
+  date: string;
+  messages: Message[];
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export { ObjectId };

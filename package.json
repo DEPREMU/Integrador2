@@ -39,7 +39,7 @@
     "axios": "^1.9.0",
     "core-js": "^3.44.0",
     "crypto-js": "^4.2.0",
-    "expo": "53.0.19",
+    "expo": "53.0.20",
     "expo-background-fetch": "~13.1.5",
     "expo-build-properties": "~0.14.6",
     "expo-constants": "~17.1.6",

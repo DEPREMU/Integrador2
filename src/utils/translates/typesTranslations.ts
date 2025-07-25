@@ -182,4 +182,15 @@ export type typeLanguages = {
   changeImage: string;
   selectImage: string;
   removeImage: string;
+  initialBotMessage: string;
+  history: string;
+  newConversation: string;
+  clearHistory: string;
+  selectConversation: string;
+  typing: string;
+  askYourQuestion: string;
+  send: string;
+  chatbotTitle: string;
+  loginRequired: string;
+  loginRequiredMessage: string;
 };

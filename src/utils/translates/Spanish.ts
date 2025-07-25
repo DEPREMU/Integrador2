@@ -196,6 +196,18 @@ const es: typeLanguages = {
   changeImage: "Cambiar imagen",
   selectImage: "Seleccionar imagen",
   removeImage: "Quitar",
+  initialBotMessage:
+    "¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
+  history: "Historial",
+  newConversation: "Nueva conversación",
+  clearHistory: "Borrar historial",
+  askYourQuestion: "Haz tu pregunta aquí...",
+  selectConversation: "Selecciona una conversación",
+  typing: "Escribiendo...",
+  send: "Enviar",
+  chatbotTitle: "Asistente Virtual de Salud",
+  loginRequired: "Inicio de sesión requerido",
+  loginRequiredMessage: "Por favor, inicia sesión para acceder a esta función.",
 } as const;
 
 export default es;

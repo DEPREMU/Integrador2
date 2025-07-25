@@ -5,3 +5,4 @@ export * from "./APIManagement";
 export * from "./notifications";
 export * from "./storageManagement";
 export * from "./patientValidation";
+export * from "./chatbotAPI";
