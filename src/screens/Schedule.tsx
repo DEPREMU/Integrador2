@@ -19,6 +19,7 @@ import HeaderComponent from '@components/common/Header';
 import ButtonComponent from '@components/common/Button';
 
 // Tipos
+import { RoutesAPI } from "../../server/src/types/TypesAPI";
 type RootStackParamList = {
   Schedule: undefined;
   Patient: undefined;
@@ -138,7 +139,7 @@ const MedicationScheduler: React.FC = () => {
         // Ya no se obtienen pacientes, solo medicamentos
         setIsMedicationsLoading(true);
         const medsRes = await fetch(
-          getRouteAPI('/getAllMedications'),
+          getRouteAPI('/getAllMedications' as RoutesAPI),
           fetchOptions<TypeBodyGetAllMedications>('POST', {
             onlyGetTheseColumns: ['_id', language !== 'en' ? `name_${language}` : 'name'],
           })

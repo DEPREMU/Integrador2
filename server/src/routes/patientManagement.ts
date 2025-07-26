@@ -1,14 +1,14 @@
 import { getDatabase } from "../database/functions.js";
 import { Request, Response } from "express";
+import { User } from "../types/Database";
 import {
-  User,
   TypeBodyCreatePatient,
   ResponseCreatePatient,
   TypeBodyDeletePatient,
   ResponseDeletePatient,
   TypeBodyAddExistingPatient,
-  ResponseAddExistingPatient,
-} from "../types/index.js";
+  ResponseAddExistingPatient
+} from "../types/TypesAPI";
 import { ObjectId } from "mongodb";
 
 /**

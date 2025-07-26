@@ -27,11 +27,7 @@ import { searchUserHandler } from "./searchUser.js";
 import { updateUserDataHandler } from "./updateUserData.js";
 import { loginHandler, signUpHandler } from "./auth.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
-import {
-  getAllMedications,
-  getUserMedications,
-  getUserPatients,
-} from "./gets/index.js";
+// ...existing code...
 
 /**
  * Creates an instance of an Express router to define and manage
@@ -45,7 +41,7 @@ type RouteConfig = {
   middlewares?: RequestHandler[];
 };
 
-const routes: Record<RoutesAPI, RouteConfig> = {
+const routes: { [key: string]: RouteConfig } = {
   "/login": { handler: loginHandler },
   "/encrypt": { handler: encryptHandler },
   "/decrypt": { handler: decryptHandler },
@@ -72,8 +68,10 @@ Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {
 });
 
 // Endpoint para agregar horario de medicamento
+// Endpoint para agregar y eliminar horario de medicamento
+import addUserMedicationRouter from "./addUserMedication.js";
+import deleteUserMedicationRouter from "./deleteUserMedication.js";
 router.use(addUserMedicationRouter);
-// Endpoint para eliminar horario de medicamento
 router.use(deleteUserMedicationRouter);
 
 export default router;

@@ -1,6 +1,6 @@
 import { env } from "../env.js";
 import { MongoClient } from "mongodb";
-import { CollectionName } from "../types/index.js";
+import { CollectionName } from "../types/index.d";
 
 const uri = env.MONGO_URI;
 

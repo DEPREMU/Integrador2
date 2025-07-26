@@ -11,38 +11,34 @@ import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import MedicationScheduler from "@screens/Schedule";
+import Chatbot from "@screens/Chatbot";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { navigate, navigationRef } from "./navigationRef";
 import { setupNotificationHandlers } from "@/utils";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import {
-  NativeStackNavigationProp,
-  createNativeStackNavigator,
-  NativeStackNavigationOptions,
-} from "@react-navigation/native-stack";
+import { useEffect } from "react";
+// (Eliminada importación duplicada)
+
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type Screens = Record<
   keyof RootStackParamList,
   {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     component: React.ComponentType<any>;
     options?:
       | NativeStackNavigationOptions
       | ((props: {
-          route: RouteProp<RootStackParamList, "Login">;
+          route: RouteProp<RootStackParamList, keyof RootStackParamList>;
           navigation: NativeStackNavigationProp<
             RootStackParamList,
-            "Login",
-            undefined
+            keyof RootStackParamList
           >;
           theme: ReactNavigation.Theme;
         }) => NativeStackNavigationOptions);
-  }
+    }
 >;
-
 /**
  * Centralized configuration object for all app screens.
  * This improves maintainability and scalability by allowing easy management of screen components and their options.
@@ -90,7 +86,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Home">
+        <Stack.Navigator initialRouteName="Patient">
           {Object.entries(screens).map(([name, { component, options }]) => (
             <Stack.Screen
               key={name}

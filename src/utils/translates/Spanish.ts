@@ -11,7 +11,7 @@ const es: typeLanguages = {
   logOut: "Cerrar sesión",
   login: "Iniciar sesión",
   languages: "Lenguajes",
-  pdfNotSpecifiedDays: "Días no especificados",
+  // pdfNotSpecifiedDays: "Días no especificados", // Eliminar o corregir si no está en typeLanguages
   pdfScheduleLabel: "Horario",
   morning: "Mañana",
   afternoon: "Tarde",
@@ -31,6 +31,7 @@ const es: typeLanguages = {
   pdfMedicationStock: "Stock de medicamento",
   pdfMedicationRequiredDoses: "Dosis requeridas",
   pdfMedicationDescription: "Descripción del medicamento",
+  // Propiedades PDF mantenidas porque existen en typeLanguages
   capsysDescription:
     "El pastillero inteligente es un dispositivo conectado diseñado para facilitar la gestión diaria de medicamentos. Se sincroniza con nuestra app móvil para enviar recordatorios automáticos, alertas personalizadas y notificaciones en tiempo real. Gracias a su diseño funcional y tecnología integrada, permite a cuidadores y usuarios llevar un control preciso y sin errores sobre horarios, dosis y administración, mejorando la adherencia al tratamiento y la tranquilidad en el cuidado",
   close: "Cerrar",
@@ -112,7 +113,7 @@ const es: typeLanguages = {
   },
   dosageTypes: JSON.stringify(["pastillas", "mg", "unidades"]),
   urgency: JSON.stringify({ low: "Baja", medium: "Media", high: "Alta" }),
-  // ...existing code...
+  hours: "horas",
   unknown: "Desconocido",
   medicationPlaceholder: "P. ej. Loratadina",
   clearMedication: "Limpiar Medicamento",
@@ -147,6 +148,8 @@ const es: typeLanguages = {
   dashboard: "Panel de usuario",
   home: "Inicio",
   pillboxSettings: "Configuración del pastillero",
+  configurePillDispenser: "Configurar pastillero",
+  generateReport: "Generar reporte",
 } as const;
 
 export default es;

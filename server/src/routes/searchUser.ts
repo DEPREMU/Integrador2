@@ -5,7 +5,7 @@ import {
   User,
   TypeBodySearchUser,
   ResponseSearchUser,
-} from "../types/index.js";
+} from "../types/index.d";
 
 /**
  * Handles the search user request by email or phone with privacy protection.

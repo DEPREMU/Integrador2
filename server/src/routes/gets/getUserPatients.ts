@@ -4,7 +4,7 @@ import {
   MedicationUser,
   ResponseGetUserPatients,
   TypeBodyGetUserPatients,
-} from "../../types";
+} from "../../types/index.d";
 import { getCollection } from "../../database/functions.js";
 
 export const getUserPatients = async (

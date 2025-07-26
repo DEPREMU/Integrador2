@@ -4,7 +4,7 @@ import {
   TypeBodyLogin,
   ResponseAuth,
   TypeBodySignup,
-} from "../types/index.js";
+} from "../types/index.d";
 import { Request, Response } from "express";
 import { getDatabase } from "../database/functions.js";
 

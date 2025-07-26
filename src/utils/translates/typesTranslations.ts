@@ -9,6 +9,28 @@ export type LanguagesSupported = "en" | "es";
  * @property key - The key for the translation.
  */
 export type typeLanguages = {
+  hours: string;
+  configurePillDispenser: string;
+  generateReport: string;
+  morning: string;
+  afternoon: string;
+  night: string;
+  pdfScheduleLabel: string;
+  pdfReportTitle: string;
+  pdfPatientName: string;
+  pdfPatientAge: string;
+  pdfPatientConditions: string;
+  pdfPatientAllergies: string;
+  pdfPatientMedications: string;
+  pdfMedicationName: string;
+  pdfMedicationDosage: string;
+  pdfMedicationType: string;
+  pdfMedicationDays: string;
+  pdfMedicationInterval: string;
+  pdfMedicationUrgency: string;
+  pdfMedicationStock: string;
+  pdfMedicationRequiredDoses: string;
+  pdfMedicationDescription: string;
   requiredDoses: string;
   requiredDosesDescription: string;
   formErrorMedication: string;

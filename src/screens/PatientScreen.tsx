@@ -12,11 +12,7 @@ import { usePDFReport } from "@hooks/usePDFReport";
 import { Ionicons } from "@expo/vector-icons";
 import { UserData } from "../types/TypesUser";
 import { MedicationUser } from "../types/TypesSchedule";
-import {
-  ResponseGetUserMedications,
-  TypeBodyGetUserMedications,
-  ResponseGetUserPatients
-} from "@types";
+import { ResponseGetUserMedications, TypeBodyGetUserMedications, ResponseGetUserPatients } from "../types/index.types";
 import { log, getRouteAPI, fetchOptions } from "@utils";
 import DayCarousel from "@components/PatientScreen/DayCarousel";
 

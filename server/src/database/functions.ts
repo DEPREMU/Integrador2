@@ -47,7 +47,7 @@ export const getUserMedicationsFromDB = async (userId: string) => {
     _id: doc._id?.toString(),
   }));
 };
-import { CollectionName } from "../types/index.js";
+import { CollectionName } from "../types/Database";
 import { Collection, Db, Document, ObjectId } from "mongodb";
 import { defaultDatabase, defaultCollection, client } from "./connection.js";
 

@@ -5,7 +5,7 @@ import {
   ResponseValidatePatientUniqueness,
   TypeBodyValidatePatientUniqueness,
   User,
-} from "../types";
+} from "../types/index.d";
 
 /**
  * Validates if email and phone are unique among ALL users (patients, caregivers, both).

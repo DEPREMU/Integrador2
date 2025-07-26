@@ -3,7 +3,7 @@ import { typeLanguages } from "./typesTranslations";
 const en: typeLanguages = {
   requiredDoses: "Required Doses",
   requiredDosesDescription: "Number of doses the patient must take in the indicated period.",
-  pdfNotSpecifiedDays: "Unspecified days",
+  // pdfNotSpecifiedDays: "Unspecified days", // Eliminar o corregir si no está en typeLanguages
   pdfScheduleLabel: "Schedule",
   morning: "Morning",
   afternoon: "Afternoon",
@@ -23,6 +23,7 @@ const en: typeLanguages = {
   pdfMedicationStock: "Medication Stock",
   pdfMedicationRequiredDoses: "Required Doses",
   pdfMedicationDescription: "Medication Description",
+  // Propiedades PDF mantenidas porque existen en typeLanguages
   addMedication: "Add medication",
   addPatient: "Add Patient",
   addPatientForm: "Here would be the form to add a patient",
@@ -101,6 +102,7 @@ const en: typeLanguages = {
   schedulesNotScheduled: "Schedules not scheduled",
   addMedicationsOnTop: "Add medications using the top form",
   hour: "Hour",
+  hours: "Hours",
   days: {
     monday: "Mo",
     tuesday: "Tu",
@@ -146,6 +148,8 @@ const en: typeLanguages = {
   dashboard: "Dashboard",
   home: "Home",
   pillboxSettings: "Pillbox Settings",
+  configurePillDispenser: "Configure Pill Dispenser",
+  generateReport: "Generate Report",
 } as const;
 
 export default en;

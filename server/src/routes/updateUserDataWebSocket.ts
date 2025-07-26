@@ -2,7 +2,7 @@ import {
   User,
   ResponseUpdateUserData,
   TypeBodyUpdateUserData,
-} from "../types/index.js";
+} from "../types/index.d";
 import { WebSocket } from "ws";
 import { getDatabase } from "../database/functions.js";
 

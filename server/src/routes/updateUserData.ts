@@ -1,6 +1,6 @@
 import { getDatabase } from "../database/functions.js";
 import { Request, Response } from "express";
-import { ResponseUpdateUserData, TypeBodyUpdateUserData, User } from "../types";
+import { ResponseUpdateUserData, TypeBodyUpdateUserData, User } from "../types/index.d";
 
 export const updateUserDataHandler = async (
   req: Request<{}, {}, TypeBodyUpdateUserData>,

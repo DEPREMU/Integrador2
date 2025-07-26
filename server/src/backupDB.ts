@@ -1,7 +1,7 @@
 import fs from "fs";
 import crypto from "crypto";
 import { getDatabase } from "./database/functions.js";
-import { CollectionName } from "./types";
+import { CollectionName } from "./types/index.d";
 
 const backupFilePath = `./backups/backup_${new Date().getTime()}.json`;
 
