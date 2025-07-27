@@ -1,3 +1,52 @@
+export const deleteUserMedicationFromDB = async (medicationId: string, userId: string) => {
+  // Elimina el medicamento del usuario en la colección 'medicationsUser'
+  try {
+    const collection = await getCollection("medicationsUser");
+    if (!collection) return false;
+    // Convertir medicationId a ObjectId si es posible
+    let query: any = { userId };
+    try {
+      query._id = getObjectId(medicationId);
+    } catch {
+      query._id = medicationId;
+    }
+    const result = await collection.deleteOne(query);
+    return result.deletedCount === 1;
+  } catch (error) {
+    console.error("Error deleting user medication:", error);
+    return false;
+  }
+};
+export const getAllMedicationsFromDB = async (fields: string[] = ["_id", "name_es", "name"]) => {
+  // Consulta a la colección de medicamentosApi y solo devuelve los campos solicitados
+  const collection = await getCollection("medicationsApi");
+  if (!collection) return [];
+  // Construir el proyección para MongoDB
+  const projection = fields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {});
+  const medications = await collection.find({}, { projection }).toArray();
+  return medications;
+};
+export const getUserMedicationsFromDB = async (userId: string) => {
+  // Consulta real: obtiene los medicamentos del usuario desde la colección 'medicationsUser'
+  const collection = await getCollection("medicationsUser");
+  if (!collection) return [];
+  const docs = await collection.find({ userId }).toArray();
+  // Mapeo seguro: solo los campos esperados
+  return docs.map(doc => ({
+    medicationId: doc.medicationId,
+    name: doc.name,
+    userId: doc.userId,
+    dosage: doc.dosage,
+    startHour: doc.startHour,
+    days: doc.days,
+    grams: doc.grams,
+    intervalHours: doc.intervalHours,
+    stock: doc.stock,
+    requiredDoses: doc.requiredDoses,
+    urgency: doc.urgency,
+    _id: doc._id?.toString(),
+  }));
+};
 import { CollectionName } from "../types/index.js";
 import { Collection, Db, Document, ObjectId } from "mongodb";
 import { defaultDatabase, defaultCollection, client } from "./connection.js";

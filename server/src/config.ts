@@ -28,7 +28,7 @@ export const hostname: string = "0.0.0.0";
  * @type {number}
  * @default 8080
  */
-export const port: number = 8080;
+export const port: number = 8082;
 
 //? This is the URL for the WebSocket connection to CAPSY.
 export const WS_HOST_CAPSY: string = "localhost";

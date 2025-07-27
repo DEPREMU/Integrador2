@@ -1,21 +1,15 @@
 import {
-  log,
-  supabase,
-  logError,
-  KEYS_STORAGE,
-  loadDataSecure,
   saveDataSecure,
-  removeDataSecure,
-  getRouteAPI,
-  fetchOptions,
-  checkLanguage,
-  hasPushNotifications,
-  reasonNotification,
-  handleCancelNotification,
   loadData,
   saveData,
-  stringifyData,
-} from "@utils";
+} from "../utils/functions/storageManagement";
+import { KEYS_STORAGE } from "../utils/constants/keysStorage";
+import { reasonNotification, ReasonNotification } from "../utils/constants/notifications";
+
+import { log, logError, getRouteAPI, fetchOptions, checkLanguage, hasPushNotifications, handleCancelNotification } from "../utils/functions";
+import { supabase } from "../utils/supabase";
+import { stringifyData } from "../utils/functions/appManagement";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   User,
   ResponseAuth,
@@ -25,29 +19,30 @@ import {
   ResponseUpdateUserData,
 } from "@typesAPI";
 import { Notifications, UserSession } from "@types";
+import { UserData } from "../types/TypesUser";
 import React, { createContext, useState, useEffect, useCallback } from "react";
 
 type UserContextType = {
   userSession: UserSession | null;
-  userData: User | null;
+  userData: UserData | null;
   isLoggedIn: boolean;
   loading: boolean;
-  login: <T = void>(
+  login: (
     email: string,
     password: string,
     rememberMe?: boolean,
-    callback?: (session: UserSession | null, err?: Error) => T,
-  ) => Promise<T>;
-  signUp: <T = void>(
+    callback?: (session: UserSession | null, err?: Error) => void,
+  ) => Promise<void>;
+  signUp: (
     email: string,
     password: string,
-    callback?: (err?: Error) => T,
-  ) => Promise<T>;
+    callback?: (err?: Error) => void,
+  ) => Promise<void>;
   logout: (callback?: (message: string) => void) => Promise<void>;
   setUserSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
   refreshToken: (refreshToken: string) => Promise<void>;
   updateUserData: (
-    userData: User,
+    userData: UserData,
     callback?: (success: boolean, error?: Error) => void,
   ) => Promise<void | undefined>;
 };
@@ -97,19 +92,19 @@ const saveSession = async (
  * @returns {Promise<User>} A promise that resolves to the current user session, or a default user object if no valid session exists.
  */
 const getSession = async (): Promise<UserSession | null> => {
-  const expiryDate = await loadDataSecure<number>(KEYS_STORAGE.SESSION_EXPIRY);
-
-  if (!expiryDate || new Date().getTime() > expiryDate) {
-    await clearSession();
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      // Web
+      const session = window.localStorage.getItem("userSession");
+      return session ? JSON.parse(session) : null;
+    } else {
+      // React Native
+      const session = await AsyncStorage.getItem("userSession");
+      return session ? JSON.parse(session) : null;
+    }
+  } catch {
     return null;
   }
-
-  const session = await loadDataSecure<UserSession>(
-    KEYS_STORAGE.USER_SESSION_STORAGE,
-  );
-  if (session) return session;
-
-  return null;
 };
 
 /**
@@ -121,13 +116,16 @@ const getSession = async (): Promise<UserSession | null> => {
  * @returns {Promise<void>} A promise that resolves when the session data has been cleared.
  */
 const clearSession = async (): Promise<void> => {
-  await removeDataSecure(KEYS_STORAGE.USER_SESSION_STORAGE);
-  await removeDataSecure(KEYS_STORAGE.SESSION_EXPIRY);
+  if (typeof window !== "undefined" && window.localStorage) {
+    window.localStorage.removeItem("userSession");
+  } else {
+    await AsyncStorage.removeItem("userSession");
+  }
 };
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [userData, setUserData] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [updatedInfo, setUpdatedInfo] = useState<boolean>(false);
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -146,27 +144,26 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     await saveSession(session, false, true);
   }, []);
 
-  const signUp = useCallback(
-    async <T = void,>(
-      email: string,
-      password: string,
-      callback: (err?: Error) => T = (_) => null as T,
-    ) => {
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) return callback?.(new Error(error.message));
-
-      const [language, pushNotifications] = await Promise.all([
-        checkLanguage(),
-        hasPushNotifications(),
-      ]);
-
-      const userData = (await fetch(
+  // signUp compatible con web: async normal, sin genéricos ni useCallback
+  async function signUp(
+    email: string,
+    password: string,
+    callback: (err?: Error) => void = (_) => null
+  ) {
+    const { error, data } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) return callback?.(new Error(error.message));
+    const [language, pushNotifications] = await Promise.all([
+      checkLanguage(),
+      hasPushNotifications(),
+    ]);
+    let userData: any = null;
+    try {
+      const res = await fetch(
         getRouteAPI("/signup"),
-        fetchOptions<TypeBodySignup>("POST", {
+        fetchOptions("POST", {
           userId: data.session?.user?.id || "",
           role: "caregiver",
           userConfig: {
@@ -179,42 +176,38 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           description: "",
           name: "",
           phone: "",
-        }),
-      )
-        .then((res) => {
-          log("User signed up successfully", res);
-          return res.json();
         })
-        .catch((err) => {
-          logError("Error during sign up", err.message);
-          return {
-            data: null,
-            error: {
-              message: err.message,
-              timestamp: new Date().toISOString(),
-            },
-          };
-        })) as ResponseAuth;
-
-      if (userData.error) {
-        logError("Error during sign up", userData.error.message);
-        return callback?.(new Error(userData.error.message));
-      }
-      setUserData(userData.data?.user || null);
-
-      return callback?.();
-    },
-    [],
-  );
+      );
+      userData = await res.json();
+    } catch (err: any) {
+      logError("Error during sign up", err?.message || String(err));
+      return callback?.(new Error(err?.message || String(err)));
+    }
+    if (userData?.error) {
+      logError("Error during sign up", userData.error.message);
+      return callback?.(new Error(userData.error.message));
+    }
+    const u = userData.data?.user;
+    setUserData(u ? {
+      id: u.userId || "",
+      email: "",
+      name: u.name || "",
+      surname: "",
+      phone: u.phone || "",
+      address: "",
+      birthdate: ""
+    } : null);
+    return callback?.();
+  }
+  // (Eliminada declaración duplicada de logout y contextValue, solo queda la versión final al final del archivo)
 
   const login = useCallback(
-    async <T = void,>(
+    async (
       email: string,
       password: string,
       rememberMe: boolean = false,
-      callback: (session: UserSession | null, err?: Error) => T = (_, __) =>
-        null as T,
-    ) => {
+      callback?: (session: UserSession | null, err?: Error) => void
+    ): Promise<void> => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -226,34 +219,71 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (!session)
         return callback?.(null, new Error("No session data received"));
 
-      await saveSession(session, rememberMe);
+      // Guardar sesión persistente
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("userSession", JSON.stringify(session));
+      } else {
+        await AsyncStorage.setItem("userSession", JSON.stringify(session));
+      }
+
       const [language, pushNotifications] = await Promise.all([
         checkLanguage(),
         hasPushNotifications(),
       ]);
-      const userData = (await fetch(
-        getRouteAPI("/login"),
-        fetchOptions<TypeBodyLogin>("POST", {
-          uuid: session?.user?.id,
+      const uuid = session?.user?.id;
+      log("LOGIN FETCH", {
+        endpoint: getRouteAPI("/login"),
+        uuid,
+        language,
+        pushNotifications,
+        body: {
+          uuid,
           language,
           pushNotifications,
-        }),
-      )
-        .then((res) => res.json())
-        .catch((error) => {
-          logError("Error fetching user data on login", error.message);
-          return {
-            data: null,
-            error: {
-              message: error.message,
-              timestamp: new Date().toISOString(),
-            },
-          };
-        })) as ResponseAuth;
-
+        }
+      });
+      // Mostrar el uuid en consola y pantalla solo una vez
+        // ...eliminado para producción
+      // Fetch user data y validar respuesta
+      let userData: ResponseAuth | null = null;
+      let rawText = "";
+      try {
+        const response = await fetch(
+          getRouteAPI("/login"),
+          fetchOptions<TypeBodyLogin>("POST", {
+            uuid: session?.user?.id,
+            language,
+            pushNotifications,
+          }),
+        );
+        rawText = await response.text();
+        // Si la respuesta parece HTML, mostrar error y no actualizar estado
+        if (rawText.trim().startsWith("<")) {
+          logError("Error: El backend devolvió HTML en vez de JSON", rawText);
+          setUserData(null);
+          setIsLoggedIn(false);
+          return callback?.(null, new Error("El backend devolvió HTML en vez de JSON"));
+        }
+        userData = JSON.parse(rawText);
+      } catch (err) {
+        logError("Error parsing user data en login", String(err));
+        setUserData(null);
+        setIsLoggedIn(false);
+        return callback?.(null, new Error("Respuesta inválida del backend"));
+      }
       setIsLoggedIn(true);
       setUserSession(session);
-      setUserData(userData.data?.user || null);
+      const u = userData?.data?.user;
+      console.log("Datos recibidos de backend en login:", u);
+      setUserData(u ? {
+        id: u.userId || "",
+        email: "",
+        name: u.name || "",
+        surname: "",
+        phone: u.phone || "",
+        address: "",
+        birthdate: ""
+      } : null);
       return callback?.(session);
     },
     [],
@@ -269,10 +299,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         clearSession(),
         loadData<Notifications>(KEYS_STORAGE.NOTIFICATIONS_STORAGE),
       ]);
-      reasonNotification.forEach(async (reason) => {
-        if (!notificationsData[reason]) return;
-        notificationsData[reason] = null;
-        await handleCancelNotification(notificationsData, reason);
+      reasonNotification.forEach(async (reason: string) => {
+        if (!notificationsData[reason as ReasonNotification]) return;
+        notificationsData[reason as ReasonNotification] = null;
+        await handleCancelNotification(notificationsData, reason as ReasonNotification);
       });
       setUserData(null);
       setIsLoggedIn(false);
@@ -297,7 +327,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       const res: ResponseUpdateUserData = await fetch(
         getRouteAPI("/updateUserData"),
         fetchOptions<TypeBodyUpdateUserData>("POST", {
-          userId: userData.userId || "",
+          userId: userData.id || "",
           userData: (newData as User) || {},
         }),
       )
@@ -324,14 +354,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           new Error(res.error?.message || "Unknown error"),
         );
       }
-      const updatedUser = {
-        ...userData,
-        ...res.user,
-        userId: userData.userId,
-        _id: userData._id,
-        createdAt: userData.createdAt,
-      };
-      setUserData(updatedUser);
+      const u = res.user;
+      setUserData(u ? {
+        id: u.userId || userData.id || "",
+        email: userData.email || "",
+        name: u.name || userData.name || "",
+        surname: userData.surname || "",
+        phone: u.phone || userData.phone || "",
+        address: userData.address || "",
+        birthdate: userData.birthdate || ""
+      } : userData);
       setUpdatedInfo(true);
       log("User data updated successfully");
       return callback?.(true);
@@ -342,13 +374,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession();
-
       if (!session || !session?.access_token || !session?.user?.id) return;
-
       setIsLoggedIn(true);
       setUserSession(session);
     };
-
     checkSession();
   }, []);
 
@@ -361,33 +390,44 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         hasPushNotifications(),
       ]);
 
-      const { data, error }: ResponseAuth = await fetch(
+      const response = await fetch(
         getRouteAPI("/login"),
         fetchOptions<TypeBodyLogin>("POST", {
           uuid: userSession.user.id,
           language,
           pushNotifications,
         }),
-      )
-        .then((res) => res.json())
-        .catch((error) => {
-          logError("Error fetching user data", error.message);
-          setLoading(false);
-          return {
-            data: null,
-            error: {
-              message: error.message,
-              timestamp: new Date().toISOString(),
-            },
-          };
-        });
+      );
+      const rawText = await response.text();
+      console.log("Raw response from /login:", rawText);
+      let data, error;
+      try {
+        const parsed = JSON.parse(rawText);
+        data = parsed.data;
+        error = parsed.error;
+      } catch (err) {
+        logError("Error parsing user data response", String(err));
+        setLoading(false);
+        data = null;
+        error = { message: "Invalid JSON response", raw: rawText };
+      }
 
       setUpdatedInfo(true);
       if (error || !data) {
         logError("Error fetching user data", error?.message);
         setUserData(null);
       } else {
-        setUserData(data.user);
+        const u = data.user;
+        console.log("Datos recibidos de backend en useEffect:", u);
+        setUserData(u ? {
+          id: u.userId || "",
+          email: "",
+          name: u.name || "",
+          surname: "",
+          phone: u.phone || "",
+          address: "",
+          birthdate: ""
+        } : null);
         setUpdatedInfo(true);
         setLoading(false);
       }
@@ -398,7 +438,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (!userSession || !userData || !isLoggedIn || updatedInfo) return;
-    if (userSession.user?.id !== userData.userId) return;
+    if (userSession.user?.id !== userData.id) return;
 
     updateUserData(userData);
   }, [userSession, userData, updatedInfo, isLoggedIn, updateUserData]);

@@ -1,84 +1,200 @@
+
 import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
+import { useMemo } from "react";
 
 export const useStylesDayCarousel = () => {
   const { isPhone, isWeb, width } = useResponsiveLayout();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
-      flex: 1,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      marginVertical: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      marginTop: 24,
+      marginBottom: 8,
+      gap: 8,
+    },
+    arrowContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
     },
     cardsRow: {
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
+      flexDirection: 'row',
+      gap: 24,
+      justifyContent: 'center',
+      alignItems: 'stretch',
+      flex: 1,
     },
     card: {
-      width: 300,
-      height: 300,
-      marginHorizontal: 8,
-      padding: 14,
+      backgroundColor: '#fff',
+      borderRadius: 18,
+      padding: 24,
+      minWidth: 240,
+      maxWidth: 320,
+      flex: 1,
+      alignItems: 'center',
+      shadowColor: '#00a69d',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.10,
+      shadowRadius: 12,
+      elevation: 6,
+      borderWidth: 1,
+      borderColor: 'rgba(0, 166, 157, 0.08)',
+      marginHorizontal: 2,
+    },
+    cardHover: {
+      shadowOpacity: 0.18,
+      elevation: 10,
+      borderColor: '#00a69d',
+    },
+    dayTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: '#222',
+      marginBottom: 18,
+      textAlign: 'center',
+      letterSpacing: 0.2,
+    },
+    miniCard: {
+      backgroundColor: '#f7f7f7',
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      width: 200,
+      alignSelf: 'center',
+      borderLeftWidth: 4,
+      borderLeftColor: '#00a69d',
+      alignItems: 'flex-start',
+      shadowColor: '#00a69d',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    medicationText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#222',
+      marginBottom: 2,
+    },
+    medicationTime: {
+      fontSize: 15,
+      color: '#00a69d',
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    medicationDoses: {
+      fontSize: 13,
+      color: '#888',
+      marginBottom: 0,
+    },
+    moreMedicationsText: {
+      fontSize: 13,
+      color: '#00a69d',
+      marginTop: 4,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    emptyMedication: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 60,
+    },
+    noMedicationsText: {
+      color: '#888',
+      fontSize: 16,
+      textAlign: 'center',
+      fontWeight: '400',
+    },
+    arrowButton: {
+      backgroundColor: 'transparent',
+      borderRadius: 50,
+      padding: 8,
+      marginHorizontal: 2,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    modalMedicationCard: {
       backgroundColor: "#fff",
       borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
-      alignItems: "center",
-      justifyContent: isPhone ? "center" : "flex-start",
+      borderLeftWidth: 4,
+      borderLeftColor: "#00a69d",
     },
-    cardHover: {
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.22,
-      shadowRadius: 12,
-      elevation: 8,
-      transform: [{ scale: 1.04 }],
-      zIndex: 2,
-    },
-    dayTitle: {
-      fontSize: isWeb ? 24 : 20,
-      fontWeight: "600",
-      marginBottom: 12,
-      color: "#333",
-      textAlign: "center",
-    },
-    medicationText: {
-      fontSize: isWeb ? 18 : 16,
-      color: "#555",
-      textAlign: "center",
-    },
-    emptyMedication: {
-      height: 24,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    arrowButton: {
-      padding: 12,
-    },
-    moreMedicationsText: {
-      color: "#00a69d",
-      marginTop: 5,
-      textAlign: "center",
-    },
-    closeButtonText: {
-      color: "#fff",
+    modalMedicationName: {
+      fontSize: isWeb ? 20 : 18,
       fontWeight: "bold",
-      fontSize: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: "#00a69d",
-      borderRadius: 8,
+      color: "#333",
+      marginBottom: 12,
       textAlign: "center",
     },
-  });
+    modalDetailRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+      paddingVertical: 4,
+    },
+    modalDetailLabel: {
+      fontSize: isWeb ? 16 : 14,
+      fontWeight: "600",
+      color: "#555",
+      marginLeft: 8,
+      marginRight: 8,
+      minWidth: 80,
+    },
+    modalDetailValue: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#333",
+      flex: 1,
+      flexWrap: "wrap",
+    },
+    modalSeparator: {
+      height: 1,
+      backgroundColor: "#e0e0e0",
+      marginVertical: 16,
+    },
+    modalEmptyText: {
+      fontSize: isWeb ? 18 : 16,
+      color: "#999",
+      textAlign: "center",
+      marginTop: 16,
+      fontStyle: "italic",
+    },
+    urgencyHigh: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#e74c3c",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+    urgencyMedium: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#f39c12",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+    urgencyLow: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#27ae60",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+  }), [isPhone, isWeb]);
 
-  const customStyles = StyleSheet.create({
+  const customStyles = useMemo(() => StyleSheet.create({
     modal: {
       backgroundColor: "#fff",
       borderRadius: 24,
@@ -93,6 +209,9 @@ export const useStylesDayCarousel = () => {
       shadowRadius: 24,
       borderWidth: 2,
       borderColor: "#00a69d",
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
     },
     title: {
       color: "#00a69d",
@@ -113,12 +232,8 @@ export const useStylesDayCarousel = () => {
       width: "100%",
       marginTop: 12,
     },
-    overlay: {
-      zIndex: 999,
-      elevation: 49,
-    },
     messageText: {},
-  });
+  }), []);
 
   return { styles, customStyles, width, isPhone, isWeb };
 };

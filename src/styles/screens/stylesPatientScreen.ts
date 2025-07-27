@@ -15,6 +15,11 @@ export const useStylesPatientScreen = () => {
       flex: 1,
       backgroundColor: "#ecebea",
     },
+    contentContainer: {
+      flex: 1,
+      padding: 16,
+      backgroundColor: "#ecebea",
+    },
     patientInfo: {
       padding: 16,
       paddingTop: 8,
@@ -42,6 +47,15 @@ export const useStylesPatientScreen = () => {
       alignSelf: "center",
       marginBottom: isPhone ? 0 : 8,
     },
+    buttonContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    buttonIcon: {
+      marginRight: 8,
+    },
     buttonText: {
       fontSize: 14,
       color: "white",
@@ -49,5 +63,5 @@ export const useStylesPatientScreen = () => {
     },
   });
 
-  return styles;
+  return { styles };
 };

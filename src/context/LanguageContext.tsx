@@ -1,10 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  ReactNode,
-  useContext,
-  createContext,
-} from "react";
+import React, { useState, useEffect, ReactNode, useContext, createContext } from "react";
+import en from "../utils/translates/English";
+import es from "../utils/translates/Spanish";
 import { i18n } from "@utils";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,7 +14,8 @@ import { typeLanguages } from "@utils";
 interface LanguageContextProps {
   language: LanguagesSupported;
   changeLanguage: (lang: LanguagesSupported) => Promise<void>;
-  t: (key: keyof typeLanguages, options?: object) => string;
+  t: (key: string, options?: object) => string;
+  translations: typeLanguages;
 }
 
 interface LanguageProviderProps {
@@ -34,6 +31,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 }) => {
   const [language, setLanguage] = useState<LanguagesSupported>("en");
   const { t: i18nextT } = useTranslation();
+  // Importar traducciones
+  const translationsMap: Record<LanguagesSupported, typeLanguages> = {
+    en,
+    es,
+  };
+  const translations: typeLanguages = translationsMap[language];
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -56,7 +59,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
       value={{
         language,
         changeLanguage,
-        t: i18nextT as (key: keyof typeLanguages, options?: object) => string,
+        t: i18nextT as (key: string, options?: object) => string,
+        translations,
       }}
     >
       {children}

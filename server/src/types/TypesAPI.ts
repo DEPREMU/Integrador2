@@ -1,18 +1,8 @@
-import { Falsy } from "react-native";
 import { MedicationApi, User, UserConfig } from "./Database";
+export type Medication = MedicationApi;
+import { Falsy } from "react-native";
 
 export type RoutesAPI =
-  | "/login"
-  | "/encrypt"
-  | "/decrypt"
-  | "/upload"
-  | "/uploadOnly"
-  | "/logs"
-  | "/signup"
-  | "/updateUserData"
-  | "/getUserPatients"
-  | "/getUserMedications"
-  | "/getAllMedications"
   | "/createPatient"
   | "/deletePatient"
   | "/unassignPatient"
@@ -21,7 +11,8 @@ export type RoutesAPI =
   | "/validatePatientUniqueness"
   | "/chatbot/getConversations"
   | "/chatbot/sendMessage"
-  | "/chatbot/clearHistory";
+  | "/chatbot/clearHistory"
+  | "/addUserMedication";
 
 export type ResponseEncrypt = {
   dataEncrypted?: string;

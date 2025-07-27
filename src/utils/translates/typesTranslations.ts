@@ -1,5 +1,5 @@
 import { DaysOfWeek } from "@types";
-import { UrgencyType } from "@typesAPI";
+import { UrgencyType } from "../../types/TypesSchedule";
 
 export type LanguagesSupported = "en" | "es";
 
@@ -9,6 +9,12 @@ export type LanguagesSupported = "en" | "es";
  * @property key - The key for the translation.
  */
 export type typeLanguages = {
+  requiredDoses: string;
+  requiredDosesDescription: string;
+  formErrorMedication: string;
+  formErrorDose: string;
+  formErrorDays: string;
+  formErrorIntervalHours: string;
   welcome: string;
   login: string;
   languages: string;
@@ -117,81 +123,4 @@ export type typeLanguages = {
   dashboard: string;
   home: string;
   pillboxSettings: string;
-  searchExisting: string;
-  createNew: string;
-  searchPlaceholder: string;
-  search: string;
-  changePhoto: string;
-  addPhoto: string;
-  searchByEmailOrPhone: string;
-  userNotFound: string;
-  required: string;
-  optional: string;
-  deletePatient: string;
-  confirmDeletePatient: string;
-  delete: string;
-  cancel: string;
-  patientCreatedSuccessfully: string;
-  patientDeletedSuccessfully: string;
-  errorCreatingPatient: string;
-  errorDeletingPatient: string;
-  fieldRequired: string;
-  separateWithCommas: string;
-  creating: string;
-  createPatient: string;
-  adding: string;
-  phone: string;
-  // Edit patient translations
-  editPatient: string;
-  editPatientInfo: string;
-  updating: string;
-  updatePatient: string;
-  patientUpdatedSuccessfully: string;
-  errorUpdatingPatient: string;
-  unassignPatient: string;
-  confirmUnassignPatient: string;
-  unassign: string;
-  patientUnassignedSuccessfully: string;
-  errorUnassigningPatient: string;
-  networkError: string;
-  serverError: string;
-  caregiverCannotBePatient: string;
-  roleCaregiver: string;
-  rolePatient: string;
-  patientAlreadyAssigned: string;
-  roleLabel: string;
-  invalidName: string;
-  invalidPhone: string;
-  invalidEmail: string;
-  invalidAge: string;
-  phoneAlreadyExists: string;
-  emailAlreadyExists: string;
-  // Additional error messages
-  userDataNotAvailable: string;
-  permissionDenied: string;
-  imageUploadedSuccessfully: string;
-  failedToUploadImage: string;
-  errorUploadingImage: string;
-  networkErrorOccurred: string;
-  // Patient Create Form additional translations
-  permissionCameraRequired: string;
-  imageSelectedWillUpload: string;
-  errorSelectingImage: string;
-  errorUploadingImagePatientCreated: string;
-  failedToCreatePatient: string;
-  changeImage: string;
-  selectImage: string;
-  removeImage: string;
-  initialBotMessage: string;
-  history: string;
-  newConversation: string;
-  clearHistory: string;
-  selectConversation: string;
-  typing: string;
-  askYourQuestion: string;
-  send: string;
-  chatbotTitle: string;
-  loginRequired: string;
-  loginRequiredMessage: string;
-  chatbot: string;
 };

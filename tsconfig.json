@@ -20,6 +20,7 @@
       "@assets/*": ["./assets/*"],
       "@styles/*": ["src/styles/*"],
       "@typesAPI": ["server/src/types/"],
+      "@typesAPI/*": ["server/src/types/*"],
       "@screens/*": ["src/screens/*"],
       "@context/*": ["src/context/*"],
       "@constants/*": ["src/constants/*"],

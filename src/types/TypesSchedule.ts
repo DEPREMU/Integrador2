@@ -1,3 +1,4 @@
+export type UrgencyType = 'low' | 'medium' | 'high';
 export type MedicationSchedule = {
   _id: string;
   medication: string;
@@ -25,3 +26,17 @@ export type DayOfWeek =
 
 export type DaysOfWeek = Record<DayOfWeek, string>;
 export type DaysOfWeekPartial = Partial<DaysOfWeek>;
+
+export type MedicationUser = {
+  _id?: string;
+  medicationId: string;
+  name: string;
+  userId: string;
+  dosage: string;
+  startHour: string;
+  days: string[];
+  grams: number;
+  intervalHours: number;
+  stock: number;
+  urgency: string;
+};

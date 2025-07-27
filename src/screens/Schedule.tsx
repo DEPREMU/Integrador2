@@ -1,508 +1,716 @@
 /* eslint-disable indent */
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-import {
-  log,
-  getRouteAPI,
-  fetchOptions,
-  typeLanguages,
-  interpolateMessage,
-} from "@utils";
-import {
-  User,
-  UrgencyType,
-  MedicationApi,
-  MedicationUser,
-  ResponseGetUserPatients,
-  ResponseGetAllMedications,
-  TypeBodyGetAllMedications,
-} from "@typesAPI";
-import ButtonComponent from "@components/common/Button";
-import { useLanguage } from "@context/LanguageContext";
-import { useNavigation } from "@react-navigation/native";
-import { useUserContext } from "@context/UserContext";
-import { RootStackParamList } from "@navigation/navigationTypes";
-import { DayOfWeek, DaysOfWeek } from "@types";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { TextInput, Text, Searchbar } from "react-native-paper";
-import { useStylesScheduleMedication } from "@styles/screens/stylesScheduleMedication";
-import { View, Platform, Pressable, ScrollView } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { Animated, Easing, View, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { TextInput, Text } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 
-type ScheduleScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "Schedule"
->;
+// Contextos y utils
+import { useUserContext } from '@context/UserContext';
+import { useLanguage } from '@context/LanguageContext';
+import { log, getRouteAPI, fetchOptions, typeLanguages, interpolateMessage } from '@utils';
+import { MedicationUser } from '@types';
+import { useStylesScheduleMedication } from '@styles/screens/stylesScheduleMedication';
+
+// Componentes
+import HeaderComponent from '@components/common/Header';
+import ButtonComponent from '@components/common/Button';
+
+// Tipos
+type RootStackParamList = {
+  Schedule: undefined;
+  Patient: undefined;
+};
+
+type ScheduleScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Schedule'>;
+
+
+import { UserData } from '@types';
+
+type UrgencyType = 'low' | 'medium' | 'high';
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+type DaysOfWeek = Partial<Record<DayOfWeek, string>>;
+
+type Medication = {
+  _id: string;
+  name: string;
+  name_es?: string;
+  name_pt?: string;
+};
+
+type ResponseGetUserPatients = {
+  error?: boolean;
+  patients: UserData[];
+};
+
+type ResponseGetAllMedications = {
+  error?: boolean;
+  medications: Medication[];
+};
+
+type TypeBodyGetAllMedications = {
+  onlyGetTheseColumns: string[];
+};
 
 const MedicationScheduler: React.FC = () => {
+  // Hooks de contexto
   const { styles } = useStylesScheduleMedication();
   const navigation = useNavigation<ScheduleScreenNavigationProp>();
   const { userData } = useUserContext();
   const { language, t } = useLanguage();
 
-  const daysOfWeek: Record<DayOfWeek, string> = {
-    monday: t("days.monday" as keyof typeLanguages),
-    tuesday: t("days.tuesday" as keyof typeLanguages),
-    wednesday: t("days.wednesday" as keyof typeLanguages),
-    thursday: t("days.thursday" as keyof typeLanguages),
-    friday: t("days.friday" as keyof typeLanguages),
-    saturday: t("days.saturday" as keyof typeLanguages),
-    sunday: t("days.sunday" as keyof typeLanguages),
-  };
-
-  const dosageTypes: string[] = JSON.parse(t("dosageTypes")) as string[];
-
-  const [dose, setDose] = useState<string>("");
+  // Estados principales
+  const [dose, setDose] = useState<string>('');
   const [time, setTime] = useState<Date>(new Date());
   const [intervalHours, setIntervalHours] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
-  const [urgency, setUrgency] = useState<Partial<Record<UrgencyType, string>>>({
-    low: t("urgency.low" as keyof typeLanguages),
-  });
-  const [patients, setPatients] = useState<User[]>([]);
-  const [, setSchedules] = useState<MedicationUser[]>([]);
-  const [medication, setMedication] = useState<Partial<MedicationApi> | null>(
-    null,
-  );
-  const [dosageType, setDosageType] = useState<string>("pills");
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [requiredDoses, setRequiredDoses] = useState<number>(0);
+  const [urgency, setUrgency] = useState<UrgencyType>('low');
+  const [schedules, setSchedules] = useState<MedicationUser[]>([]);
+  const [medication, setMedication] = useState<Medication | null>(null);
+  const [dosageType, setDosageType] = useState<string>('pills');
+  const [searchValue, setSearchValue] = useState<string>('');
   const [selectedDays, setSelectedDays] = useState<DaysOfWeek | null>(null);
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
-  const [searchMedicationsList, setSearchMedicationsList] = useState<
-    Partial<MedicationApi>[]
-  >([]);
-  const [medicationsList, setMedicationsList] =
-    useState<Partial<MedicationApi>[]>();
-  const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
+  const [searchMedicationsList, setSearchMedicationsList] = useState<Medication[]>([]);
+  const [medicationsList, setMedicationsList] = useState<Medication[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearchingMedications, setIsSearchingMedications] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isMedicationsLoading, setIsMedicationsLoading] = useState(true);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [iconRotation, setIconRotation] = useState('0deg');
 
-  useEffect(() => {
-    const getPatients = async () => {
-      if (!userData?.patientUserIds || userData.patientUserIds.length === 0)
-        return;
+  // Validación
+  const [fieldErrors, setFieldErrors] = useState({
+    medication: false,
+    dose: false,
+    days: false,
+    intervalHours: false,
+    urgency: false,
+  });
 
-      const data: ResponseGetUserPatients = await fetch(
-        getRouteAPI("/getUserPatients"),
-        fetchOptions("POST", { userId: userData.userId }),
-      ).then((res) => res.json());
+  // Animaciones
+  const formAnim = useRef(new Animated.Value(0)).current;
+  const dosageTypes: string[] = JSON.parse(t('dosageTypes')) as string[];
 
-      if (data.error) {
-        console.error("Error fetching patients:", data.error);
-        return;
+  // Días traducidos
+  const daysOfWeek: Record<DayOfWeek, string> = {
+    monday: t('days.monday' as keyof typeLanguages),
+    tuesday: t('days.tuesday' as keyof typeLanguages),
+    wednesday: t('days.wednesday' as keyof typeLanguages),
+    thursday: t('days.thursday' as keyof typeLanguages),
+    friday: t('days.friday' as keyof typeLanguages),
+    saturday: t('days.saturday' as keyof typeLanguages),
+    sunday: t('days.sunday' as keyof typeLanguages),
+  };
+
+  // Animación icono reloj
+  const animateIconRotation = useCallback(() => {
+    setIconRotation('0deg');
+    let deg = 0;
+    const interval = setInterval(() => {
+      deg += 30;
+      setIconRotation(`${deg}deg`);
+      if (deg >= 360) {
+        clearInterval(interval);
+        setIconRotation('0deg');
       }
-      const { patients } = data;
-      log(patients, "patients");
-      if (patients.length === 0) return;
-      setSelectedPatient(patients[0]);
-      setPatients(patients);
-      patients.forEach((patient) => log("patient:", patient));
+    }, 16);
+  }, []);
+
+  // Animación entrada formulario
+  useEffect(() => {
+    Animated.timing(formAnim, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Fetch datos iniciales
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        // Ya no se obtienen pacientes, solo medicamentos
+        setIsMedicationsLoading(true);
+        const medsRes = await fetch(
+          getRouteAPI('/getAllMedications'),
+          fetchOptions<TypeBodyGetAllMedications>('POST', {
+            onlyGetTheseColumns: ['_id', language !== 'en' ? `name_${language}` : 'name'],
+          })
+        ).then(res => res.json());
+        setMedicationsList(medsRes.medications?.map((m: Medication) => ({ ...m, _id: String(m._id) })) || []);
+      } catch (error) {
+        log('Error fetching data:', error);
+      } finally {
+        setIsMedicationsLoading(false);
+      }
     };
 
-    const getMedications = async () => {
-      log("Fetching medications...");
-      const data: ResponseGetAllMedications = await fetch(
-        getRouteAPI("/getAllMedications"),
-        fetchOptions<TypeBodyGetAllMedications>("POST", {
-          onlyGetTheseColumns: [
-            "_id",
-            language !== "en" ? `name_${language}` : "name",
-          ],
-        }),
-      ).then((res) => res.json());
+    fetchInitialData();
+  }, [language]);
 
-      setMedicationsList(data.medications);
-    };
+  // Validación campos
+  const validateFields = useCallback(() => {
+    const doseValue = parseFloat(dose);
+    return (
+      !!medication &&
+      !!dose && !isNaN(doseValue) && doseValue > 0 &&
+      !!selectedDays && Object.keys(selectedDays).length > 0 &&
+      intervalHours > 0 &&
+      !!urgency
+    );
+  }, [medication, dose, selectedDays, intervalHours, urgency]);
 
-    getPatients();
-    getMedications();
-  }, [userData, language, navigation]);
+  // Errores visuales
+  const getFieldErrors = useCallback(() => ({
+    medication: !medication,
+    dose: !dose || isNaN(parseFloat(dose)) || parseFloat(dose) <= 0,
+    days: !selectedDays || Object.keys(selectedDays).length === 0,
+    intervalHours: intervalHours <= 0,
+    urgency: !urgency,
+  }), [medication, dose, selectedDays, intervalHours, urgency]);
 
+  // Reset formulario
   const resetForm = useCallback(() => {
     setMedication(null);
-    setDose("");
+    setDose('');
     setSelectedDays(null);
     setTime(new Date());
     setDosageType(dosageTypes[0]);
+    setIntervalHours(0);
+    setStock(0);
+    setRequiredDoses(0);
+    setUrgency('low');
+    setFieldErrors({
+      medication: false,
+      dose: false,
+      days: false,
+      intervalHours: false,
+      urgency: false,
+    });
+    setHasAttemptedSubmit(false);
   }, [dosageTypes]);
 
-  const handleAddSchedule = useCallback(() => {
-    const medicationAPI = medicationsList?.find(
-      (med) => String(med._id) === String(medication?._id),
-    );
-    const newSchedule: MedicationUser = {
-      medicationId: String(medication?._id || ""),
-      name: (medicationAPI?.name as string) || t("unknown"),
-      userId: selectedPatient?.userId || "",
-      dosage: dosageType,
-      startHour: time.toTimeString().slice(0, 5),
-      days: [...Object.keys(selectedDays || {})],
-      grams: parseFloat(dose.split(" ")[0]),
-      intervalHours,
-      stock,
-      urgency: (Object.values(urgency)[0] ||
-        t("urgency.low" as keyof typeLanguages)) as UrgencyType,
-    };
+  // Enviar horario
+  const handleAddSchedule = useCallback(async () => {
+    const errors = getFieldErrors();
+    setFieldErrors(errors);
+    setHasAttemptedSubmit(true);
 
-    setSchedules((prev) => [...prev, newSchedule]);
-    resetForm();
+    if (Object.values(errors).some(e => e)) return;
+
+
+    // El paciente es el usuario logueado
+    if (!userData || !userData.id) {
+      alert('No hay usuario logueado. Inicia sesión antes de agregar el horario.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const body = {
+        medication: {
+          userId: userData.id,
+          medicationId: medication!._id,
+          name: language !== 'en' ? (medication as any)[`name_${language}`] : medication!.name,
+          dosage: dosageType,
+          startHour: time.toTimeString().slice(0, 5),
+          days: Object.keys(selectedDays!),
+          grams: parseFloat(dose),
+          intervalHours,
+          stock,
+          requiredDoses,
+          urgency,
+        }
+      };
+
+      // DEBUG: log userData and request body
+      console.log('userData:', userData);
+      console.log('addUserMedication body:', body);
+
+      const res = await fetch(
+        getRouteAPI('/addUserMedication'),
+        fetchOptions('POST', body)
+      ).then(r => r.json());
+
+      if (res.success) {
+        setSchedules(prev => [...prev, res.medication]);
+        resetForm();
+        navigation.navigate('Patient');
+      } else {
+        alert(t('error.addScheduleFailed' as keyof typeLanguages) + (res.error?.message || ''));
+      }
+    } catch (error) {
+      alert('Error de red: ' + error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
+    getFieldErrors,
     medication,
-    t,
-    dose,
-    selectedDays,
-    time,
     dosageType,
+    time,
+    selectedDays,
+    dose,
     intervalHours,
     stock,
+    requiredDoses,
     urgency,
-    medicationsList,
     resetForm,
-    selectedPatient,
+    navigation,
+    language,
+    t
   ]);
 
-  const toggleDay = (day: DayOfWeek) => {
-    setSelectedDays((prev) => {
-      if (!prev)
-        return {
-          [day]: t(("days." + day) as keyof typeLanguages),
-        } as DaysOfWeek;
-      log(prev, "prevSelectedDays", day);
-      if (Object.keys(prev).includes(day)) {
-        log(prev);
-        delete prev[day];
-        log(prev);
-        return prev;
+  // Toggle día
+  const toggleDay = useCallback((day: DayOfWeek) => {
+    setSelectedDays(prev => {
+      const newDays = prev ? { ...prev } : {};
+      if (newDays[day]) {
+        delete newDays[day];
+        return Object.keys(newDays).length ? newDays : null;
       }
-      return {
-        ...prev,
-        [day]: t(("days." + day) as keyof typeLanguages),
-      };
+      return { ...newDays, [day]: t(`days.${day}` as keyof typeLanguages) };
     });
+  }, [t]);
+
+  // Estilos combinados
+  const fullStyles = {
+    ...styles,
+    ...StyleSheet.create({
+      managementCard: {
+        width: '100%',
+        maxWidth: 500,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        marginBottom: 24,
+        padding: 32,
+        shadowColor: '#00a69d',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        elevation: 6,
+      },
+      managementTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#00a69d',
+        textAlign: 'center',
+        marginBottom: 8,
+        textShadowColor: 'rgba(178, 223, 219, 0.75)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+      },
+      backButton: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 50 : 80,
+        left: 20,
+        zIndex: 10,
+        backgroundColor: Platform.OS === 'ios' ? '#00a69d' : 'transparent',
+        borderRadius: 24,
+        padding: 8,
+      },
+      timeInput: {
+        backgroundColor: '#f8f9fa',
+        borderWidth: 2,
+        borderColor: '#00a69d',
+        borderRadius: 16,
+        padding: 14,
+        fontSize: 16,
+        color: '#00a69d',
+        fontWeight: '600',
+      },
+      submitButton: {
+        backgroundColor: '#00a69d',
+        borderRadius: 16,
+        padding: 16,
+        marginTop: 24,
+        alignItems: 'center',
+        shadowColor: '#00a69d',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6,
+      },
+      submitButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '600',
+      },
+      submitButtonPressed: {
+        backgroundColor: '#00897b',
+      },
+    }),
   };
-
-  const handleTimeChange = (
-    event: DateTimePickerEvent,
-    selectedTime?: Date,
-  ) => {
-    setShowTimePicker(false);
-    if (selectedTime) setTime(selectedTime);
-  };
-
-  const getAgeText = useCallback(
-    (age: number | string): string => {
-      const ageText = t("age") || "Age";
-      return `${ageText}: ${age} ${t("years") || "years"}`;
-    },
-    [t],
-  );
-
-  const handleSearchMedication = useCallback(() => {
-    if (searchValue.length < 3) return;
-
-    const found = medicationsList?.filter((med) =>
-      med.name?.toLowerCase().includes(searchValue.toLowerCase()),
-    );
-    log(found?.length, "foundMedications", searchValue);
-    if (found) setSearchMedicationsList(found);
-    else setSearchMedicationsList([]);
-  }, [searchValue, medicationsList]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t("medicationsManagement")}</Text>
+    <View style={{ flex: 1, backgroundColor: '#f4f4f4' }}>
+      <Pressable
+        onPress={() => navigation.goBack()}
+        style={fullStyles.backButton}
+        android_ripple={{ color: 'rgba(0,166,157,0.2)', radius: 24 }}
+      >
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color={Platform.OS === 'ios' ? 'white' : '#00a69d'}
+        />
+      </Pressable>
 
-        <View style={styles.patientSelector}>
-          <Text style={styles.patientLabel}>{t("patientText")}:</Text>
-          <View style={styles.patientButtons}>
-            {patients.map((patient) => (
-              <Pressable
-                key={patient.userId}
-                style={[
-                  styles.patientButton,
-                  selectedPatient?.userId === patient.userId &&
-                    styles.selectedPatient,
-                ]}
-                onPress={() => setSelectedPatient(patient)}
-              >
-                <Text
-                  style={
-                    selectedPatient?.userId === patient.userId
-                      ? styles.selectedPatientText
-                      : styles.patientButtonText
-                  }
-                >
-                  {patient.name || t("noNameGiven")}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {selectedPatient && (
-          <View style={styles.patientInfo}>
-            <Text style={styles.patientDetail}>
-              {t("namePatient", {
-                interpolateMessage: selectedPatient?.name || t("unknown"),
-              })}
-            </Text>
-            <Text style={styles.patientDetail}>
-              {getAgeText(selectedPatient?.age || "N/A")}
-            </Text>
-            {selectedPatient.conditions &&
-              selectedPatient.conditions.length > 0 && (
-                <Text style={styles.patientDetail}>
-                  {t("conditions")}: {selectedPatient?.conditions?.join(", ")}
-                </Text>
-              )}
-          </View>
-        )}
-      </View>
+      <HeaderComponent />
 
       <ScrollView
-        style={styles.formContainer}
-        contentContainerStyle={styles.formContent}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingVertical: 24,
+          alignItems: 'center',
+          paddingBottom: 50,
+        }}
       >
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("medicationText")}:</Text>
-          {!medication && (
-            <Searchbar
-              style={styles.input}
-              value={searchValue}
-              placeholder={t("medicationPlaceholder")}
-              onChangeText={setSearchValue}
-              onIconPress={handleSearchMedication}
-              autoCorrect={false}
-              autoCapitalize="none"
-              onSubmitEditing={handleSearchMedication}
-            />
-          )}
-          {medication && (
-            <ButtonComponent
-              handlePress={() => {
-                setMedication(null);
-                setSearchValue("");
-                setSearchMedicationsList([]);
-              }}
-              children={
-                <View style={styles.clearMedicationChildren}>
-                  <Text style={styles.clearMedicationText}>X</Text>
-                  <Text style={styles.clearMedicationText}>
-                    {medication?.name || t("unknown")}
-                  </Text>
-                </View>
-              }
-              replaceStyles={{
-                button: styles.selectedMedButton,
-                textButton: {},
-              }}
-              forceReplaceStyles
-              touchableOpacity
-            />
-          )}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.medicationScroll}
-          >
-            {searchMedicationsList.length > 0 &&
-              searchMedicationsList.map((medication, index) => {
-                log(medication, "searchMedicationsList");
-                return (
-                  <ButtonComponent
-                    key={(medication._id as unknown as string) || index}
-                    label={medication.name || t("unknown")}
-                    handlePress={() => {
-                      setSearchValue("");
-                      setSearchMedicationsList([]);
-                      setMedication(medication);
+        <View style={fullStyles.managementCard}>
+          <Text style={fullStyles.managementTitle}>
+            {t('medicationsManagement')}
+          </Text>
+        </View>
+
+        <Animated.View
+          style={[
+            styles.formContainer,
+            {
+              opacity: formAnim,
+              transform: [
+                {
+                  translateY: formAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.formContent}>
+            {/* Búsqueda medicamentos */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('medicationText')}</Text>
+              <TextInput
+                style={[styles.input, fieldErrors.medication && hasAttemptedSubmit && styles.inputError]}
+                value={searchValue}
+                onChangeText={text => setSearchValue(text)}
+                placeholder={t('medicationPlaceholder')}
+                right={
+                  <TextInput.Icon
+                    icon={isSearchingMedications ? 'loading' : 'magnify'}
+                    onPress={() => {
+                      if (searchValue.length >= 3) {
+                        setIsSearchingMedications(true);
+                        setTimeout(() => {
+                          const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, '');
+                          const normalizedSearch = normalize(searchValue);
+                          const filtered = medicationsList.filter(m => {
+                            let medName = '';
+                            if (language === 'es' && m.name_es) {
+                              medName = m.name_es;
+                            } else if (String(language) === 'pt' && m.name_pt) {
+                              medName = m.name_pt;
+                            } else if (m.name) {
+                              medName = m.name;
+                            }
+                            return normalize(medName).includes(normalizedSearch);
+                          });
+                          setSearchMedicationsList(filtered);
+                          setIsSearchingMedications(false);
+                        }, 500);
+                      }
                     }}
-                    replaceStyles={{
-                      button: { ...styles.addButton, marginHorizontal: 5 },
-                      textButton: {},
-                    }}
-                    touchableOpacity
                   />
-                );
-              })}
-          </ScrollView>
-        </View>
-
-        <View style={styles.doseContainer}>
-          <View style={styles.doseInputGroup}>
-            <Text style={styles.label}>{t("dosage")}:</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              underlineColor="#00a69d"
-              activeUnderlineColor="#00a69d"
-              value={dose}
-              onChangeText={setDose}
-              label={interpolateMessage(t("dosagePlaceholder"), ["100 "])}
-            />
-          </View>
-
-          <View style={styles.dosageTypeGroup}>
-            <Text style={styles.label}>{t("type")}:</Text>
-            <View style={styles.dosageButtons}>
-              {dosageTypes.map((type, index) => (
-                <Pressable
-                  key={index}
-                  style={[
-                    styles.dosageButton,
-                    dosageType === type && styles.selectedDosageButton,
-                  ]}
-                  onPress={() => setDosageType(type)}
-                >
-                  <Text
-                    style={
-                      dosageType === type
-                        ? styles.selectedDosageText
-                        : styles.dosageButtonText
-                    }
-                  >
-                    {type}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("daysText")}:</Text>
-          <View style={styles.daysContainer}>
-            {Object.entries(daysOfWeek).map(([key, day], index) => (
-              <ButtonComponent
-                label={day}
-                replaceStyles={{
-                  button: styles.dayButton,
-                  textButton: Object.values(selectedDays || {}).includes(day)
-                    ? styles.selectedDayText
-                    : styles.dayButtonText,
-                }}
-                handlePress={() => toggleDay(key as DayOfWeek)}
-                forceReplaceStyles
-                key={index}
+                }
               />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("hour")}:</Text>
-          {Platform.OS !== "web" && (
-            <ButtonComponent
-              label={time.toTimeString().slice(0, 5)}
-              handlePress={() => setShowTimePicker(true)}
-              replaceStyles={{
-                button: styles.timeButton,
-                textButton: styles.timeButtonText,
-              }}
-              forceReplaceStyles
-              touchableOpacity
-            />
-          )}
-          {Platform.OS !== "web" && showTimePicker && (
-            <DateTimePicker
-              value={time}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleTimeChange}
-            />
-          )}
-          {Platform.OS === "web" && (
-            <input
-              type="time"
-              value={time.toTimeString().slice(0, 5)}
-              onChange={(e) => {
-                const [hours, minutes] = e.target.value.split(":").map(Number);
-                const newTime = new Date(time);
-                newTime.setHours(hours);
-                newTime.setMinutes(minutes);
-                setTime(newTime);
-              }}
-              style={styles.timeButton}
-            />
-          )}
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("intervalHours")}:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            underlineColor="#00a69d"
-            activeUnderlineColor="#00a69d"
-            value={intervalHours ? intervalHours.toString() : ""}
-            onChangeText={(text) => setIntervalHours(Number(text))}
-            label={t("intervalHoursPlaceholder")}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("stock")}:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            underlineColor="#00a69d"
-            activeUnderlineColor="#00a69d"
-            value={stock ? stock.toString() : ""}
-            onChangeText={(text) => setStock(Number(text))}
-            label={t("stockPlaceholder")}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("urgencyText")}:</Text>
-          <View style={styles.urgencyButtons}>
-            {Object.entries(
-              JSON.parse(t("urgency")) as Record<UrgencyType, string>,
-            ).map(([key, label]) => (
-              <Pressable
-                key={key}
-                style={[
-                  styles.urgencyButton,
-                  Object.values(urgency)[0] === label &&
-                    styles.selectedUrgencyButton,
-                ]}
-                onPress={() => setUrgency({ [key as UrgencyType]: label })}
-              >
-                <Text
-                  style={
-                    Object.values(urgency)[0] === label
-                      ? styles.selectedUrgencyText
-                      : styles.urgencyButtonText
-                  }
-                >
-                  {label}
+              {fieldErrors.medication && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>
+                  {t('formErrorMedication' as keyof typeLanguages)}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
+              )}
 
-        <ButtonComponent
-          label={["+", t("addSchedule")].join(" ")}
-          handlePress={handleAddSchedule}
-          replaceStyles={{
-            button: styles.addButton,
-            textButton: styles.addButtonText,
-          }}
-          forceReplaceStyles
-          touchableOpacity
-          disabled={
-            !medication ||
-            !dose ||
-            !(Object.keys(selectedDays || {}).length > 0) ||
-            intervalHours <= 0 ||
-            !urgency
-          }
-        />
+              {/* Sugerencias de medicamentos filtrados */}
+              {searchMedicationsList.length > 0 && (
+                <View style={{ backgroundColor: '#fff', borderRadius: 8, marginTop: 4, elevation: 2 }}>
+                  {searchMedicationsList.map(med => (
+                    <Pressable
+                      key={med._id}
+                      style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                      onPress={() => {
+                        setMedication(med);
+                        setSearchValue(language === 'es' && med.name_es ? med.name_es : med.name);
+                        setSearchMedicationsList([]);
+                      }}
+                    >
+                      <Text style={{ color: '#00a69d', fontWeight: '500' }}>
+                        {language === 'es' && med.name_es ? med.name_es : med.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Dosis */}
+            <View style={styles.doseContainer}>
+              <View style={styles.doseInputGroup}>
+                <Text style={styles.label}>{t('dosage')}</Text>
+                <TextInput
+                style={[styles.input, styles.inputHint, fieldErrors.dose && hasAttemptedSubmit && styles.inputError]}
+                keyboardType="numeric"
+                value={dose}
+                onChangeText={text => setDose(text.replace(/[^0-9.]/g, ''))}
+                placeholder={interpolateMessage(t('dosagePlaceholder' as keyof typeLanguages), ['500 mg']) || 'Dosage'}
+                />
+                {fieldErrors.dose && hasAttemptedSubmit && (
+                  <Text style={styles.errorText}>
+                    {t('formErrorDose' as keyof typeLanguages)}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.dosageTypeGroup}>
+                <Text style={styles.label}>{t('type')}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  {dosageTypes.map(type => (
+                    <Pressable
+                      key={type}
+                      style={[
+                        styles.urgencyButton,
+                        dosageType === type && styles.selectedUrgencyButton,
+                      ]}
+                      onPress={() => setDosageType(type)}
+                    >
+                      <Text
+                        style={
+                          dosageType === type
+                            ? styles.selectedUrgencyText
+                            : styles.urgencyButtonText
+                        }
+                      >
+                        {type}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {/* Días */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('daysText')}</Text>
+              <View style={styles.daysContainer}>
+                {Object.entries(daysOfWeek).map(([day, label]) => (
+                  <Pressable
+                    key={day}
+                    style={[
+                      styles.dayButton,
+                      selectedDays && day in selectedDays && styles.selectedDay,
+                    ]}
+                    onPress={() => toggleDay(day as DayOfWeek)}
+                  >
+                    <Text
+                      style={
+                        selectedDays && day in selectedDays
+                          ? styles.selectedDayText
+                          : styles.dayButtonText
+                      }
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {fieldErrors.days && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>
+                  {t('formErrorDays' as keyof typeLanguages)}
+                </Text>
+              )}
+            </View>
+
+            {/* Hora */}
+            {/* Campo de hora - Versión completa */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('selectTime')}</Text>
+              {Platform.OS !== 'web' ? (
+                <>
+                  <Pressable
+                    onPress={() => {
+                      animateIconRotation();
+                      setShowTimePicker(true);
+                    }}
+                    style={({ pressed }) => [
+                      styles.timeInputContainer,
+                      pressed && { backgroundColor: '#e0f7fa' },
+                    ]}
+                  >
+                    <Text style={{ fontWeight: '600', fontSize: 16, color: '#00a69d' }}>
+                      {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                    <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
+                      <Ionicons 
+                        name="time-outline" 
+                        size={20} 
+                        color="#00a69d" 
+                      />
+                    </Animated.View>
+                  </Pressable>
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={time}
+                      mode="time"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(event, selectedDate) => {
+                        setShowTimePicker(false);
+                        if (selectedDate) {
+                          setTime(selectedDate);
+                        }
+                      }}
+                      themeVariant="light"
+                      accentColor="#00a69d"
+                    />
+                  )}
+                </>
+              ) : (
+                <input
+                  type="time"
+                  value={time.toTimeString().slice(0, 5)}
+                  onChange={(e) => {
+                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                    const newTime = new Date(time);
+                    newTime.setHours(hours);
+                    newTime.setMinutes(minutes);
+                    setTime(newTime);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '2px solid #00a69d',
+                    fontSize: '16px',
+                    color: '#00a69d',
+                    backgroundColor: '#f8f9fa',
+                  }}
+                />
+              )}
+            </View>
+
+            {/* Intervalo */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('intervalHours')}</Text>
+              <TextInput
+                style={[styles.input, fieldErrors.intervalHours && hasAttemptedSubmit && styles.inputError]}
+                keyboardType="numeric"
+                value={intervalHours.toString()}
+                onChangeText={text => setIntervalHours(Number(text.replace(/[^0-9.]/g, '')) || 0)}
+              />
+              {fieldErrors.intervalHours && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>
+                  {t('formErrorIntervalHours' as keyof typeLanguages)}
+                </Text>
+              )}
+            </View>
+
+            {/* Stock */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('stock')}</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={stock.toString()}
+                onChangeText={text => setStock(Number(text.replace(/[^0-9.]/g, '')) || 0)}
+              />
+            </View>
+
+            {/* Dosis requeridas */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('requiredDoses')}</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={requiredDoses.toString()}
+                onChangeText={text => setRequiredDoses(Number(text.replace(/[^0-9.]/g, '')) || 0)}
+                placeholder={t('stockPlaceholder' as keyof typeLanguages)}
+              />
+              <Text style={styles.inputDescription}>{t('requiredDosesDescription' as keyof typeLanguages)}</Text>
+            </View>
+
+            {/* Urgencia */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('urgencyText')}</Text>
+              <View style={styles.urgencyButtons}>
+                {(() => {
+                  let urgencyLabels: Record<string, string> = {};
+                  const rawUrgency = t("urgency");
+                  if (typeof rawUrgency === "string") {
+                    try {
+                      urgencyLabels = JSON.parse(rawUrgency);
+                    } catch {
+                      urgencyLabels = { low: "Low", medium: "Medium", high: "High" };
+                    }
+                  } else if (typeof rawUrgency === "object" && rawUrgency !== null) {
+                    urgencyLabels = rawUrgency as Record<string, string>;
+                  }
+                  return (["low", "medium", "high"] as UrgencyType[]).map(level => (
+                    <Pressable
+                      key={level}
+                      style={[
+                        styles.urgencyButton,
+                        urgency === level && styles.selectedUrgencyButton,
+                      ]}
+                      onPress={() => setUrgency(level)}
+                    >
+                      <Text
+                        style={
+                          urgency === level
+                            ? styles.selectedUrgencyText
+                            : styles.urgencyButtonText
+                        }
+                      >
+                        {urgencyLabels[level] || level}
+                      </Text>
+                    </Pressable>
+                  ));
+                })()}
+              </View>
+              {fieldErrors.urgency && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>
+                  {t('formErrorUrgency' as keyof typeLanguages)}
+                </Text>
+              )}
+            </View>
+
+            {/* Botón enviar */}
+            <ButtonComponent
+              label={t('addSchedule')}
+              handlePress={handleAddSchedule}
+              customStyles={{ button: [fullStyles.submitButton, isSubmitting && fullStyles.submitButtonPressed], textButton: fullStyles.submitButtonText }}
+            />
+            {/* Errores */}
+            {hasAttemptedSubmit && Object.values(fieldErrors).some(Boolean) && (
+              <View style={styles.errorContainer}>
+                {Object.entries(fieldErrors)
+                  .filter(([_, hasError]) => hasError)
+                  .map(([field]) => (
+                    <Text key={field} style={styles.errorText}>
+                      {t((`formError${field.charAt(0).toUpperCase() + field.slice(1)}`) as keyof typeLanguages)}
+                    </Text>
+                  ))}
+              </View>
+            )}
+          </View>
+        </Animated.View>
       </ScrollView>
-    </ScrollView>
+    </View>
   );
-};
+}
 
 export default MedicationScheduler;

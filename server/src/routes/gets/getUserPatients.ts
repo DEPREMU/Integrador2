@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import {
   User,
   MedicationUser,
@@ -5,7 +6,6 @@ import {
   TypeBodyGetUserPatients,
 } from "../../types";
 import { getCollection } from "../../database/functions.js";
-import { Request, Response } from "express";
 
 export const getUserPatients = async (
   req: Request<{}, {}, TypeBodyGetUserPatients>,

@@ -1,31 +1,10 @@
-import {
-  upload,
-  handleReceiveImages,
-  handleReceiveImagesOnly,
-} from "./manageImages.js";
-import {
-  getUserPatients,
-  getAllMedications,
-  getUserMedications,
-} from "./gets/index.js";
-import {
-  sendMessageHandler,
-  clearHistoryHandler,
-  getConversationsHandler,
-} from "./chatbot/chatbot.js";
-import {
-  createPatientHandler,
-  deletePatientHandler,
-  addExistingPatientHandler,
-  unassignPatientHandler,
-} from "./patientManagement.js";
 import express from "express";
 import { RoutesAPI } from "../types/TypesAPI.js";
 import { logsHandler } from "./logs.js";
 import { RequestHandler } from "express";
-import { searchUserHandler } from "./searchUser.js";
 import { updateUserDataHandler } from "./updateUserData.js";
 import { loginHandler, signUpHandler } from "./auth.js";
+import { upload, handleReceiveImages } from "./manageImages.js";
 import { decryptHandler, encryptHandler } from "./encryption.js";
 import {
   getAllMedications,
@@ -54,26 +33,27 @@ const routes: Record<RoutesAPI, RouteConfig> = {
     handler: handleReceiveImages,
     middlewares: [upload.array("images")],
   },
-  "/uploadOnly": {
-    handler: handleReceiveImagesOnly,
-    middlewares: [upload.array("images")],
-  },
+  "/uploadOnly": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
   "/signup": { handler: signUpHandler },
   "/updateUserData": { handler: updateUserDataHandler },
   "/getUserPatients": { handler: getUserPatients },
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
+  "/addUserMedication": { handler: (req, res, next) => next() },
+  "/deleteUserMedication": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/createPatient": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/deletePatient": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/unassignPatient": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/addExistingPatient": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/searchUser": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/validatePatientUniqueness": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/chatbot/getConversations": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/chatbot/sendMessage": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
+  "/chatbot/clearHistory": { handler: (req, res) => res.status(501).json({ error: "Not implemented" }) },
 };
 
-
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {
-  if (path === "/addUserMedication") return; // handled by router.use below
   router.post(path, ...middlewares, handler);
 });
-
-// Endpoint para agregar horario de medicamento
-router.use(addUserMedicationRouter);
-// Endpoint para eliminar horario de medicamento
-router.use(deleteUserMedicationRouter);
 
 export default router;
