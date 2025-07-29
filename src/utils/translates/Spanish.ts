@@ -122,6 +122,8 @@ const es: typeLanguages = {
   dashboard: "Panel de usuario",
   home: "Inicio",
   pillboxSettings: "Configuración del pastillero",
+  pillboxDescription:
+    "En esta sección puedes configurar tu pastillero siguiendo las indicaciones proporcionadas por Capsy. Asegúrate de colocar cada medicamento en el compartimento correspondiente y verifica que esté ubicado correctamente.",
 } as const;
 
 export default es;

@@ -117,4 +117,5 @@ export type typeLanguages = {
   dashboard: string;
   home: string;
   pillboxSettings: string;
+  pillboxDescription: string;
 };

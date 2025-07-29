@@ -88,7 +88,7 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
    * @param option - The menu option selected by the user
    */
   const handlePress = (
-    option: "Language" | "Login" | "Settings" | "Home" | "Dashboard",
+    option: "Language" | "Login" | "Settings" | "Home" | "Dashboard"| "PillboxSettings",
   ) => {
     if (option === "Language") {
       setShowLanguageSelector(true);
@@ -103,6 +103,9 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
       setShowLanguageSelector(false);
     } else if (option === "Dashboard") {
       navigation.replace("Dashboard");
+      setShowLanguageSelector(false);
+    } else if (option === "PillboxSettings") {
+      navigation.replace("PillboxSettings");
       setShowLanguageSelector(false);
     }
   };
@@ -154,6 +157,17 @@ const Menu: React.FC<MenuProps> = ({ visible, onClose }) => {
               <ButtonComponent
                 handlePress={() => handlePress("Dashboard")}
                 label={t("dashboard")}
+                touchableOpacity
+                replaceStyles={{
+                  button: styles.button,
+                  textButton: styles.textButton,
+                }}
+              />
+            )}
+            {isLoggedIn && currentScreen !== "PillboxSettings" && (
+              <ButtonComponent
+                handlePress={() => handlePress("PillboxSettings")}
+                label={t("pillboxSettings")}
                 touchableOpacity
                 replaceStyles={{
                   button: styles.button,

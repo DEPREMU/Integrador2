@@ -120,6 +120,7 @@ const en: typeLanguages = {
   dashboard: "Dashboard",
   home: "Home",  
   pillboxSettings: "Pillbox Settings",
+  pillboxDescription: "In this section, you can set up your pill organizer by following the instructions provided by Capsy. Make sure to place each medication in the correct compartment and verify that it is properly positioned.",
 } as const;
 
 export default en;

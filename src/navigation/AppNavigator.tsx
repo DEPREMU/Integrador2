@@ -17,6 +17,7 @@ import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { navigate, navigationRef } from "./navigationRef";
 import { setupNotificationHandlers } from "@/utils";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
+import PillboxSettings from "@/screens/PillboxSettings";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -56,6 +57,9 @@ const screens: Screens = {
   },
   Settings: {
     component: Settings,
+  },
+  PillboxSettings: {
+    component: PillboxSettings,
   },
 };
 

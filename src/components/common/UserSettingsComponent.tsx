@@ -61,15 +61,18 @@ const roles: RoleType[] = ["caregiver", "patient", "both"];
 const UserSettingsComponent: React.FC = () => {
   const { t } = useLanguage();
   const { styles } = useStylesSettings();
-  const { userData, updateUserData } = useUserContext();
+  const { userData, updateUserData, isLoggedIn } = useUserContext();
+
+  console.log("UserSettingsComponent rendered - isLoggedIn:", isLoggedIn);
+  console.log("UserSettingsComponent rendered - userData:", userData);
 
   const [role, setRole] = useState<RoleType>("caregiver");
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [imageId, setImageId] = useState<string>("");
-  const [userId, setUserId] = useState<string>(""); 
-  const [imageWasUploaded, setImageWasUploaded] = useState<boolean>(false); 
+  const [userId, setUserId] = useState<string>("");
+  const [imageWasUploaded, setImageWasUploaded] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     visible: boolean;
     message: string;
@@ -100,6 +103,9 @@ const UserSettingsComponent: React.FC = () => {
         const fileInfo = result.files[0];
         let newImageId: string;
 
+        console.log("Upload result:", result);
+        console.log("File info:", fileInfo);
+
         if (typeof fileInfo === "string") {
           newImageId = fileInfo;
         } else if (
@@ -109,6 +115,7 @@ const UserSettingsComponent: React.FC = () => {
         ) {
           newImageId = (fileInfo as any).path;
         } else {
+          console.log("Error: Invalid file info format");
           setSnackbar({
             visible: true,
             message: t("errorUserImage"),
@@ -117,6 +124,7 @@ const UserSettingsComponent: React.FC = () => {
           return;
         }
 
+        console.log("New image ID:", newImageId);
         setImageId(newImageId);
         setImageWasUploaded(true);
 
@@ -143,8 +151,12 @@ const UserSettingsComponent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!userData) return;
+    if (!userData) {
+      console.log("No userData available in context");
+      return;
+    }
 
+    console.log("Loading user data from context:", userData);
     setRole(userData.role);
     setName(userData.name);
     setPhone(userData.phone);
@@ -154,6 +166,9 @@ const UserSettingsComponent: React.FC = () => {
 
     if (userData.userId) {
       setUserId(userData.userId);
+      console.log("User ID set from userData:", userData.userId);
+    } else {
+      console.log("No userId found in userData");
     }
   }, [userData, userId]);
 
@@ -208,30 +223,38 @@ const UserSettingsComponent: React.FC = () => {
       imageId,
     } as User;
 
+    console.log("Saving user data:", updatedUserData);
+    console.log("Image ID being saved:", imageId);
+    console.log("Image was uploaded:", imageWasUploaded);
+    console.log("Current user from context:", userData);
+    console.log("User ID being used:", currentUserId);
+
     await updateUserData(updatedUserData, (success, error) => {
       if (error) {
+        logError(error);
+        setSnackbar({
+          visible: true,
+          message: error.message,
+          type: "error",
+        });
+        return;
+      }
+
+      if (success) {
         if (imageWasUploaded) {
           setSnackbar({
             visible: true,
             message: t("imageUploadSuccess"),
             type: "success",
           });
-          setImageWasUploaded(false);
-          logError(error);
+        } else {
           setSnackbar({
             visible: true,
-            message: error.message,
-            type: "error",
+            message: t("dataUpdated"),
+            type: "success",
           });
         }
-      }
-      if (success) {
-        setSnackbar({
-          visible: true,
-          message: t("dataUpdated"),
-          type: "success",
-        });
-        setImageWasUploaded(false); 
+        setImageWasUploaded(false);
       }
     });
   };
