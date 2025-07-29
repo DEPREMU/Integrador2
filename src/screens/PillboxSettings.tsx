@@ -150,7 +150,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       />
     </View>
   );
-
+  
   return (
     <>
       <HeaderComponent />

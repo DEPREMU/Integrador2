@@ -3,6 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
+import Chatbot from "@screens/Chatbot";
 import Settings from "@/screens/Settings";
 import HomeScreen from "@screens/HomeScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
@@ -11,13 +12,13 @@ import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import MedicationScheduler from "@screens/Schedule";
+import PillboxSettings from "@screens/PillboxSettings";
 import React, { useEffect } from "react";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
 import { navigate, navigationRef } from "./navigationRef";
 import { setupNotificationHandlers } from "@/utils";
 import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import PillboxSettings from "@/screens/PillboxSettings";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -61,7 +62,25 @@ const screens: Screens = {
   PillboxSettings: {
     component: PillboxSettings,
   },
+  Chatbot: {
+    component: Chatbot,
+  },
 };
+
+const allScreens = Object.entries(screens).map(
+  ([name, { component, options }]) => (
+    <Stack.Screen
+      key={name}
+      name={name as keyof RootStackParamList}
+      component={component}
+      options={
+        (options as NativeStackNavigationOptions) ?? {
+          headerShown: false,
+        }
+      }
+    />
+  ),
+);
 
 const AppNavigator: React.FC = () => {
   useEffect(() => {
@@ -73,20 +92,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Home">
-          {Object.entries(screens).map(([name, { component, options }]) => (
-            <Stack.Screen
-              key={name}
-              name={name as keyof RootStackParamList}
-              component={component}
-              options={
-                (options as NativeStackNavigationOptions) ?? {
-                  headerShown: false,
-                }
-              }
-            />
-          ))}
-        </Stack.Navigator>
+        <Stack.Navigator initialRouteName="Home">{allScreens}</Stack.Navigator>
       </BackgroundTaskProvider>
     </NavigationContainer>
   );

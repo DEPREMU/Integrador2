@@ -12,6 +12,12 @@ const useStylesSettings = () => {
   const buttonTextColor = "#fff";
 
   const styles = StyleSheet.create({
+    flex1: {
+      flex: 1,
+    },
+    paddingBottom32: {
+      paddingBottom: 32,
+    },
     container: {
       flex: 1,
       padding: isPhone ? 20 : isTablet ? 40 : 60,

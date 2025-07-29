@@ -34,7 +34,7 @@ const HomeScreen: React.FC = () => {
         <CarouselComponent items={SLOGAN_MSGS} />
         <CardComponent title="Capsy" description={t("capsysDescription")} />
 
-        <View style={styles.imageContainer}>
+        git        <View style={styles.imageContainer}>
           <Image source={PAST_IMA} style={styles.image} />
         </View>
 

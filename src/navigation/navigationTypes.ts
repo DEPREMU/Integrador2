@@ -7,6 +7,7 @@ export type ScreensAvailable =
   | "HowToCode"
   | "Schedule"
   | "Settings"
-  | "PillboxSettings";
+  | "PillboxSettings"
+  | "Chatbot";
 
 export type RootStackParamList = Record<ScreensAvailable, undefined>;
