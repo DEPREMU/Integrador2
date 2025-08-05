@@ -24,8 +24,8 @@ const useStylesHomeScreen = () => {
       width: "100%",
     },
     image: {
-      width: isPhone ? 200 : isTablet ? 300 : 300,
-      height: isPhone ? 300 : 300,
+      width: isPhone ? 280 : isTablet ? 400 : 400,
+      height: isPhone ? 400 : 400,
       marginRight: 12,
       marginTop: 4,
       resizeMode: "contain",

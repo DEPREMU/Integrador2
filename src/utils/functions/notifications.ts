@@ -1,7 +1,7 @@
 import { Notifications } from "@types";
-import { log, logError } from "./debug";
 import { stringifyData } from "./appManagement";
 import * as notifications from "expo-notifications";
+import { Platform } from "react-native";
 import { ScreensAvailable } from "@navigation/navigationTypes";
 import { loadData, loadDataSecure, saveData } from "./storageManagement";
 import { ReasonNotification } from "../constants/notifications";
@@ -99,9 +99,9 @@ export const handleCancelNotification = async (
         stringifyData(notificationsData),
       );
     }
-    log(`Notification with reason "${reason}" canceled successfully.`);
+    console.log(`Notification with reason "${reason}" canceled successfully.`);
   } catch (error) {
-    logError(`Error canceling notification with reason "${reason}":`, error);
+    console.error(`Error canceling notification with reason "${reason}":`, error);
   }
 };
 
@@ -114,6 +114,17 @@ export const sendNotification = async (
   data?: Record<string, unknown>,
 ): Promise<void> => {
   try {
+    // Check if we're on web platform - notifications are not supported
+    if (Platform.OS === 'web') {
+      console.log("Notifications are not supported on web platform");
+      
+      // Show browser alert instead for web
+      if (typeof window !== 'undefined' && window.alert) {
+        window.alert(`${title}\n\n${body}`);
+      }
+      return;
+    }
+
     const [notificationsEnabled, sessionExpiry] = await Promise.all([
       hasPushNotifications(),
       loadDataSecure<number | null>(KEYS_STORAGE.SESSION_EXPIRY),
@@ -153,6 +164,11 @@ export const sendNotification = async (
     );
   } catch (error) {
     console.error("Error sending notification:", error);
+    
+    // Fallback for any notification errors - show browser alert on web
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
+      window.alert(`${title}\n\n${body}`);
+    }
   }
 };
 

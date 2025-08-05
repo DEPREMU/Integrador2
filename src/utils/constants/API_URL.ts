@@ -1,6 +1,6 @@
 
 // This file is auto-generated. Do not edit it manually if it's not necessary.
-// Generated on 2025-07-18T19:16:00.069Z
+// Generated on 2025-08-05T04:15:38.985Z
 import { Platform } from "react-native";
 const isDev = process.env.NODE_ENV === "development";
 export const API_URL = !isDev

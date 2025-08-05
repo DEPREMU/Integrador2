@@ -17,7 +17,9 @@ export type ScreensAvailable =
   | "Patient"
   | "HowToCode"
   | "Schedule"
-  | "Settings";
+  | "Settings"
+  | "PillboxSettings"
+  | "Chatbot";
 
 export type TestsAvailable = "notification" | "ping" | "waitForCapsy";
 

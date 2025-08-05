@@ -42,7 +42,13 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
   "Home"
 >;
 
-const buttonsIsLoggedIn = ["Home", "Dashboard", "Settings", "Chatbot"] as const;
+const buttonsIsLoggedIn = [
+  "Home",
+  "Dashboard",
+  "Settings",
+  "PillboxSettings",
+  "Chatbot",
+] as const;
 
 /**
  * Menu component that displays a navigation menu with smart screen detection.
@@ -112,6 +118,7 @@ const Menu: React.FC<MenuProps> = ({
       case "Settings":
       case "Home":
       case "Dashboard":
+      case "PillboxSettings":
       case "Chatbot":
         if (currentScreen === option) return;
         navigation.replace(option);
@@ -155,10 +162,22 @@ const Menu: React.FC<MenuProps> = ({
             {isLoggedIn &&
               buttonsIsLoggedIn.map((screen) => {
                 if (currentScreen === screen) return null;
+
+                // Mapear nombres de pantalla a claves de traducción correctas
+                const getTranslationKey = (screenName: string) => {
+                  switch (screenName) {
+                    case "PillboxSettings":
+                      return "pillboxSettings";
+                    default:
+                      return screenName.toLowerCase();
+                  }
+                };
+
                 return (
                   <ButtonComponent
+                    key={screen}
                     handlePress={() => handlePress(screen)}
-                    label={t(screen.toLowerCase() as keyof typeof t)}
+                    label={t(getTranslationKey(screen) as keyof typeof t)}
                     touchableOpacity
                     replaceStyles={{
                       button: styles.button,

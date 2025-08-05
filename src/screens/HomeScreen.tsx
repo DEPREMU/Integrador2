@@ -34,14 +34,16 @@ const HomeScreen: React.FC = () => {
         <CarouselComponent items={SLOGAN_MSGS} />
         <CardComponent title="Capsy" description={t("capsysDescription")} />
 
-        git        <View style={styles.imageContainer}>
+        <View style={styles.imageContainer}>
           <Image source={PAST_IMA} style={styles.image} />
         </View>
 
         {Platform.OS === "web" && (
           <View style={styles.footerContainer}>
             <Text style={styles.footerTitle}>{APP_NAME}</Text>
-            <Text style={styles.footerDescription}>{t("description")}</Text>
+            <Text style={styles.footerDescription}>
+              {t("footerDescription")}
+            </Text>
             <Text style={styles.footerCopyright}>
               © 2025 Capsy. All rights reserved.
             </Text>
