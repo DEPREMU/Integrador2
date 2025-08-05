@@ -4,12 +4,13 @@ import {
   ResponseGetUserPatients,
   TypeBodyGetUserPatients,
 } from "../../types";
+import fs from "fs";
 import { getCollection } from "../../database/functions.js";
 import { Request, Response } from "express";
 
 export const getUserPatients = async (
   req: Request<{}, {}, TypeBodyGetUserPatients>,
-  res: Response<ResponseGetUserPatients>,
+  res: Response<ResponseGetUserPatients>
 ) => {
   const { userId } = req.body;
   console.log("getUserPatients called with userId:", userId);
