@@ -35,6 +35,8 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+app.get("/closeServer", () => process.exit(1)); // For testing purposes
+
 app.use("/api/v1", router);
 
 export default app;

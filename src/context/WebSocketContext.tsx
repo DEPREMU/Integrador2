@@ -96,7 +96,7 @@ const getWebSocket = (
         testing: "waitForCapsy",
         data: {
           "test-capsule": {
-            id: "test-capsule",
+            id: 1,
             type: "timeout",
             timeout: 10000,
           },
