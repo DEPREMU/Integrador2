@@ -88,7 +88,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Patient">{allScreens}</Stack.Navigator>
+        <Stack.Navigator initialRouteName="Home">{allScreens}</Stack.Navigator>
       </BackgroundTaskProvider>
     </NavigationContainer>
   );
