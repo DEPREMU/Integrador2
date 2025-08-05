@@ -1,8 +1,10 @@
 /* eslint-disable indent */
 import {
+  CapsyWebSocket,
   UserWebSocket,
   WebSocketMessage,
   WebSocketResponse,
+  TimerType,
 } from "./types/WebSocket.js";
 import { getDatabase } from "./database/functions.js";
 import { getTranslations } from "./translates/getTranslations.js";
@@ -11,6 +13,39 @@ import { Server as HTTPServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 
 let clients: Record<string, UserWebSocket> = {};
+const clientsCapsy: Record<string, CapsyWebSocket> = {};
+
+// Función para calcular la próxima ocurrencia considerando el intervalo
+const getNextScheduledTime = (
+  startTime: string,
+  intervalMs: number,
+): number => {
+  const [hours, minutes] = startTime.split(":").map(Number);
+  const now = new Date();
+  const baseTime = new Date();
+
+  baseTime.setHours(hours, minutes, 0, 0);
+
+  // Si es hoy y aún no ha llegado la hora
+  if (baseTime > now) {
+    return baseTime.getTime() - now.getTime();
+  }
+
+  // Calcular cuántos intervalos han pasado desde la hora base
+  const timeSinceBase = now.getTime() - baseTime.getTime();
+  const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
+  const nextInterval = baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
+
+  return nextInterval - now.getTime();
+};
+
+export const isConnectedUser = (clientId: string): boolean => {
+  return clients[clientId]?.ws?.readyState === WebSocket.OPEN;
+};
+
+export const isConnectedCapsy = (clientId: string): boolean => {
+  return clientsCapsy[clientId]?.ws?.readyState === WebSocket.OPEN;
+};
 
 const initClients = async () => {
   const localClients = {} as Record<string, UserWebSocket>;
@@ -23,7 +58,7 @@ const initClients = async () => {
   users.forEach((user) => {
     localClients[user.userId] = {
       ws: clients[user.userId]?.ws || null,
-      wsCapsy: clients[user.userId]?.wsCapsy || null,
+      wsCapsy: clients[user.userId]?.wsCapsy || undefined,
       user,
       userConfig:
         userConfigs.find((config) => config.userId === user.userId) || null,
@@ -50,27 +85,46 @@ const handleInitWebSocket = (
     timestamp: new Date().toISOString(),
   };
   if (parsedMessage.type !== "init") return;
+  let id = parsedMessage.userId;
 
-  if (!parsedMessage.userId) {
-    console.error("No userId provided in init message");
+  if (id) {
+    if (!clients?.[id]) {
+      console.error("User not found:", id);
+      ws.send(JSON.stringify(response));
+      return;
+    }
+    response = {
+      type: "init-success",
+      message: "WebSocket it's correctly initialized",
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+    console.log(`WebSocket initialized for userId: ${id}`);
+    clients[id].ws = ws;
+
+    return id;
+  }
+  id = parsedMessage.capsyId;
+  if (!id) {
+    console.error("No userId or capsyId provided in init message");
     ws.send(JSON.stringify(response));
     return;
   }
-  if (!clients?.[parsedMessage.userId]) {
-    console.error("User not found:", parsedMessage.userId);
-    ws.send(JSON.stringify(response));
-    return;
-  }
+
+  clientsCapsy[id] = {
+    ws,
+    id,
+  };
+
   response = {
     type: "init-success",
-    message: "WebSocket it's correctly initialized",
+    message: "Capsy WebSocket initialized correctly",
     timestamp: new Date().toISOString(),
   };
   ws.send(JSON.stringify(response));
-  console.log(`WebSocket initialized for userId: ${parsedMessage.userId}`);
-  clients[parsedMessage.userId].ws = ws;
+  console.log(`Capsy WebSocket initialized for capsyId: ${id}`);
 
-  return parsedMessage.userId;
+  return id;
 };
 
 const handlePongWebSocket = (ws: WebSocket) => {
@@ -93,7 +147,7 @@ const handleTestWebSocket = (
     string,
     {
       id: NodeJS.Timeout | number | null;
-      type: "interval" | "timeout";
+      type: TimerType;
     }
   > = {};
 
@@ -102,13 +156,18 @@ const handleTestWebSocket = (
     parsedMessage.testing,
   );
 
+  const userConfig = clients[clientId]?.userConfig;
+
+  const translations = getTranslations(userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
   const handler = () => {
     const response: WebSocketResponse = {
       type: "notification",
       notification: {
+        body: t("medicationReminderBody"),
+        title: t("medicationReminderTitle"),
         reason: "Medication Reminder",
-        title: "It's time for your medication",
-        body: "You have a medication scheduled for this time.",
         screen: "Home",
         trigger: null,
       },
@@ -116,10 +175,6 @@ const handleTestWebSocket = (
     };
     ws.send(JSON.stringify(response));
   };
-  const userConfig = clients[clientId]?.userConfig;
-
-  const translations = getTranslations(userConfig?.language || "en");
-  const t = (key: keyof typeof translations) => translations[key];
 
   switch (parsedMessage.testing) {
     case "notification":
@@ -177,25 +232,356 @@ const handleCapsyWebSocket = (
   parsedMessage: WebSocketMessage,
 ) => {
   if (parsedMessage.type !== "capsy") return;
-  let response: WebSocketResponse;
+  const intervalsCapsy = clients[clientId]?.intervalCapsy;
+  const newIntervalsCapsy: Record<
+    string,
+    {
+      id: NodeJS.Timeout | number | null;
+      type: TimerType;
+    }
+  > = {};
+
+  if (intervalsCapsy)
+    Object.values(intervalsCapsy).forEach((value) => {
+      if (!value?.id) return;
+      if (value.type === "timeout") clearTimeout(value.id);
+      else if (value.type === "interval") clearInterval(value.id);
+    });
 
   if (!clients[clientId]?.wsCapsy) {
-    clients[clientId].wsCapsy = ws;
+    clients[clientId].wsCapsy = {};
+  }
+
+  const translations = getTranslations(
+    clients[clientId]?.userConfig?.language || "en",
+  );
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // No crear handler aquí, cada pastillero tendrá su propia configuración
+
+  parsedMessage.pastilla.forEach((value) => {
+    if (!value?.id || !value?.type || !value?.timeout || !value?.cantidad)
+      return;
+    const id =
+      value.type === "timeout"
+        ? setTimeout(() => {
+            // Solo notificar al usuario, no enviar a todos los Capsy
+            const response: WebSocketResponse = {
+              type: "notification",
+              notification: {
+                reason: "Medication Reminder",
+                title: t("medicationReminderTitle"),
+                body: t("medicationReminderBody"),
+                screen: "Home",
+                trigger: null,
+              },
+              timestamp: new Date().toISOString(),
+            };
+            ws.send(JSON.stringify(response));
+          }, value.timeout)
+        : setInterval(() => {
+            // Solo notificar al usuario, no enviar a todos los Capsy
+            const response: WebSocketResponse = {
+              type: "notification",
+              notification: {
+                reason: "Medication Reminder",
+                title: t("medicationReminderTitle"),
+                body: t("medicationReminderBody"),
+                screen: "Home",
+                trigger: null,
+              },
+              timestamp: new Date().toISOString(),
+            };
+            ws.send(JSON.stringify(response));
+          }, value.timeout);
+    newIntervalsCapsy[value.id] = {
+      id,
+      type: value.type,
+    };
+  });
+
+  clients[clientId].intervalCapsy = newIntervalsCapsy;
+
+  const finalResponse = {
+    type: "capsy",
+    message: "Capsy WebSocket was initialized correctly",
+    timestamp: new Date().toISOString(),
+  };
+  ws.send(JSON.stringify(finalResponse));
+};
+
+const handleAddCapsyWebSocket = (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "add-capsy" || !parsedMessage.capsyId) return;
+  const capsyId = parsedMessage.capsyId;
+  let response: WebSocketResponse = {
+    type: "error-capsy",
+    message: "Capsy not found",
+    timestamp: new Date().toISOString(),
+  };
+
+  // Verificar si el Capsy existe en clientsCapsy
+  if (!clientsCapsy[capsyId]) {
     response = {
       type: "error-capsy",
-      message: "Capsy WebSocket initialized successfully",
+      message: "Capsy device not found or not connected",
       timestamp: new Date().toISOString(),
     };
     ws.send(JSON.stringify(response));
     return;
   }
 
+  // Vincular el Capsy al usuario
+  if (!clients[clientId].wsCapsy) {
+    clients[clientId].wsCapsy = {};
+  }
+  clients[clientId].wsCapsy[capsyId] = {
+    ...clientsCapsy[capsyId],
+    userId: clientId,
+  };
+
+  // Actualizar la referencia del usuario en el Capsy
+  clientsCapsy[capsyId].userId = clientId;
+
   response = {
-    type: "capsy",
-    message: "Capsy WebSocket was initialized correctly",
+    type: "notification",
+    notification: {
+      reason: "Initial Notification",
+      title: `Capsy ${capsyId} vinculado`,
+      body: "El dispositivo Capsy se ha vinculado correctamente a tu cuenta.",
+      screen: "Dashboard",
+      trigger: null,
+    },
     timestamp: new Date().toISOString(),
   };
   ws.send(JSON.stringify(response));
+};
+
+// Nueva función para configurar un pastillero específico
+const handleCapsyIndividualConfig = (
+  clientId: string,
+  capsyId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "capsy-individual") return;
+
+  const userClient = clients[clientId];
+  if (!userClient) return;
+
+  const translations = getTranslations(userClient.userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // Limpiar intervalos anteriores para este Capsy específico
+  if (userClient.intervalCapsy) {
+    Object.keys(userClient.intervalCapsy).forEach((key) => {
+      if (key.startsWith(`${capsyId}_`)) {
+        const interval = userClient.intervalCapsy?.[key];
+        if (interval?.id) {
+          if (interval.type === "timeout" || interval.type === "scheduled")
+            clearTimeout(interval.id as NodeJS.Timeout);
+          else if (interval.type === "interval")
+            clearInterval(interval.id as NodeJS.Timeout);
+        }
+        if (userClient.intervalCapsy) {
+          delete userClient.intervalCapsy[key];
+        }
+      }
+    });
+  } else {
+    userClient.intervalCapsy = {};
+  }
+
+  // Configurar horarios específicos para este Capsy
+  parsedMessage.pastilla.forEach((value) => {
+    if (!value?.id || !value?.type || !value?.cantidad) return;
+
+    const handler = () => {
+      // Verificar si el Capsy específico está conectado
+      const capsyDevice = clientsCapsy[capsyId];
+      if (!capsyDevice || capsyDevice.ws?.readyState !== WebSocket.OPEN) {
+        const response: WebSocketResponse = {
+          type: "notification",
+          notification: {
+            reason: "Capsy not connected",
+            title: t("capsyNotConnectedTitle"),
+            body: t("capsyNotConnectedBody"),
+            screen: "Home",
+          },
+          timestamp: new Date().toISOString(),
+        };
+        userClient.ws?.send(JSON.stringify(response));
+        return;
+      }
+
+      // Notificar al usuario
+      const userNotification: WebSocketResponse = {
+        type: "notification",
+        notification: {
+          reason: "Medication Reminder",
+          title: t("medicationReminderTitle"),
+          body: `${t("medicationReminderBody")} - Capsy ${capsyId}`,
+          screen: "Home",
+          trigger: null,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      userClient.ws?.send(JSON.stringify(userNotification));
+
+      // Enviar solicitud solo al Capsy específico
+      const capsyRequest: WebSocketResponse = {
+        type: "capsy-alert",
+        pastilla: { id: value.id, cantidad: value.cantidad },
+        timestamp: new Date().toISOString(),
+      };
+      capsyDevice.ws?.send(JSON.stringify(capsyRequest));
+    };
+
+    let timerId: NodeJS.Timeout | number;
+    let timerType: TimerType = value.type;
+
+    // Manejar diferentes tipos de configuración
+    switch (value.type) {
+      case "timeout":
+        if (!value.timeout) return;
+        timerId = setTimeout(handler, value.timeout);
+        break;
+
+      case "interval":
+        if (!value.timeout) return;
+        timerId = setInterval(handler, value.timeout);
+        break;
+
+      case "scheduled": {
+        if (!value.startTime || !value.intervalMs) return;
+
+        // Primera ejecución: setTimeout hasta la hora específica
+        const timeUntilStart = getNextScheduledTime(
+          value.startTime,
+          value.intervalMs,
+        );
+        timerId = setTimeout(() => {
+          // Ejecutar la primera vez
+          handler();
+
+          // Luego programar el intervalo repetitivo
+          const intervalId = setInterval(handler, value.intervalMs || 0);
+
+          // Actualizar la referencia del timer con el interval
+          const uniqueKey = `${capsyId}_${value.id}`;
+          if (userClient.intervalCapsy) {
+            userClient.intervalCapsy[uniqueKey] = {
+              id: intervalId,
+              type: "interval",
+            };
+          }
+        }, timeUntilStart);
+        timerType = "scheduled";
+        break;
+      }
+
+      default:
+        return;
+    }
+
+    // Usar una clave única que incluya el capsyId
+    const uniqueKey = `${capsyId}_${value.id}`;
+    if (userClient.intervalCapsy) {
+      userClient.intervalCapsy[uniqueKey] = {
+        id: timerId,
+        type: timerType,
+      };
+    }
+  });
+
+  const response = {
+    type: "capsy",
+    message: `Capsy ${capsyId} configured successfully with individual schedule`,
+    timestamp: new Date().toISOString(),
+  };
+  ws.send(JSON.stringify(response));
+};
+
+// Nuevo manejador para solicitudes de pastillas desde Capsy
+const handleCapsyPillRequest = (
+  capsyId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "capsy-pill-request") return;
+
+  const capsy = clientsCapsy[capsyId];
+  if (!capsy || !capsy.userId) return;
+
+  const userId = capsy.userId;
+  const userClient = clients[userId];
+
+  if (!userClient || !userClient.ws) return;
+
+  const userConfig = userClient.userConfig;
+  const translations = getTranslations(userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // Notificar al usuario que es hora de tomar medicación
+  const userNotification: WebSocketResponse = {
+    type: "notification",
+    notification: {
+      reason: "Medication Reminder",
+      title: t("medicationReminderTitle"),
+      body: t("medicationReminderBody"),
+      screen: "Home",
+      trigger: null,
+    },
+    timestamp: new Date().toISOString(),
+  };
+  userClient.ws.send(JSON.stringify(userNotification));
+
+  // Enviar alerta al Capsy para que emita sonido
+  const capsyAlert: WebSocketResponse = {
+    type: "capsy-alert",
+    pastilla: parsedMessage.pastilla[0], // Asumiendo una pastilla por vez
+    timestamp: new Date().toISOString(),
+  };
+  ws.send(JSON.stringify(capsyAlert));
+};
+
+// Nuevo manejador para confirmación de medicación tomada
+const handleMedicationTaken = (
+  capsyId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "medication-taken") return;
+
+  const capsy = clientsCapsy[capsyId];
+  if (!capsy || !capsy.userId) return;
+
+  const userId = capsy.userId;
+  const userClient = clients[userId];
+
+  if (!userClient || !userClient.ws) return;
+
+  const userConfig = userClient.userConfig;
+  const translations = getTranslations(userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // Notificar al usuario que la medicación fue tomada
+  const confirmation: WebSocketResponse = {
+    type: "notification",
+    notification: {
+      reason: "Medication Taken",
+      title: t("medicationTakenTitle") || "Medicación tomada",
+      body:
+        t("medicationTakenBody") || "Has tomado tu medicación correctamente.",
+      screen: "Home",
+      trigger: null,
+    },
+    timestamp: new Date().toISOString(),
+  };
+  userClient.ws.send(JSON.stringify(confirmation));
 };
 
 export const setupWebSocket = async (server: HTTPServer) => {
@@ -215,6 +601,7 @@ export const setupWebSocket = async (server: HTTPServer) => {
 
   wss.on("connection", (ws: WebSocket) => {
     let clientId: string | undefined;
+    let isCapsyConnection = false;
 
     ws.on("message", async (buffer: Buffer) => {
       try {
@@ -224,6 +611,10 @@ export const setupWebSocket = async (server: HTTPServer) => {
         switch (parsedMessage.type) {
           case "init":
             clientId = handleInitWebSocket(ws, parsedMessage);
+            // Determinar si es una conexión Capsy
+            if (parsedMessage.capsyId) {
+              isCapsyConnection = true;
+            }
             break;
           case "ping":
             handlePongWebSocket(ws);
@@ -235,6 +626,27 @@ export const setupWebSocket = async (server: HTTPServer) => {
           case "capsy":
             if (!clientId) break;
             handleCapsyWebSocket(clientId, ws, parsedMessage);
+            break;
+          case "capsy-individual":
+            if (!clientId || !parsedMessage.capsyId) break;
+            handleCapsyIndividualConfig(
+              clientId,
+              parsedMessage.capsyId,
+              ws,
+              parsedMessage,
+            );
+            break;
+          case "add-capsy":
+            if (!clientId) break;
+            handleAddCapsyWebSocket(clientId, ws, parsedMessage);
+            break;
+          case "capsy-pill-request":
+            if (!clientId || !isCapsyConnection) break;
+            handleCapsyPillRequest(clientId, ws, parsedMessage);
+            break;
+          case "medication-taken":
+            if (!clientId || !isCapsyConnection) break;
+            handleMedicationTaken(clientId, ws, parsedMessage);
             break;
           default:
             break;
