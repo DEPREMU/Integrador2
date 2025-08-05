@@ -752,9 +752,43 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Sends pillbox configuration data to the physical device via WebSocket
-   * Attempts to connect to the pillbox using WebSocket protocol with fallback support
-   * Uses a timeout mechanism and provides detailed error handling
+   * Links a pillbox to the current user following FLUJO_PASTILLERO_COMPLETO.md workflow
+   * Sends add-capsy message to associate the device with the user account
+   *
+   * @async
+   * @function linkPillbox
+   * @param {string} capsyId - The pillbox ID to link
+   * @returns {Promise<boolean>} True if linking was successful
+   */
+  const linkPillbox = async (capsyId: string): Promise<boolean> => {
+    try {
+      // Send add-capsy message following documented workflow
+      const message = {
+        type: "add-capsy" as const,
+        capsyId: capsyId,
+      };
+
+      console.log("Linking pillbox with add-capsy:", JSON.stringify(message, null, 2));
+      
+      sendMessage(message);
+      
+      // Wait a moment for server response
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log("Pillbox linked successfully");
+      return true;
+      
+    } catch (error: any) {
+      console.error("Error linking pillbox:", error);
+      showSnackbar(t("couldNotEstablishConnection"));
+      return false;
+    }
+  };
+
+  /**
+   * Sends pillbox configuration data to the server following FLUJO_PASTILLERO_COMPLETO.md workflow
+   * Uses the capsy-individual message type to configure specific pastillero with scheduled medications
+   * Supports startTime for specific hours and intervalMs for repetition cycles
    *
    * @async
    * @function sendToPillbox
@@ -763,116 +797,91 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
    *
    * @example
    * sendToPillbox([
-   *   { id: 1, cantidad: 2 },
-   *   { id: 3, cantidad: 1 }
+   *   { id: 1, cantidad: 2, type: "scheduled", startTime: "07:30", intervalMs: 28800000 },
+   *   { id: 3, cantidad: 1, type: "interval", timeout: 43200000 }
    * ])
    */
   const sendToPillbox = async (pastillaData: any[]) => {
+    if (!pillboxId.trim()) {
+      showSnackbar(t("pillboxIdRequired"));
+      return;
+    }
+
     setIsConnecting(true);
 
-    // Prepare payload in the format expected by the pillbox device
-    const payload = {
-      pastilla: pastillaData.map((item) => {
-        const compartment = compartments.find((comp) => comp.id === item.id);
-        return {
-          ...item,
-          timeSlots: compartment?.timeSlots || [],
-        };
-      }),
-    };
+    try {
+      // First, link the pillbox if it's not already saved
+      const savedConfig = savedConfigs.find(
+        (config) => config.patientId === selectedPatient && config.pillboxId === pillboxId,
+      );
 
-    console.log("Sending to pillbox via WebSocket:", JSON.stringify(payload));
-
-    // WebSocket URLs for pillbox communication
-    const wsUrls = [
-      "ws://192.168.4.1:81", // Primary WebSocket endpoint
-      "ws://192.168.4.1:80", // Fallback WebSocket endpoint
-    ];
-
-    // Try each WebSocket URL until one succeeds or all fail
-    for (let i = 0; i < wsUrls.length; i++) {
-      try {
-        console.log(`Attempting WebSocket connection to: ${wsUrls[i]}`);
-
-        // Create promise to handle WebSocket connection
-        await new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(wsUrls[i]);
-
-          // Set up connection timeout
-          const connectionTimeout = setTimeout(() => {
-            ws.close();
-            reject(new Error("Connection timeout"));
-          }, 8000);
-
-          // Handle WebSocket connection opening
-          ws.onopen = () => {
-            clearTimeout(connectionTimeout);
-            console.log(`WebSocket connected to ${wsUrls[i]}`);
-
-            // Send the payload
-            ws.send(JSON.stringify(payload));
-            console.log("Data sent via WebSocket:", JSON.stringify(payload));
-          };
-
-          // Handle incoming messages from pillbox
-          ws.onmessage = (event) => {
-            clearTimeout(connectionTimeout);
-            console.log("Pillbox WebSocket response:", event.data);
-            ws.close();
-            setIsConnecting(false);
-
-            showSnackbar(t("configurationSentSuccessfully"));
-            resolve();
-          };
-
-          // Handle WebSocket errors
-          ws.onerror = (error) => {
-            clearTimeout(connectionTimeout);
-            console.error(`WebSocket error at ${wsUrls[i]}:`, error);
-            ws.close();
-            reject(new Error("WebSocket connection failed"));
-          };
-
-          // Handle WebSocket connection close
-          ws.onclose = (event) => {
-            clearTimeout(connectionTimeout);
-            console.log(
-              `WebSocket closed for ${wsUrls[i]}:`,
-              event.code,
-              event.reason,
-            );
-
-            // If connection closed without success
-            if (!event.wasClean) {
-              reject(
-                new Error(`WebSocket closed unexpectedly: ${event.reason}`),
-              );
-            }
-          };
-        });
-
-        // If we reach here, the WebSocket succeeded
-        return;
-      } catch (error: any) {
-        console.error(`Error with WebSocket ${wsUrls[i]}:`, error);
-
-        // Handle errors only on the last attempt
-        if (i === wsUrls.length - 1) {
+      if (!savedConfig) {
+        console.log("Linking new pillbox before configuration...");
+        const linkSuccess = await linkPillbox(pillboxId);
+        if (!linkSuccess) {
           setIsConnecting(false);
-
-          if (error.message.includes("timeout")) {
-            Alert.alert(t("error"), t("connectionTimeout"));
-          } else if (
-            error.message.includes("Network") ||
-            error.message.includes("WebSocket")
-          ) {
-            Alert.alert(t("error"), t("verifyPillboxConnection"));
-          } else {
-            Alert.alert(t("error"), t("couldNotEstablishConnection"));
-          }
+          return;
         }
-        // Continue to next URL if not the last attempt
       }
+
+      // Build the pastilla array following the documented workflow format
+      const pastillaArray = pastillaData.map((item) => {
+        const compartment = compartments.find((comp) => comp.id === item.id);
+        
+        // Convert timeSlots to the documented format
+        const timeSlot = compartment?.timeSlots?.[0];
+        
+        if (timeSlot?.startTime) {
+          // Use scheduled type with specific start time
+          return {
+            id: item.id as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10),
+            cantidad: item.cantidad,
+            type: "scheduled" as const,
+            timeout: timeSlot.intervalHours * 3600000, // Required timeout field
+            startTime: timeSlot.startTime,
+            intervalMs: timeSlot.intervalHours * 3600000, // Convert hours to milliseconds
+          };
+        } else if (timeSlot?.intervalHours) {
+          // Use interval type for immediate start with repetition
+          return {
+            id: item.id as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10),
+            cantidad: item.cantidad,
+            type: "interval" as const,
+            timeout: timeSlot.intervalHours * 3600000, // Convert hours to milliseconds
+          };
+        } else {
+          // Default to single dose (timeout type)
+          return {
+            id: item.id as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10),
+            cantidad: item.cantidad,
+            type: "timeout" as const,
+            timeout: 0, // Immediate
+          };
+        }
+      });
+
+      // Prepare capsy-individual message following documented workflow
+      const message = {
+        type: "capsy-individual" as const,
+        capsyId: pillboxId,
+        pastilla: pastillaArray,
+      };
+
+      console.log("Sending capsy-individual configuration:", JSON.stringify(message, null, 2));
+
+      // Send the message to the server using WebSocket context
+      sendMessage(message);
+      
+      // Show success message
+      showSnackbar(t("configurationSentSuccessfully"));
+      console.log("Capsy configuration sent successfully via server WebSocket");
+      
+      } catch (error: any) {
+      console.error("Error sending capsy configuration:", error);
+
+      showSnackbar(t("couldNotEstablishConnection"));
+    } finally {
+          setIsConnecting(false);
     }
   };
 
