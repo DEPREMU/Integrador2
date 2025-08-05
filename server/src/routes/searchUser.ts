@@ -67,7 +67,7 @@ export const searchUserHandler = async (
 
   try {
     const db = await getDatabase();
-    let searchQuery: any = {};
+    const searchQuery: any = {};
 
     if (email) {
       searchQuery.email = email;

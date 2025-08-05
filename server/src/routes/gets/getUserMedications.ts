@@ -2,8 +2,9 @@ import {
   ResponseGetUserMedications,
   TypeBodyGetUserMedications,
 } from "../../types";
-import { MedicationUser } from "../../types/Database.js";
+import { getDatabase } from "../../database/functions.js";
 import { getCollection } from "../../database/functions.js";
+import { MedicationUser } from "../../types/Database.js";
 import { Request, Response } from "express";
 
 export const getUserMedications = async (
@@ -39,6 +40,19 @@ export const getUserMedications = async (
     console.log(`Found ${medications.length} medications for user:`, userId);
     res.status(200).json({
       medications: medications as MedicationUser[],
+    });
+    const db = await getDatabase();
+
+    // Get medications for the user
+    const medicationsUser = await db
+      .collection<MedicationUser>("medicationsUser")
+      .find({ userId })
+      .toArray();
+
+    console.log(`Found ${medications.length} medications for user ${userId}`);
+
+    res.status(200).json({
+      medications: medicationsUser,
     });
   } catch (error) {
     console.error("Error fetching user medications:", error);

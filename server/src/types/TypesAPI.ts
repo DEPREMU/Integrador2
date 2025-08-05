@@ -13,6 +13,8 @@ export type RoutesAPI =
   | "/getUserPatients"
   | "/getUserMedications"
   | "/getAllMedications"
+  | "/addUserMedication"
+  | "/deleteUserMedication"
   | "/createPatient"
   | "/deletePatient"
   | "/unassignPatient"
@@ -117,6 +119,26 @@ export type ResponseGetAllMedications = {
 export type TypeBodyGetAllMedications = {
   onlyGetTheseColumns?: (keyof MedicationApi)[];
   onlyGetTheseMedicationsById?: string[];
+};
+
+// Medication User Management types
+export type TypeBodyAddUserMedication = {
+  medication: Omit<import("./Database").MedicationUser, "_id">;
+};
+
+export type ResponseAddUserMedication = {
+  success: boolean;
+  medication?: import("./Database").MedicationUser;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyDeleteUserMedication = {
+  medicationId: string;
+};
+
+export type ResponseDeleteUserMedication = {
+  success: boolean;
+  error?: { message: string; timestamp: string };
 };
 
 // Patient management types

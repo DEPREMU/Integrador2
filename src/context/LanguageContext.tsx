@@ -14,11 +14,14 @@ import {
   LanguagesSupported,
 } from "@utils";
 import { typeLanguages } from "@utils";
+import en from "@/utils/translates/English";
+import es from "@/utils/translates/Spanish";
 
 interface LanguageContextProps {
   language: LanguagesSupported;
   changeLanguage: (lang: LanguagesSupported) => Promise<void>;
   t: (key: keyof typeLanguages, options?: object) => string;
+  translations: typeLanguages;
 }
 
 interface LanguageProviderProps {
@@ -34,6 +37,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 }) => {
   const [language, setLanguage] = useState<LanguagesSupported>("en");
   const { t: i18nextT } = useTranslation();
+
+  const getTranslations = (): typeLanguages => {
+    return language === "es" ? es : en;
+  };
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -57,6 +64,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         language,
         changeLanguage,
         t: i18nextT as (key: keyof typeLanguages, options?: object) => string,
+        translations: getTranslations(),
       }}
     >
       {children}

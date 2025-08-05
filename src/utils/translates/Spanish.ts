@@ -2,6 +2,7 @@ import { typeLanguages } from "./typesTranslations";
 
 const es: typeLanguages = {
   addMedication: "Agregar medicamento",
+  configurePillDispenser: "Configurar pastillero",
   addPatient: "Agregar Paciente",
   addPatientForm: "Aquí estaría el formulario para agregar un paciente",
   capsysDescription:
@@ -67,6 +68,8 @@ const es: typeLanguages = {
   allergies: "Alergias",
   name: "Nombre",
   medicationsManagement: "Gestión de Medicamentos",
+  manageMedicationsDescription:
+    "Gestiona los horarios de medicamentos de tus pacientes",
   type: "Tipo",
   daysText: "Días",
   selectTime: "Seleccionar Hora",
@@ -75,6 +78,7 @@ const es: typeLanguages = {
   schedulesNotScheduled: "Horarios no programados",
   addMedicationsOnTop: "Agrega medicamentos usando el formulario superior",
   hour: "Hora",
+  hours: "Horas",
   days: {
     monday: "Lu",
     tuesday: "Ma",
@@ -92,14 +96,31 @@ const es: typeLanguages = {
   deleteMedication: "Eliminar Medicamento",
   intervalHours: "Horas de intervalo",
   intervalHoursPlaceholder: "Horas de intervalo (ej. 8)",
-  stock: "Stock",
+  stock: "Cantidad(Stock)",
   stockPlaceholder: "Ej. 30",
+  requiredDoses: "Dosis Necesaria",
+  requiredDosesPlaceholder: "Ej. 30",
+  requiredDosesDescription:
+    "Cantidad total de dosis para completar el tratamiento",
   urgencyText: "Urgencia",
   namePatient: "Nombre: {{interpolateMessage}}",
   // User Settings Component
   settings: "Ajustes",
   save: "Guardar",
   enableNotifications: "Activar notificaciones",
+  searchMedications: "Buscar medicamentos",
+  medicationNotFound: "No se encontró el medicamento",
+  noMedicationsFoundMessage:
+    "No se encontraron medicamentos que coincidan con tu búsqueda",
+  loadingMedications: "Cargando medicamentos...",
+  medicationRequired: "Medicamento requerido",
+  dosageRequired: "Dosis requerida (mayor a 0)",
+  daysRequired: "Selecciona al menos un día",
+  intervalRequired: "Intervalo de horas requerido",
+  urgencyRequired: "Nivel de urgencia requerido",
+  formValidationTitle: "Campos requeridos",
+  formValidationMessage: "Por favor completa los siguientes campos:",
+  searchHint: "Escribe al menos 3 caracteres",
   uploadImage: "Subir imagen",
   description: "Descripción",
   footerDescription:
@@ -164,6 +185,8 @@ const es: typeLanguages = {
   patientUnassignedSuccessfully: "{0} ha sido desasignado exitosamente.",
   errorUnassigningPatient: "Error al desasignar paciente",
   networkError: "Error de red",
+  medicationAddedSuccessfully: "¡Medicamento agregado exitosamente!",
+  errorSavingMedication: "Error al guardar medicamento",
   serverError: "Error de conexión al servidor",
   // Caregiver validation translations
   caregiverCannotBePatient:
@@ -272,6 +295,48 @@ const es: typeLanguages = {
   remove: "Eliminar",
   configurationSavedInCapsy: "Configuración guardada en Capsy correctamente",
   intervalMustBeGreaterThanZero: "El intervalo debe ser mayor a 0 horas",
+  // PDF Report translations
+  pdfReportTitle: "Reporte Médico",
+  generateReport: "Generar Reporte PDF",
+  pdfGeneratedTitle: "PDF Generado",
+  pdfGeneratedMessage: "El reporte médico se ha descargado exitosamente.",
+  pdfSavedMessage: "El reporte se guardó exitosamente.",
+  pdfErrorMessage:
+    "Hubo un error al generar el reporte. Por favor, inténtalo de nuevo.",
+  noMedicationsTitle: "Sin Medicamentos",
+  noMedicationsReportMessage: "No hay medicamentos para incluir en el reporte.",
+  errorTitle: "Error",
+  generating: "Generando...",
+  // PDF Content translations
+  pdfMedicalReportTitle: "Reporte Médico de Medicamentos",
+  pdfGeneratedOn: "Generado el",
+  pdfPatientInformation: "📋 Información del Paciente",
+  pdfPatientLabel: "Paciente",
+  pdfTotalMedicationsLabel: "Medicamentos Totales",
+  pdfActiveTreatmentsLabel: "Tratamientos Activos",
+  pdfLastUpdateLabel: "Última Actualización",
+  pdfGeneralStatistics: "📊 Estadísticas Generales",
+  pdfAverageAdherence: "Adherencia Promedio",
+  pdfActiveMedications: "Medicamentos Activos",
+  pdfDailyAverage: "Promedio Diario",
+  pdfPreferredTime: "Horario Preferido",
+  pdfMedicationDetails: "💊 Detalle de Medicamentos",
+  pdfNoMedicationsRegistered: "No hay medicamentos registrados.",
+  pdfDosageLabel: "Dosis",
+  pdfScheduleLabel: "Horario",
+  pdfDaysLabel: "Días",
+  pdfAdherenceLabel: "Adherencia",
+  pdfNotSpecified: "No especificado",
+  pdfNotSpecifiedDays: "No especificados",
+  pdfMedicationDefault: "Medicamento",
+  pdfFooterText1:
+    "Este reporte fue generado automáticamente por la aplicación MediTime.",
+  pdfFooterText2:
+    "Para consultas médicas, consulte siempre con su profesional de salud.",
+  // Time periods for PDF
+  morning: "Mañana",
+  afternoon: "Tarde",
+  night: "Noche",
 } as const;
 
 export default es;

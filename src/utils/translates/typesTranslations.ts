@@ -30,6 +30,7 @@ export type typeLanguages = {
   patientName: string;
   patientDescription: string;
   addMedication: string;
+  configurePillDispenser: string;
   noMedications: string;
   // Days of the week
   monday: string;
@@ -73,6 +74,7 @@ export type typeLanguages = {
   allergies: string;
   name: string;
   medicationsManagement: string;
+  manageMedicationsDescription: string;
   type: string;
   daysText: string;
   selectTime: string;
@@ -81,8 +83,9 @@ export type typeLanguages = {
   schedulesNotScheduled: string;
   addMedicationsOnTop: string;
   hour: string;
+  hours: string;
   days: DaysOfWeek;
-  dosageTypes: string;
+  dosageTypes: string | string[];
   urgency: string | Record<UrgencyType, string>;
   unknown: string;
   medicationPlaceholder: string;
@@ -92,11 +95,26 @@ export type typeLanguages = {
   intervalHoursPlaceholder: string;
   stock: string;
   stockPlaceholder: string;
+  requiredDoses: string;
+  requiredDosesPlaceholder: string;
+  requiredDosesDescription: string;
   urgencyText: string;
   namePatient: string;
   settings: string;
   enableNotifications: string;
   save: string;
+  searchMedications: string;
+  medicationNotFound: string;
+  noMedicationsFoundMessage: string;
+  loadingMedications: string;
+  medicationRequired: string;
+  dosageRequired: string;
+  daysRequired: string;
+  intervalRequired: string;
+  urgencyRequired: string;
+  formValidationTitle: string;
+  formValidationMessage: string;
+  searchHint: string;
   uploadImage: string;
   description: string;
   footerDescription: string;
@@ -155,6 +173,8 @@ export type typeLanguages = {
   patientUnassignedSuccessfully: string;
   errorUnassigningPatient: string;
   networkError: string;
+  medicationAddedSuccessfully: string;
+  errorSavingMedication: string;
   serverError: string;
   caregiverCannotBePatient: string;
   roleCaregiver: string;
@@ -246,4 +266,43 @@ export type typeLanguages = {
   remove: string;
   configurationSavedInCapsy: string;
   intervalMustBeGreaterThanZero: string;
+  // PDF Report translations
+  pdfReportTitle: string;
+  generateReport: string;
+  pdfGeneratedTitle: string;
+  pdfGeneratedMessage: string;
+  pdfSavedMessage: string;
+  pdfErrorMessage: string;
+  noMedicationsTitle: string;
+  noMedicationsReportMessage: string;
+  errorTitle: string;
+  generating: string;
+  // PDF Content translations
+  pdfMedicalReportTitle: string;
+  pdfGeneratedOn: string;
+  pdfPatientInformation: string;
+  pdfPatientLabel: string;
+  pdfTotalMedicationsLabel: string;
+  pdfActiveTreatmentsLabel: string;
+  pdfLastUpdateLabel: string;
+  pdfGeneralStatistics: string;
+  pdfAverageAdherence: string;
+  pdfActiveMedications: string;
+  pdfDailyAverage: string;
+  pdfPreferredTime: string;
+  pdfMedicationDetails: string;
+  pdfNoMedicationsRegistered: string;
+  pdfDosageLabel: string;
+  pdfScheduleLabel: string;
+  pdfDaysLabel: string;
+  pdfAdherenceLabel: string;
+  pdfNotSpecified: string;
+  pdfNotSpecifiedDays: string;
+  pdfMedicationDefault: string;
+  pdfFooterText1: string;
+  pdfFooterText2: string;
+  // Time periods for PDF
+  morning: string;
+  afternoon: string;
+  night: string;
 };

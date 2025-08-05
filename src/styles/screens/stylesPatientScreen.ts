@@ -1,53 +1,109 @@
 import { StyleSheet } from "react-native";
 import { useResponsiveLayout } from "@context/LayoutContext";
+import { useMemo } from "react";
 
 /**
- * Custom hook that returns responsive styles for the PatientScreen component.
+ * Returns responsive styles for the PatientScreen component.
  * Adjusts layout and button width for mobile and small web screens.
  *
  * @returns {object} StyleSheet object for PatientScreen
  */
-export const useStylesPatientScreen = () => {
-  const { isPhone } = useResponsiveLayout();
+export const stylesPatientScreen = () => {
+  const { isPhone, width, height, isWeb } = useResponsiveLayout();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: "#ecebea",
     },
+    contentContainer: {
+      flex: 1,
+      maxWidth: 800,
+      alignSelf: "center",
+      width: "100%",
+    },
     patientInfo: {
-      padding: 16,
-      paddingTop: 8,
+      padding: isPhone ? 20 : 24,
+      paddingTop: 16,
+      marginBottom: isPhone ? 12 : 16,
+      backgroundColor: "#fff",
+      marginHorizontal: 16,
+      borderRadius: 20,
+      shadowColor: "#00a69d",
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 6,
+      borderWidth: 1,
+      borderColor: "rgba(0, 166, 157, 0.08)",
     },
     patientName: {
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: isPhone ? 22 : 24,
+      fontWeight: "800",
+      color: "#00a69d",
+      textAlign: "center",
+      textShadowColor: "rgba(0, 166, 157, 0.2)",
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 3,
+      letterSpacing: 0.5,
     },
     patientDescription: {
-      fontSize: 14,
-      color: "#666",
-      marginTop: 4,
+      fontSize: isPhone ? 14 : 15,
+      color: "#21aae1",
+      marginTop: 6,
+      marginBottom: isPhone ? 8 : 4,
+      textAlign: "center",
+      lineHeight: 20,
     },
     buttonContainer: {
-      paddingHorizontal: 0,
-      marginBottom: isPhone ? 0 : 10,
+      paddingHorizontal: 16,
+      paddingTop: isPhone ? 8 : 4,
+      marginBottom: isPhone ? 16 : 10,
       alignItems: "center",
+      flexDirection: isPhone ? "column" : "row",
+      justifyContent: "center",
+      gap: isPhone ? 12 : 16,
+      maxWidth: 600,
+      alignSelf: "center",
+      width: "100%",
     },
     button: {
-      paddingVertical: isPhone ? 10 : 14,
+      paddingVertical: 0,
+      paddingHorizontal: isPhone ? 20 : 24,
       backgroundColor: "#00a69d",
-      borderRadius: 6,
-      maxWidth: isPhone ? undefined : 220,
-      width: isPhone ? 200 : 180,
+      borderRadius: 16,
+      width: isPhone ? "90%" : 240,
+      maxWidth: isPhone ? 350 : 280,
+      height: isPhone ? 60 : 54,
       alignSelf: "center",
-      marginBottom: isPhone ? 0 : 8,
+      shadowColor: "#00a69d",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 6,
+      borderWidth: 1,
+      borderColor: "rgba(255, 255, 255, 0.2)",
+      justifyContent: "center",
     },
     buttonText: {
-      fontSize: 14,
+      fontSize: isPhone ? 16 : 15,
       color: "white",
       textAlign: "center",
+      fontWeight: "700",
+      letterSpacing: 0.5,
+      flexShrink: 1,
     },
-  });
+    buttonContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      flex: 1,
+    },
+    buttonIcon: {
+      marginRight: 8,
+      flexShrink: 0,
+    },
+  }), [isPhone]);
 
   return styles;
 };
