@@ -11,6 +11,7 @@ import {
 } from "react-native-paper";
 import { useLanguage } from "@context/LanguageContext";
 import { useUserContext } from "@context/UserContext";
+import { useWebSocket } from "@context/WebSocketContext";
 import HeaderComponent from "@components/common/Header";
 import CardComponent from "@components/Home/Card";
 import { getRouteAPI, fetchOptions, PAST_ARR } from "@utils";
@@ -104,6 +105,7 @@ interface SavedPillboxConfig {
  */
 const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   const { isLoggedIn, userData } = useUserContext();
+  const { sendMessage } = useWebSocket();
   const { t } = useLanguage();
 
   const [selectedPatient, setSelectedPatient] = useState<string>("");
@@ -876,12 +878,12 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       showSnackbar(t("configurationSentSuccessfully"));
       console.log("Capsy configuration sent successfully via server WebSocket");
       
-      } catch (error: any) {
+    } catch (error: any) {
       console.error("Error sending capsy configuration:", error);
-
+      
       showSnackbar(t("couldNotEstablishConnection"));
     } finally {
-          setIsConnecting(false);
+      setIsConnecting(false);
     }
   };
 
