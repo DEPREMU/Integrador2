@@ -14,61 +14,94 @@ export const getAllMedications = async (
   console.log("getAllMedications called with body:", body);
 
   const db = await getCollection<MedicationApi>("medicationsApi");
-  const medications = await db?.find({}).toArray();
-  if (!medications) {
-    console.error("No medications found in the database");
-    res.status(505).json({
-      medications: [],
-      error: {
-        message: "No medications found",
-        timestamp: new Date().toISOString(),
-      },
-    });
-    return;
-  }
-  let filteredMedications = medications;
+  
   if (!body) {
-    console.log(
-      "No body provided in request to getAllMedications, sending all medications",
-    );
+    console.log("No body provided in request to getAllMedications, sending all medications");
+    const medications = await db?.find({}).toArray();
+    if (!medications) {
+      console.error("No medications found in the database");
+      res.status(505).json({
+        medications: [],
+        error: {
+          message: "No medications found",
+          timestamp: new Date().toISOString(),
+        },
+      });
+      return;
+    }
     res.json({
       medications: medications || [],
     });
     return;
   }
+
   const { onlyGetTheseColumns, onlyGetTheseMedicationsById } = body;
 
-  if (onlyGetTheseMedicationsById && onlyGetTheseMedicationsById?.length > 0) {
-    console.log(
-      "Filtering medications by onlyGetTheseMedications",
-      onlyGetTheseMedicationsById,
-    );
-    filteredMedications = filteredMedications.filter((medication) =>
-      onlyGetTheseMedicationsById.includes(medication._id as unknown as string),
-    );
-  }
-  if (onlyGetTheseColumns && onlyGetTheseColumns?.length > 0) {
-    console.log(
-      "Filtering medications by onlyGetTheseColumns",
-      onlyGetTheseColumns,
-    );
-    filteredMedications = filteredMedications.map((medication) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const filteredMedication: any = {};
-      onlyGetTheseColumns.forEach((column) => {
-        if (!medication[column]) {
-          if (["name_es", "name_fr"].includes(column))
-            filteredMedication[column] = medication.name;
-          return;
-        }
-        filteredMedication[column] = medication[column];
-      });
-      return filteredMedication;
-    });
+  // Build MongoDB query and projection for optimal performance
+  const query: any = {};
+  const projection: any = {};
+  
+  // Filter by specific medication IDs if provided
+  if (onlyGetTheseMedicationsById && onlyGetTheseMedicationsById.length > 0) {
+    console.log("Filtering medications by IDs:", onlyGetTheseMedicationsById);
+    query._id = { $in: onlyGetTheseMedicationsById };
   }
 
-  console.log("sending medications:", filteredMedications.length);
-  res.json({
-    medications: filteredMedications,
-  });
+  // Use MongoDB projection to only fetch required columns
+  if (onlyGetTheseColumns && onlyGetTheseColumns.length > 0) {
+    console.log("Using MongoDB projection for columns:", onlyGetTheseColumns);
+    onlyGetTheseColumns.forEach((column) => {
+      projection[column] = 1;
+    });
+    // Always include 'name' field for fallback logic
+    if (onlyGetTheseColumns.includes("name_es") || onlyGetTheseColumns.includes("name_fr")) {
+      projection.name = 1;
+    }
+  }
+
+  try {
+    const medications = await db?.find(query, { projection }).toArray();
+    
+    if (!medications) {
+      console.error("No medications found in the database");
+      res.status(505).json({
+        medications: [],
+        error: {
+          message: "No medications found",
+          timestamp: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
+    // Apply fallback logic for missing translated names
+    let filteredMedications = medications;
+    if (onlyGetTheseColumns && onlyGetTheseColumns.length > 0) {
+      filteredMedications = medications.map((medication) => {
+        const result = { ...medication };
+        // Apply fallback for name_es and name_fr
+        if (onlyGetTheseColumns.includes("name_es") && !result.name_es && result.name) {
+          result.name_es = result.name;
+        }
+        if (onlyGetTheseColumns.includes("name_fr") && !result.name_fr && result.name) {
+          result.name_fr = result.name;
+        }
+        return result;
+      });
+    }
+
+    console.log("sending medications:", filteredMedications.length);
+    res.json({
+      medications: filteredMedications,
+    });
+  } catch (error) {
+    console.error("Error fetching medications:", error);
+    res.status(500).json({
+      medications: [],
+      error: {
+        message: "Error fetching medications",
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
 };

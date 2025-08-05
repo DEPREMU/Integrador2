@@ -2,14 +2,18 @@ import React from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
 import { capitalize, log } from "@/utils";
-import ButtonComponent from "@components/common/Button";
+import Button from "@components/common/Button";
 import { MedicationUser } from "@typesAPI";
+import { useLanguage } from "@context/LanguageContext";
 
 const RenderScheduleItem: React.FC<{
   data: MedicationUser[];
-  styles: Record<string, object>;
+  styles: any;
   deleteSchedule: (medicationId: string) => void;
-}> = ({ data, styles, deleteSchedule }) => (
+}> = ({ data, styles, deleteSchedule }) => {
+  const { translations } = useLanguage();
+  
+  return (
   <>
     {data.map((item) => {
       log(item);
@@ -24,9 +28,12 @@ const RenderScheduleItem: React.FC<{
               {item.grams}-{item.dosage || "mg"} {item.startHour} -{" "}
               {item.intervalHours}
             </Text>
+            <Text style={styles.requiredDosesText}>
+              {translations.requiredDoses || "Required Doses"}: {item.requiredDoses || 0}
+            </Text>
           </View>
           <View style={styles.daysIndicator}>
-            {item.days.map((day) => (
+            {item.days.map((day: string) => (
               <Text
                 key={day}
                 style={[
@@ -38,7 +45,7 @@ const RenderScheduleItem: React.FC<{
               </Text>
             ))}
           </View>
-          <ButtonComponent
+          <Button
             label="✕"
             replaceStyles={{
               button: styles.deleteButton,
@@ -46,7 +53,7 @@ const RenderScheduleItem: React.FC<{
             }}
             handlePress={() =>
               deleteSchedule(
-                (item._id || item.medicationId) as unknown as string,
+                (item._id || item.medicationId) as unknown as string
               )
             }
             forceReplaceStyles
@@ -56,7 +63,8 @@ const RenderScheduleItem: React.FC<{
       );
     })}
   </>
-);
+  );
+};
 
 const RenderScheduleItemMemo = React.memo(
   RenderScheduleItem,
@@ -68,7 +76,7 @@ const RenderScheduleItemMemo = React.memo(
     const isEqualsFunctions =
       prevProps.deleteSchedule === nextProps.deleteSchedule;
     return isEqualsData && isEqualsStyles && isEqualsFunctions;
-  },
+  }
 );
 
 export default RenderScheduleItemMemo;

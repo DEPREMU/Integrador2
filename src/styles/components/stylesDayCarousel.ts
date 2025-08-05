@@ -1,10 +1,11 @@
 import { useResponsiveLayout } from "@context/LayoutContext";
 import { StyleSheet } from "react-native";
+import { useMemo } from "react";
 
-export const useStylesDayCarousel = () => {
+export const stylesDayCarousel = () => {
   const { isPhone, isWeb, width } = useResponsiveLayout();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       flexDirection: "row",
@@ -52,6 +53,32 @@ export const useStylesDayCarousel = () => {
       fontSize: isWeb ? 18 : 16,
       color: "#555",
       textAlign: "center",
+      fontWeight: "600",
+    },
+    medicationItem: {
+      alignItems: "center",
+      marginVertical: 3,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      backgroundColor: "#f8f9fa",
+      borderRadius: 8,
+      minWidth: "90%",
+      borderLeftWidth: 3,
+      borderLeftColor: "#00a69d",
+    },
+    medicationTime: {
+      fontSize: isWeb ? 14 : 12,
+      color: "#00a69d",
+      textAlign: "center",
+      fontWeight: "500",
+      marginTop: 2,
+    },
+    medicationDoses: {
+      fontSize: isWeb ? 12 : 10,
+      color: "#666",
+      textAlign: "center",
+      fontWeight: "400",
+      marginTop: 1,
     },
     emptyMedication: {
       height: 24,
@@ -60,25 +87,92 @@ export const useStylesDayCarousel = () => {
     },
     arrowButton: {
       padding: 12,
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      shadowOpacity: 0,
+      elevation: 0,
     },
     moreMedicationsText: {
       color: "#00a69d",
       marginTop: 5,
       textAlign: "center",
     },
-    closeButtonText: {
-      color: "#fff",
+    modalMedicationCard: {
+      backgroundColor: "#fff",
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+      borderLeftWidth: 4,
+      borderLeftColor: "#00a69d",
+    },
+    modalMedicationName: {
+      fontSize: isWeb ? 20 : 18,
       fontWeight: "bold",
-      fontSize: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: "#00a69d",
-      borderRadius: 8,
+      color: "#333",
+      marginBottom: 12,
       textAlign: "center",
     },
-  });
+    modalDetailRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+      paddingVertical: 4,
+    },
+    modalDetailLabel: {
+      fontSize: isWeb ? 16 : 14,
+      fontWeight: "600",
+      color: "#555",
+      marginLeft: 8,
+      marginRight: 8,
+      minWidth: 80,
+    },
+    modalDetailValue: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#333",
+      flex: 1,
+      flexWrap: "wrap",
+    },
+    modalSeparator: {
+      height: 1,
+      backgroundColor: "#e0e0e0",
+      marginVertical: 16,
+    },
+    modalEmptyText: {
+      fontSize: isWeb ? 18 : 16,
+      color: "#999",
+      textAlign: "center",
+      marginTop: 16,
+      fontStyle: "italic",
+    },
+    urgencyHigh: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#e74c3c",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+    urgencyMedium: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#f39c12",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+    urgencyLow: {
+      fontSize: isWeb ? 16 : 14,
+      color: "#27ae60",
+      flex: 1,
+      flexWrap: "wrap" as any,
+      fontWeight: "bold",
+    },
+  }), [isPhone, isWeb]);
 
-  const customStyles = StyleSheet.create({
+  const customStyles = useMemo(() => StyleSheet.create({
     modal: {
       backgroundColor: "#fff",
       borderRadius: 24,
@@ -93,6 +187,9 @@ export const useStylesDayCarousel = () => {
       shadowRadius: 24,
       borderWidth: 2,
       borderColor: "#00a69d",
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
     },
     title: {
       color: "#00a69d",
@@ -113,12 +210,8 @@ export const useStylesDayCarousel = () => {
       width: "100%",
       marginTop: 12,
     },
-    overlay: {
-      zIndex: 999,
-      elevation: 49,
-    },
     messageText: {},
-  });
+  }), []);
 
   return { styles, customStyles, width, isPhone, isWeb };
 };

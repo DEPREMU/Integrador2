@@ -19,6 +19,8 @@ import {
   addExistingPatientHandler,
   unassignPatientHandler,
 } from "./patientManagement.js";
+import { addUserMedicationHandler } from "./addUserMedication.js";
+import { deleteUserMedicationHandler } from "./deleteUserMedication.js";
 import express from "express";
 import { RoutesAPI } from "../types/TypesAPI.js";
 import { logsHandler } from "./logs.js";
@@ -59,6 +61,8 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/getUserPatients": { handler: getUserPatients },
   "/getUserMedications": { handler: getUserMedications },
   "/getAllMedications": { handler: getAllMedications },
+  "/addUserMedication": { handler: addUserMedicationHandler },
+  "/deleteUserMedication": { handler: deleteUserMedicationHandler },
   "/createPatient": { handler: createPatientHandler },
   "/deletePatient": { handler: deletePatientHandler },
   "/addExistingPatient": { handler: addExistingPatientHandler },
