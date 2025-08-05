@@ -41,7 +41,7 @@ const stylesSnackbarComponent = () => {
   const styles = StyleSheet.create({
     container: {
       position: "absolute",
-      top: 40,
+      top: 120,
       left: 0,
       right: 0,
       zIndex: 9999,
@@ -51,11 +51,13 @@ const stylesSnackbarComponent = () => {
       backgroundColor: "#388e3c",
       borderRadius: 8,
       marginHorizontal: 16,
+      minHeight: 60,
     },
     snackbarError: {
       backgroundColor: "#d32f2f",
       borderRadius: 8,
       marginHorizontal: 16,
+      minHeight: 60,
     },
   });
 

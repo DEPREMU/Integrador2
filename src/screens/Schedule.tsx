@@ -1,3 +1,47 @@
+/**
+ * @fileoverview MedicationScheduler Component - Medication Management Screen
+ * 
+ * This component provides a comprehensive interface for scheduling and managing medications
+ * for patients. It includes medication search, form validation, scheduling configuration,
+ * and real-time feedback through notifications.
+ * 
+ * @version 1.0.0
+ * @author MediTime Development Team
+ * @since 2025-08-05
+ * 
+ * @features
+ * - Real-time medication search with optimized API queries
+ * - Form validation with error highlighting and summary
+ * - Day selection for medication scheduling
+ * - Time picker for medication timing
+ * - Dosage type selection (pills, mg, units)
+ * - Stock and urgency level management
+ * - Patient selection and management
+ * - Animated UI elements and smooth transitions
+ * - Snackbar notifications for user feedback
+ * - Automatic navigation after successful submission
+ * 
+ * @dependencies
+ * - React Native core components
+ * - React Native Paper for UI components
+ * - React Navigation for screen transitions
+ * - Expo vector icons for iconography
+ * - Custom hooks for PDF generation and styling
+ * - Context providers for user data and language
+ * 
+ * @performance
+ * - Optimized medication search with projection queries
+ * - Debounced form validation to prevent excessive re-renders
+ * - Memoized callback functions to prevent unnecessary re-creations
+ * - Animated values using useRef to persist across re-renders
+ * 
+ * @accessibility
+ * - Form validation with clear error messages
+ * - Visual indicators for required fields
+ * - Touch-friendly button sizes and spacing
+ * - Screen reader compatible components
+ */
+
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -31,11 +75,25 @@ import React, { useCallback, useEffect, useState, useMemo, useRef } from "react"
 import { log, getRouteAPI, fetchOptions, interpolateMessage } from "@utils";
 import { Ionicons } from "@expo/vector-icons";
 
+/**
+ * Navigation prop type for the Schedule screen
+ * @typedef {Object} ScheduleScreenNavigationProp
+ * @extends {NativeStackNavigationProp<RootStackParamList, "Schedule">}
+ */
 type ScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Schedule"
 >;
 
+/**
+ * Medication data structure for search and selection
+ * @typedef {Object} Medication
+ * @property {string} _id - Unique identifier for the medication
+ * @property {string} [name] - Medication name in English
+ * @property {string} [name_es] - Medication name in Spanish
+ * @property {string} [name_fr] - Medication name in French
+ * @property {any} [key] - Additional properties from the API
+ */
 type Medication = {
   _id: string;
   name?: string;
@@ -43,6 +101,55 @@ type Medication = {
   name_fr?: string;
   [key: string]: any;
 };
+
+/**
+ * MedicationScheduler - Main component for medication scheduling and management
+ * 
+ * This component provides a comprehensive form for adding and managing patient medications.
+ * It includes real-time search, form validation, scheduling configuration, and user feedback.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered medication scheduler interface
+ * 
+ * @example
+ * ```tsx
+ * <MedicationScheduler />
+ * ```
+ * 
+ * @hooks
+ * - useStylesScheduleMedication: Custom styling with responsive design
+ * - useNavigation: React Navigation hook for screen transitions
+ * - useUserContext: User authentication and data management
+ * - useLanguage: Internationalization and translation support
+ * 
+ * @state
+ * - Form fields: dose, time, intervalHours, stock, requiredDoses, urgency
+ * - UI state: showTimePicker, isSubmitting, isSearchingMedications
+ * - Data state: patients, schedules, medication, searchMedicationsList
+ * - Validation state: fieldErrors, hasAttemptedSubmit, isFormValid
+ * - Animation state: fadeAnim, slideAnim, pulseAnim, buttonScaleAnim
+ * - Notification state: snackbarVisible, snackbarMessage, snackbarType
+ * 
+ * @functions
+ * - handleAddSchedule: Processes form submission and API calls
+ * - handleSearchMedication: Performs medication search with filtering
+ * - validateFields: Validates all form fields and updates error state
+ * - resetForm: Clears all form fields and validation errors
+ * - toggleDay: Manages day selection for medication scheduling
+ * - showSnackbar: Displays success/error notifications to user
+ * 
+ * @api
+ * - GET /getAllMedications: Fetches medication database with projection
+ * - GET /getUserPatients: Retrieves patients associated with current user
+ * - GET /getUserMedications: Gets existing medication schedules
+ * - POST /addUserMedication: Creates new medication schedule
+ * 
+ * @performance
+ * - Medication search is debounced and cached for better UX
+ * - Form validation uses setTimeout to prevent excessive re-renders
+ * - Animation values are stored in useRef to persist across renders
+ * - API calls use projection queries to minimize data transfer
+ */
 
 const MedicationScheduler: React.FC = () => {
   const { styles, isPhone } = useStylesScheduleMedication();
@@ -170,7 +277,7 @@ const MedicationScheduler: React.FC = () => {
     setRequiredDoses(0);
     setUrgency({ low: getUrgencyValue('low') });
     setTime(new Date());
-    // Reset validation states when form is reset
+            // Reset validation states when form is reset
     setHasAttemptedSubmit(false);
     setFieldErrors({
       medication: false,
@@ -235,9 +342,7 @@ const MedicationScheduler: React.FC = () => {
            urgency && 
            Object.keys(urgency).length > 0;
     
-    // Prevent showing validation errors if form is actually valid
     if (isValid && hasAttemptedSubmit) {
-      // Clear any previous errors if form is now valid
       setTimeout(() => {
         setFieldErrors({
           medication: false,
@@ -252,10 +357,8 @@ const MedicationScheduler: React.FC = () => {
     return isValid;
   }, [medication, dose, selectedDays, intervalHours, urgency, hasAttemptedSubmit]);
 
-  // Reset specific field errors when user fixes them (only when form has been attempted)
   useEffect(() => {
     if (hasAttemptedSubmit) {
-      // Use a small delay to avoid flickering
       const timeoutId = setTimeout(() => {
         const doseValue = parseFloat(dose);
         setFieldErrors(prev => ({
@@ -297,12 +400,12 @@ const MedicationScheduler: React.FC = () => {
     };
 
     const getMedications = async () => {
-      console.log("🔍 getMedications() started");
+      console.log("getMedications() started");
       log("Fetching medications...");
       setIsMedicationsLoading(true);
       
       try {
-        console.log("🔍 About to call fetch with URL:", getRouteAPI("/getAllMedications"));
+        console.log("About to call fetch with URL:", getRouteAPI("/getAllMedications"));
         
         const response = await fetch(
           getRouteAPI("/getAllMedications"),
@@ -315,7 +418,7 @@ const MedicationScheduler: React.FC = () => {
           })
         );
 
-        console.log("🔍 Response received:", response.status, response.statusText);
+        console.log("Response received:", response.status, response.statusText);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -323,39 +426,38 @@ const MedicationScheduler: React.FC = () => {
         
         const data: ResponseGetAllMedications = await response.json();
         
-        console.log("🔍 JSON parsed successfully. Data preview:", {
+        console.log("JSON parsed successfully. Data preview:", {
           hasError: !!data.error,
           medicationsCount: data.medications?.length,
           firstMedicationSample: data.medications?.[0]
         });
 
         if (data.error) {
-          console.error("❌ API returned error:", data.error);
+          console.error("API returned error:", data.error);
           setMedicationsList([]);
           setIsMedicationsLoading(false);
           return;
         }
 
         if (!data.medications || !Array.isArray(data.medications)) {
-          console.error("❌ Invalid medications data:", data.medications);
+          console.error("Invalid medications data:", data.medications);
           setMedicationsList([]);
           setIsMedicationsLoading(false);
           return;
         }
 
-        console.log("✅ Setting medications list with", data.medications.length, "items");
-        // Convert ObjectId to string for frontend compatibility
+        console.log("Setting medications list with", data.medications.length, "items");
         const medicationsWithStringIds = data.medications.map(med => ({
           ...med,
           _id: med._id?.toString() || ''
         })) as Medication[];
         setMedicationsList(medicationsWithStringIds);
         setIsMedicationsLoading(false);
-        console.log("✅ getMedications() completed successfully");
+        console.log("getMedications() completed successfully");
         
       } catch (error) {
-        console.error("❌ getMedications() failed with error:", error);
-        console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack available');
+        console.error("getMedications() failed with error:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available');
         setMedicationsList([]);
         setIsMedicationsLoading(false);
       }
@@ -386,14 +488,13 @@ const MedicationScheduler: React.FC = () => {
     getUserScheduledMedications();
   }, [userData?.userId, language]);
 
-  // Start animations when component mounts
   useEffect(() => {
     startEntranceAnimations();
   }, [startEntranceAnimations]);
 
   // Start pulse animation when add button becomes enabled
   useEffect(() => {
-    console.log("🔍 Form validation check:", {
+    console.log("Form validation check:", {
       medication: !!medication,
       dose: !!dose,
       selectedDays: Object.keys(selectedDays || {}).length,
@@ -407,7 +508,6 @@ const MedicationScheduler: React.FC = () => {
     }
   }, [isFormValid, startPulseAnimation]);
 
-  // Validate fields in real-time when user has attempted to submit (with debounce)
   useEffect(() => {
     if (hasAttemptedSubmit) {
       const timeoutId = setTimeout(() => {
@@ -426,24 +526,23 @@ const MedicationScheduler: React.FC = () => {
   }, []);
 
   const handleAddSchedule = useCallback(async () => {
-    console.log("🚀 handleAddSchedule called");
+    console.log("handleAddSchedule called");
     animateButtonPress();
     
-    // Validate fields first BEFORE setting hasAttemptedSubmit
     if (!validateFields()) {
-      console.warn("❌ Form validation failed");
+      console.warn("Form validation failed");
       setHasAttemptedSubmit(true);
       return;
     }
     
     if (!selectedPatient || !medication || !userData?.userId) {
-      console.error("❌ Missing required data:", { selectedPatient, medication, userData: userData?.userId });
+      console.error("Missing required data:", { selectedPatient, medication, userData: userData?.userId });
       alert("Por favor selecciona un paciente y un medicamento");
       setHasAttemptedSubmit(true);
       return;
     }
 
-    console.log("✅ Required data available:", { 
+    console.log("Required data available:", { 
       selectedPatient: selectedPatient.name, 
       medication: medication.name 
     });
@@ -457,7 +556,7 @@ const MedicationScheduler: React.FC = () => {
     const newSchedule: Omit<MedicationUser, "_id"> = {
       medicationId: medication._id,
       name: medicationAPI?.name || translations.unknown,
-      userId: userData.userId, // Use logged-in user's ID, not the selected patient
+      userId: userData.userId,
       dosage: dosageType,
       startHour: time.toTimeString().slice(0, 5),
       days: [...Object.keys(selectedDays || {})],
@@ -468,10 +567,10 @@ const MedicationScheduler: React.FC = () => {
         getUrgencyValue('low')) as UrgencyType,
     };
 
-    console.log("📝 New schedule data:", newSchedule);
+    console.log("New schedule data:", newSchedule);
 
     try {
-      console.log("🌐 Sending request to backend...");
+      console.log("Sending request to backend...");
       
       const response: ResponseAddUserMedication = await fetch(
         getRouteAPI("/addUserMedication"),
@@ -481,26 +580,22 @@ const MedicationScheduler: React.FC = () => {
       ).then((res) => res.json());
 
       if (response.success) {
-        console.log("✅ Medication saved successfully!");
-        // Mostrar mensaje de éxito con Snackbar
+        console.log("Medication saved successfully!");
         showSnackbar(translations.medicationAddedSuccessfully, "success");
         
-        // Actualizar la lista local
         setSchedules((prev) => [...prev, response.medication!]);
         
-        // Limpiar el formulario
         resetForm();
         
-        // Navegar automáticamente a PatientScreen con un delay
         setTimeout(() => {
           navigation.navigate("Patient");
         }, 300);
       } else {
-        console.error("❌ Error saving medication:", response.error);
+        console.error("Error saving medication:", response.error);
         showSnackbar(translations.errorSavingMedication + ": " + (response.error?.message || "Unknown error"), "error");
       }
     } catch (error) {
-      console.error("❌ Network error:", error);
+      console.error("Network error:", error);
       showSnackbar(translations.networkError, "error");
     } finally {
       setIsSubmitting(false);
@@ -569,7 +664,7 @@ const MedicationScheduler: React.FC = () => {
 
     if (isMedicationsLoading || !medicationsList || medicationsList.length === 0) {
       console.warn("Medications list not loaded yet, please wait...");
-      console.warn("🔍 State check:", {
+      console.warn("State check:", {
         isMedicationsLoading,
         medicationsListExists: !!medicationsList,
         medicationsListLength: medicationsList?.length
@@ -599,10 +694,9 @@ const MedicationScheduler: React.FC = () => {
     }
   }, [searchValue, medicationsList, isMedicationsLoading, animateIconRotation, language]);
 
-  // Auto-retry search when medications finish loading (only once per search term)
   useEffect(() => {
     if (!isMedicationsLoading && searchValue.length >= 3 && hasSearched && searchMedicationsList.length === 0 && medicationsList && medicationsList.length > 0 && !isSearchingMedications && !hasTriedRetry) {
-      console.log("🔄 Medications loaded, retrying search for:", searchValue);
+      console.log("Medications loaded, retrying search for:", searchValue);
       setHasTriedRetry(true);
       handleSearchMedication();
     }
@@ -729,7 +823,7 @@ const MedicationScheduler: React.FC = () => {
               value={searchValue}
               onChangeText={(text) => {
                 setSearchValue(text);
-                setHasTriedRetry(false); // Reset retry flag when search term changes
+                setHasTriedRetry(false);
                 if (text.length < 3) {
                   setSearchMedicationsList([]);
                   setHasSearched(false);
@@ -919,13 +1013,11 @@ const MedicationScheduler: React.FC = () => {
               onChangeText={(text) => {
                 let numericValue = text.replace(/[^0-9.]/g, '');
                 
-                // Prevent multiple decimal points
                 const parts = numericValue.split('.');
                 if (parts.length > 2) {
                   numericValue = parts[0] + '.' + parts.slice(1).join('');
                 }
                 
-                // Prevent leading zeros (except for decimal numbers like 0.5)
                 if (numericValue.length > 1 && numericValue[0] === '0' && numericValue[1] !== '.') {
                   numericValue = numericValue.substring(1);
                 }
@@ -1244,32 +1336,4 @@ const MedicationScheduler: React.FC = () => {
     </Animated.View>
   );
 };
-/*
-  <ScrollView
-        style={styles.schedulesContainer}
-        contentContainerStyle={styles.schedulesContent}
-      >
-        <Text style={styles.sectionTitle}>
-          {translations.schedulesScheduled}
-        </Text>
-        {schedules.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {translations.schedulesNotScheduled}
-            </Text>
-            <Text style={styles.emptyStateSubtext}>
-              {translations.addMedicationsOnTop}
-            </Text>
-          </View>
-        ) : (
-          <RenderScheduleItemMemo
-            data={schedules}
-            styles={styles}
-            deleteSchedule={deleteSchedule}
-          />
-        )}
-      </ScrollView>
-
- */
-
 export default MedicationScheduler;
