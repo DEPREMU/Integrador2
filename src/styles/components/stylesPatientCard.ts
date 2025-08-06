@@ -93,13 +93,6 @@ export const useStylesPatientCard = () => {
       borderWidth: 2,
       borderColor: "#fff",
     },
-    deleteButtonText: {
-      color: "#fff",
-      fontSize: 20,
-      fontWeight: "bold",
-      lineHeight: 20,
-      textAlign: "center",
-    },
     editButton: {
       position: "absolute",
       top: 5,
@@ -118,13 +111,6 @@ export const useStylesPatientCard = () => {
       shadowRadius: 4,
       borderWidth: 2,
       borderColor: "#fff",
-    },
-    editButtonText: {
-      color: "#fff",
-      fontSize: 16,
-      fontWeight: "bold",
-      lineHeight: 16,
-      textAlign: "center",
     },
   });
 };
