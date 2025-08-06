@@ -9,4 +9,14 @@ export type ScreensAvailable =
   | "Settings"
   | "Chatbot";
 
-export type RootStackParamList = Record<ScreensAvailable, undefined>;
+export type RootStackParamList = {
+  Login: undefined;
+  SignUp: undefined;
+  Home: undefined;
+  Dashboard: undefined;
+  Patient: { patientId?: string };
+  HowToCode: undefined;
+  Schedule: { patientId?: string };
+  Settings: undefined;
+  Chatbot: undefined;
+};

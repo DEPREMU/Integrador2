@@ -160,7 +160,7 @@ const PatientCarousel: React.FC<PatientCarouselProps> = ({
             photoUrl={item.photo}
             pills={item.pills}
             description={item.description}
-            onPress={() => navigation.navigate("Patient")}
+            onPress={() => navigation.navigate("Patient", { patientId: item.id })}
             onDelete={onDeletePatient ? () => onDeletePatient(item.id) : undefined}
             onEdit={onEditPatient ? () => onEditPatient(item.id) : undefined}
             style={{ marginRight: 15 }}
