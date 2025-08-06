@@ -3,6 +3,7 @@ import React from 'react';
 import { useStylesPatientCard } from '@styles/components/stylesPatientCard';
 import { View, Text, Image, Pressable, ViewStyle, TouchableOpacity } from 'react-native';
 import { getRouteImage } from "@/utils";
+import { Ionicons } from '@expo/vector-icons';
 
 /**
  * Props interface for the PatientCard component.
@@ -86,7 +87,11 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, descri
               accessibilityLabel={`Editar paciente ${name}`}
               accessibilityRole="button"
             >
-              <Text style={styles.editButtonText}>Edit</Text>
+              <Ionicons 
+                name="pencil" 
+                size={16} 
+                color="#fff" 
+              />
             </TouchableOpacity>
           )}
 
@@ -104,7 +109,11 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, descri
               accessibilityLabel={`Desasignar paciente ${name}`}
               accessibilityRole="button"
             >
-              <Text style={styles.deleteButtonText}>X</Text>
+              <Ionicons 
+                name="trash-outline" 
+                size={16} 
+                color="#fff" 
+              />
             </TouchableOpacity>
           )}
         </>
