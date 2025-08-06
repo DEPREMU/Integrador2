@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import Header from "@components/common/Header";
+import SnackbarAlert from "@components/common/SnackbarAlert";
 import { useLanguage } from "@context/LanguageContext";
 import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
 import { useNavigation } from "@react-navigation/native";
@@ -43,6 +44,9 @@ const PatientScreen: React.FC = () => {
   const [medications, setMedications] = useState<MedicationUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
   const { generateMedicationReport, isGenerating } = usePDFReport();
 
   const loadUserMedications = async () => {
@@ -130,10 +134,23 @@ const PatientScreen: React.FC = () => {
     return unsubscribe;
   }, [navigation]);
 
-  const handleGeneratePDF = () => {
-    const patientName = selectedPatient?.name || userData?.name || translations.patientName;
-    const patientId = selectedPatient?.userId || userData?.userId || 'unknown';
-    generateMedicationReport(medications, patientName, patientId);
+  const handleGeneratePDF = async () => {
+    try {
+      const patientName = selectedPatient?.name || userData?.name || translations.patientName;
+      const patientId = selectedPatient?.userId || userData?.userId || 'unknown';
+      
+      await generateMedicationReport(medications, patientName, patientId);
+      
+      // Mostrar notificación de éxito
+      setSnackbarMessage("PDF generado exitosamente");
+      setSnackbarType("success");
+      setSnackbarVisible(true);
+    } catch (error) {
+      // Mostrar notificación de error
+      setSnackbarMessage("Error al generar el PDF");
+      setSnackbarType("error");
+      setSnackbarVisible(true);
+    }
   };
 
   return (
@@ -199,6 +216,13 @@ const PatientScreen: React.FC = () => {
           onDeleteMedication={handleDeleteMedication}
         />
       </View>
+      
+      <SnackbarAlert
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        type={snackbarType}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </View>
   );
 };
