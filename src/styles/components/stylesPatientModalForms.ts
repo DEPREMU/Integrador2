@@ -24,6 +24,7 @@ export const useStylesPatientModalForms = () => {
   return StyleSheet.create({
     formContainer: {
       width: "100%",
+      maxWidth: "100%",
       backgroundColor: "transparent",
       padding: 0,
       gap: 12,
@@ -36,7 +37,9 @@ export const useStylesPatientModalForms = () => {
 
     // Container around the TextInput itself
     inputContainer: {
-      width: "100%",
+      width: 350,
+      maxWidth: 350,
+      alignSelf: "center",
       backgroundColor: "#ecebea",
       borderRadius: 16,
       borderBottomWidth: 2,
@@ -112,6 +115,9 @@ export const useStylesPatientModalForms = () => {
       shadowRadius: 4,
       elevation: 2,
       padding: 16,
+      width: 350,
+      maxWidth: 350,
+      alignSelf: "center",
     },
 
     // User info section styles
@@ -169,6 +175,9 @@ export const useStylesPatientModalForms = () => {
     buttonWrapper: {
       marginTop: 20,
       alignItems: "center",
+      width: 350,
+      maxWidth: 350,
+      alignSelf: "center",
     },
 
     // Error container and text
@@ -179,13 +188,16 @@ export const useStylesPatientModalForms = () => {
       borderRadius: 6,
       borderWidth: 1,
       borderColor: "#f44336",
+      width: 350,
+      maxWidth: 350,
+      alignSelf: "center",
     },
 
     // Result container and items
     resultContainer: {
       marginTop: 16,
       width: "100%",
-      alignItems: "stretch",
+      alignItems: "center",
     },
     resultTitle: {
       fontSize: 16,
@@ -385,15 +397,17 @@ export const useStylesPatientModalForms = () => {
 
     // Fixed container for modal forms (like PatientModalBody)
     fixedContainer: {
-      position: "relative",
       width: "100%",
+      height: "100%",
+      alignSelf: "center",
       overflow: "hidden",
     },
 
     // Form wrapper for ScrollView content
     formWrapper: {
-      paddingHorizontal: 0,
-      paddingBottom: 16,
+      padding: 16,
+      paddingBottom: 80,
+      width: "100%",
     },
 
     // Scroll hint indicator
@@ -434,6 +448,13 @@ export const useStylesPatientModalForms = () => {
       marginRight: 8,
       fontSize: 18,
       color: "#e74c3c",
+    },
+
+    // Flex grow style for content areas
+    flexGrow: {
+      flex: 1,
+      width: "100%",
+      maxWidth: "100%",
     },
   });
 };

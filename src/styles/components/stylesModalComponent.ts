@@ -42,6 +42,9 @@ export const useStylesModalComponent = () => {
     body: {
       paddingHorizontal: isPhone ? 10 : 20,
       borderRadius: 8,
+      width: "100%",
+      maxWidth: "100%",
+      overflow: "hidden",
     },
     buttons: {
       flexDirection: "row",
