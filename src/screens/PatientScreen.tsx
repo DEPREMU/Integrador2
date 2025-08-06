@@ -4,7 +4,7 @@ import Header from "@components/common/Header";
 import SnackbarAlert from "@components/common/SnackbarAlert";
 import { useLanguage } from "@context/LanguageContext";
 import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { useResponsiveLayout } from "@context/LayoutContext";
@@ -35,10 +35,13 @@ type PatientScreenNavigationProp = NativeStackNavigationProp<
   "Patient"
 >;
 
+type PatientScreenRouteProp = RouteProp<RootStackParamList, "Patient">;
+
 const PatientScreen: React.FC = () => {
   const styles = stylesPatientScreen();
   const { translations } = useLanguage();
   const navigation = useNavigation<PatientScreenNavigationProp>();
+  const route = useRoute<PatientScreenRouteProp>();
   const { isPhone } = useResponsiveLayout();
   const { userData } = useUserContext();
   const [medications, setMedications] = useState<MedicationUser[]>([]);
@@ -67,7 +70,18 @@ const PatientScreen: React.FC = () => {
         console.error("Error loading medications:", response.error);
       } else {
         log("Loaded medications:", response.medications);
-        setMedications(response.medications || []);
+        
+        // Filter medications for the selected patient if available
+        if (selectedPatient?.userId) {
+          const patientMedications = response.medications?.filter(
+            med => med.patientUserId === selectedPatient.userId
+          ) || [];
+          log(`Filtered medications for patient ${selectedPatient.name}:`, patientMedications);
+          setMedications(patientMedications);
+        } else {
+          // If no specific patient selected, show all medications (fallback)
+          setMedications(response.medications || []);
+        }
       }
     } catch (error) {
       console.error("Network error loading medications:", error);
@@ -92,7 +106,25 @@ const PatientScreen: React.FC = () => {
     const { patients } = data;
     log(patients, "patients");
     if (patients.length === 0) return;
-    setSelectedPatient(patients[0]);
+    
+    // Get patientId from navigation params
+    const patientIdFromRoute = route.params?.patientId;
+    
+    if (patientIdFromRoute) {
+      // Find the specific patient from the route
+      const targetPatient = patients.find(patient => patient.userId === patientIdFromRoute);
+      if (targetPatient) {
+        log(`Setting selected patient from route: ${targetPatient.name} (${targetPatient.userId})`);
+        setSelectedPatient(targetPatient);
+      } else {
+        log(`Patient with ID ${patientIdFromRoute} not found, defaulting to first patient`);
+        setSelectedPatient(patients[0]);
+      }
+    } else {
+      // No specific patient requested, default to first patient
+      log("No specific patient requested, defaulting to first patient");
+      setSelectedPatient(patients[0]);
+    }
   };
 
   const handleDeleteMedication = async (medicationId: string) => {
@@ -122,17 +154,24 @@ const PatientScreen: React.FC = () => {
     if (userData) {
       loadPatients();
     }
-    loadUserMedications();
-  }, [userData?.userId]);
+  }, [userData?.userId, route.params?.patientId]);
+
+  useEffect(() => {
+    if (selectedPatient) {
+      loadUserMedications();
+    }
+  }, [selectedPatient?.userId]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      log("PatientScreen focused, reloading medications...");
-      loadUserMedications();
+      log("PatientScreen focused, reloading data...");
+      if (userData) {
+        loadPatients();
+      }
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, userData]);
 
   const handleGeneratePDF = async () => {
     try {
@@ -170,7 +209,7 @@ const PatientScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("Schedule")}
+            onPress={() => navigation.navigate("Schedule", { patientId: selectedPatient?.userId })}
             activeOpacity={0.8}
           >
             <View style={styles.buttonContent}>

@@ -47,6 +47,7 @@ export type MedicationApi = {
 
 export type MedicationUser = {
   userId: string;
+  patientUserId?: string;
   _id?: string;
   grams: number;
   dosage: string;

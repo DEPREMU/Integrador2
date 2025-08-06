@@ -62,6 +62,7 @@ export type UrgencyType = "low" | "medium" | "high";
 
 export type MedicationUser = {
   userId: string;
+  patientUserId?: string;
   _id?: ObjectId;
   grams: number;
   dosage: string;

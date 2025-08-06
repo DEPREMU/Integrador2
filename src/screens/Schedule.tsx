@@ -62,7 +62,7 @@ import Button from "@components/common/Button";
 import Header from "@components/common/Header";
 import SnackbarAlert from "@components/common/SnackbarAlert";
 import { useLanguage } from "@context/LanguageContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
 import { TextInput, Text } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
@@ -84,6 +84,8 @@ type ScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Schedule"
 >;
+
+type ScheduleScreenRouteProp = RouteProp<RootStackParamList, "Schedule">;
 
 /**
  * Medication data structure for search and selection
@@ -154,6 +156,7 @@ type Medication = {
 const MedicationScheduler: React.FC = () => {
   const { styles, isPhone } = useStylesScheduleMedication();
   const navigation = useNavigation<ScheduleScreenNavigationProp>();
+  const route = useRoute<ScheduleScreenRouteProp>();
   const { userData } = useUserContext();
   const { language, translations } = useLanguage();
 
@@ -394,7 +397,21 @@ const MedicationScheduler: React.FC = () => {
       const { patients } = data;
       log(patients, "patients");
       if (patients.length === 0) return;
-      setSelectedPatient(patients[0]);
+      
+      // Check if we have a specific patient from navigation params
+      const patientIdFromRoute = route.params?.patientId;
+      if (patientIdFromRoute) {
+        const targetPatient = patients.find(patient => patient.userId === patientIdFromRoute);
+        if (targetPatient) {
+          log(`Setting selected patient from route: ${targetPatient.name} (${targetPatient.userId})`);
+          setSelectedPatient(targetPatient);
+        } else {
+          log(`Patient with ID ${patientIdFromRoute} not found, defaulting to first patient`);
+          setSelectedPatient(patients[0]);
+        }
+      } else {
+        setSelectedPatient(patients[0]);
+      }
       setPatients(patients);
       patients.forEach((patient: User) => log("patient:", patient));
     };
@@ -486,7 +503,7 @@ const MedicationScheduler: React.FC = () => {
     getPatients();
     getMedications();
     getUserScheduledMedications();
-  }, [userData?.userId, language]);
+  }, [userData?.userId, language, route.params?.patientId]);
 
   useEffect(() => {
     startEntranceAnimations();
@@ -557,6 +574,7 @@ const MedicationScheduler: React.FC = () => {
       medicationId: medication._id,
       name: medicationAPI?.name || translations.unknown,
       userId: userData.userId,
+      patientUserId: selectedPatient.userId,
       dosage: dosageType,
       startHour: time.toTimeString().slice(0, 5),
       days: [...Object.keys(selectedDays || {})],
@@ -588,7 +606,7 @@ const MedicationScheduler: React.FC = () => {
         resetForm();
         
         setTimeout(() => {
-          navigation.navigate("Patient");
+          navigation.navigate("Patient", { patientId: selectedPatient?.userId });
         }, 300);
       } else {
         console.error("Error saving medication:", response.error);
@@ -719,7 +737,7 @@ const MedicationScheduler: React.FC = () => {
     >
       {/* Back Button - rendered before Header to ensure it stays behind menu */}
       <Pressable
-        onPress={() => navigation.navigate("Patient")}
+        onPress={() => navigation.navigate("Patient", { patientId: selectedPatient?.userId })}
         style={styles.backButton}
         android_ripple={{ color: isPhone ? "rgba(255,255,255,0.2)" : "rgba(0,166,157,0.2)", radius: 24 }}
       >
@@ -1108,28 +1126,33 @@ const MedicationScheduler: React.FC = () => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{translations.hour}:</Text>
           {Platform.OS !== "web" && (
-            <TextInput
-              style={styles.input}
-              value={time.toTimeString().slice(0, 5)}
-              onFocus={() => setShowTimePicker(true)}
-              showSoftInputOnFocus={false}
-              placeholder={translations.selectTime}
-              mode="flat"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              theme={inputTheme}
-              right={
-                <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
-                  <TextInput.Icon 
-                    icon="clock-outline" 
-                    onPress={() => {
-                      animateIconRotation();
-                      setShowTimePicker(true);
-                    }}
-                  />
-                </Animated.View>
-              }
-            />
+            <Pressable onPress={() => setShowTimePicker(true)}>
+              <View pointerEvents="none">
+                <TextInput
+                  style={styles.input}
+                  value={time.toTimeString().slice(0, 5)}
+                  editable={false}
+                  selectTextOnFocus={false}
+                  showSoftInputOnFocus={false}
+                  placeholder={translations.selectTime}
+                  mode="flat"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  theme={inputTheme}
+                  right={
+                    <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
+                      <TextInput.Icon 
+                        icon="clock-outline" 
+                        onPress={() => {
+                          animateIconRotation();
+                          setShowTimePicker(true);
+                        }}
+                      />
+                    </Animated.View>
+                  }
+                />
+              </View>
+            </Pressable>
           )}
           {Platform.OS !== "web" && showTimePicker && (
             <DateTimePicker
