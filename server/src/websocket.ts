@@ -26,11 +26,24 @@ const getNextScheduledTime = (
 
   baseTime.setHours(hours, minutes, 0, 0);
 
+  // Crear formateo consistente para debugging
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("es-ES", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
   console.log(
     `⏰ getNextScheduledTime - startTime: ${startTime}, intervalMs: ${intervalMs}ms (${intervalMs / 3600000}h)`,
   );
   console.log(
-    `⏰ Current time: ${now.toLocaleTimeString()}, Target time: ${baseTime.toLocaleTimeString()}`,
+    `⏰ Current time: ${formatTime(now)} (${now.getTime()}), Target time: ${formatTime(baseTime)} (${baseTime.getTime()})`,
+  );
+  console.log(
+    `⏰ Debug - Current hour: ${now.getHours()}, Current minute: ${now.getMinutes()}, Target hour: ${hours}, Target minute: ${minutes}`,
   );
 
   // Si es hoy y aún no ha llegado la hora (futuro cercano)
@@ -61,16 +74,18 @@ const getNextScheduledTime = (
       baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
     const timeUntilNext = nextOccurrence - now.getTime();
 
+    const nextOccurrenceDate = new Date(nextOccurrence);
     console.log(
-      `⏰ Next occurrence scheduled in: ${timeUntilNext}ms (${Math.round(timeUntilNext / 60000)} minutes)`,
+      `⏰ Next occurrence at: ${formatTime(nextOccurrenceDate)} (in ${timeUntilNext}ms = ${Math.round(timeUntilNext / 60000)} minutes)`,
     );
 
     // Si la próxima ocurrencia es muy pronto (menos de 1 minuto), usar el siguiente intervalo
     if (timeUntilNext < 60000) {
       const nextAfterThat = nextOccurrence + intervalMs;
       const timeUntilNextAfterThat = nextAfterThat - now.getTime();
+      const nextAfterThatDate = new Date(nextAfterThat);
       console.log(
-        `⏰ Next occurrence too soon, using subsequent one: ${timeUntilNextAfterThat}ms (${Math.round(timeUntilNextAfterThat / 60000)} minutes)`,
+        `⏰ Next occurrence too soon, using subsequent one at: ${formatTime(nextAfterThatDate)} (in ${timeUntilNextAfterThat}ms = ${Math.round(timeUntilNextAfterThat / 60000)} minutes)`,
       );
       return timeUntilNextAfterThat;
     }
