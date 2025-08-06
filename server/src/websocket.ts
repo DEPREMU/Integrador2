@@ -548,6 +548,201 @@ const handleCapsyPillRequest = (
   ws.send(JSON.stringify(capsyAlert));
 };
 
+// Función para iniciar el schedule automático del pastillero
+const startPillboxSchedule = async (
+  clientId: string,
+  pillboxId: string,
+  compartments: any[],
+) => {
+  console.log("🚀 Starting pillbox schedule for:", pillboxId);
+
+  const userClient = clients[clientId];
+  if (!userClient) {
+    console.error("❌ User client not found:", clientId);
+    return;
+  }
+
+  const translations = getTranslations(userClient.userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // Limpiar intervalos anteriores para este pastillero específico
+  if (userClient.intervalCapsy) {
+    Object.keys(userClient.intervalCapsy).forEach((key) => {
+      if (key.startsWith(`${pillboxId}_`)) {
+        const interval = userClient.intervalCapsy?.[key];
+        if (interval?.id) {
+          if (interval.type === "timeout" || interval.type === "scheduled") {
+            clearTimeout(interval.id as NodeJS.Timeout);
+          } else if (interval.type === "interval") {
+            clearInterval(interval.id as NodeJS.Timeout);
+          }
+        }
+        if (userClient.intervalCapsy) {
+          delete userClient.intervalCapsy[key];
+        }
+      }
+    });
+  } else {
+    userClient.intervalCapsy = {};
+  }
+
+  // Crear pastilla array basado en los compartments configurados
+  const pastillaArray = compartments
+    .filter((comp) => comp.medication && comp.medication.trim() !== "")
+    .map((comp) => {
+      const timeSlot = comp.timeSlots?.[0]; // Usar el primer horario configurado
+
+      if (!timeSlot) {
+        console.log(`⚠️ No time slot configured for compartment ${comp.id}`);
+        return null;
+      }
+
+      const quantity = extractQuantityFromDosage(comp.dosage);
+
+      if (timeSlot.startTime) {
+        // Configuración con hora específica (tipo scheduled)
+        return {
+          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          cantidad: quantity,
+          type: "scheduled" as const,
+          timeout: timeSlot.intervalHours * 3600000, // Requerido por compatibilidad
+          startTime: timeSlot.startTime,
+          intervalMs: timeSlot.intervalHours * 3600000, // Convertir horas a ms
+        };
+      } else if (timeSlot.intervalHours) {
+        // Configuración con intervalo (tipo interval)
+        return {
+          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          cantidad: quantity,
+          type: "interval" as const,
+          timeout: timeSlot.intervalHours * 3600000,
+        };
+      }
+
+      return null;
+    })
+    .filter((item) => item !== null);
+
+  console.log("💊 Pastilla array for schedule:", pastillaArray);
+
+  // Configurar horarios específicos para este pastillero
+  pastillaArray.forEach((value) => {
+    if (!value?.id || !value?.type || !value?.cantidad) return;
+
+    const handler = () => {
+      // Verificar si el pastillero específico está conectado
+      const capsyDevice = clientsCapsy[pillboxId];
+      if (!capsyDevice || capsyDevice.ws?.readyState !== WebSocket.OPEN) {
+        console.log(
+          `⚠️ Capsy ${pillboxId} not connected, sending notification to user only`,
+        );
+
+        const response: WebSocketResponse = {
+          type: "notification",
+          notification: {
+            reason: "Capsy not connected",
+            title: t("capsyNotConnectedTitle") || "Pastillero no conectado",
+            body:
+              t("capsyNotConnectedBody") ||
+              "El pastillero no está conectado. Por favor revisa la conexión.",
+            screen: "PillboxSettings",
+            trigger: null,
+          },
+          timestamp: new Date().toISOString(),
+        };
+        userClient.ws?.send(JSON.stringify(response));
+        return;
+      }
+
+      // Notificar al usuario
+      const userNotification: WebSocketResponse = {
+        type: "notification",
+        notification: {
+          reason: "Medication Reminder",
+          title: t("medicationReminderTitle") || "Recordatorio de medicación",
+          body: `${t("medicationReminderBody")} - Pastillero ${pillboxId}`,
+          screen: "Home",
+          trigger: null,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      userClient.ws?.send(JSON.stringify(userNotification));
+
+      // Enviar solicitud al pastillero específico
+      const capsyRequest: WebSocketResponse = {
+        type: "capsy-alert",
+        pastilla: { id: value.id, cantidad: value.cantidad },
+        timestamp: new Date().toISOString(),
+      };
+      capsyDevice.ws?.send(JSON.stringify(capsyRequest));
+    };
+
+    let timerId: NodeJS.Timeout | number;
+    let timerType: TimerType = value.type;
+
+    // Manejar diferentes tipos de configuración
+    switch (value.type) {
+      case "interval":
+        if (!value.timeout) return;
+        timerId = setInterval(handler, value.timeout);
+        break;
+
+      case "scheduled": {
+        if (!value.startTime || !value.intervalMs) return;
+
+        // Primera ejecución: setTimeout hasta la hora específica
+        const timeUntilStart = getNextScheduledTime(
+          value.startTime,
+          value.intervalMs,
+        );
+
+        console.log(
+          `⏰ Scheduling compartment ${value.id} in ${timeUntilStart}ms (${Math.round(timeUntilStart / 60000)} minutes)`,
+        );
+
+        timerId = setTimeout(() => {
+          handler(); // Ejecutar primera vez
+
+          // Configurar intervalo para repetir
+          const intervalId = setInterval(handler, value.intervalMs!);
+          const uniqueIntervalKey = `${pillboxId}_${value.id}_interval`;
+          if (userClient.intervalCapsy) {
+            userClient.intervalCapsy[uniqueIntervalKey] = {
+              id: intervalId,
+              type: "interval",
+            };
+          }
+        }, timeUntilStart);
+        timerType = "scheduled";
+        break;
+      }
+
+      default:
+        return;
+    }
+
+    // Usar una clave única que incluya el pillboxId
+    const uniqueKey = `${pillboxId}_${value.id}`;
+    if (userClient.intervalCapsy) {
+      userClient.intervalCapsy[uniqueKey] = {
+        id: timerId,
+        type: timerType,
+      };
+    }
+  });
+
+  console.log(
+    `✅ Schedule started for pillbox ${pillboxId} with ${pastillaArray.length} compartments`,
+  );
+};
+
+// Función auxiliar para extraer cantidad de la dosis
+const extractQuantityFromDosage = (dosage: string): number => {
+  if (!dosage) return 1;
+  const match = dosage.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+};
+
 // Nuevo manejador para guardar configuración del pastillero
 const handleSavePillboxConfig = async (
   clientId: string,
@@ -608,7 +803,7 @@ const handleSavePillboxConfig = async (
       .collection("pillboxConfigs")
       .replaceOne({ userId, patientId }, configWithTimestamp, { upsert: true });
 
-    console.log("📊 Upsert result:", result);
+    console.log("📊 Upsert result:", result.modifiedCount);
 
     if (!result.acknowledged) {
       const response: WebSocketResponse = {
@@ -625,6 +820,11 @@ const handleSavePillboxConfig = async (
     }
 
     console.log("✅ Pillbox config saved successfully via WebSocket");
+
+    // Después de guardar la configuración, iniciar automáticamente el schedule
+    console.log("⏰ Starting automatic schedule for pillbox:", pillboxId);
+    await startPillboxSchedule(clientId, pillboxId, compartments);
+
     const response: WebSocketResponse = {
       type: "pillbox-config-saved",
       success: true,
