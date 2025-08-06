@@ -639,7 +639,113 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   }, [compartments, selectedPatient, pillboxId]);
 
   /**
-   * Loads saved pillbox configuration for a specific patient from the database
+   * WebSocket message handler for pillbox configuration responses
+   */
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const message = event.detail;
+      console.log("📨 WebSocket message received:", message);
+
+      if (!message || !message.type) return;
+
+      switch (message.type) {
+        case "pillbox-config-saved":
+          console.log("✅ Pillbox config saved response:", message);
+          if (message.success && message.config) {
+            // Convert lastUpdated string back to Date object
+            const configWithDate = {
+              ...message.config,
+              lastUpdated: new Date(message.config.lastUpdated),
+            };
+
+            // Update local state
+            setSavedConfigs((prev) => {
+              const filtered = prev.filter(
+                (config) => config.patientId !== message.config.patientId,
+              );
+              return [...filtered, configWithDate];
+            });
+
+            console.log("💾 Config saved successfully via WebSocket");
+          } else if (message.error) {
+            console.error(
+              "❌ Error saving config via WebSocket:",
+              message.error,
+            );
+            showSnackbar(
+              "Error al guardar la configuración: " + message.error.message,
+            );
+          }
+          break;
+
+        case "pillbox-config-loaded":
+          console.log("📥 Pillbox config loaded response:", message);
+          if (message.config) {
+            // Convert lastUpdated string back to Date object
+            const configWithDate = {
+              ...message.config,
+              lastUpdated: new Date(message.config.lastUpdated),
+            };
+
+            // Update savedConfigs state to include this config
+            setSavedConfigs((prev) => {
+              const filtered = prev.filter(
+                (config) => config.patientId !== message.config.patientId,
+              );
+              return [...filtered, configWithDate];
+            });
+
+            console.log("📥 Config loaded successfully via WebSocket");
+          } else if (message.error) {
+            console.log(
+              "ℹ️ No config found via WebSocket:",
+              message.error.message,
+            );
+          }
+          break;
+
+        case "pillbox-config-deleted":
+          console.log("🗑️ Pillbox config deleted response:", message);
+          if (message.success) {
+            console.log("✅ Config deleted successfully via WebSocket");
+            showSnackbar("Configuración eliminada exitosamente");
+          } else if (message.error) {
+            console.error(
+              "❌ Error deleting config via WebSocket:",
+              message.error,
+            );
+            showSnackbar(
+              "Error al eliminar la configuración: " + message.error.message,
+            );
+          }
+          break;
+
+        default:
+          // Not a pillbox config message, ignore
+          break;
+      }
+    };
+
+    // Add event listener for custom pillbox config messages
+    window.addEventListener(
+      "pillbox-config-message",
+      handleWebSocketMessage as EventListener,
+    );
+    console.log("📡 WebSocket message handler registered for pillbox config");
+
+    return () => {
+      window.removeEventListener(
+        "pillbox-config-message",
+        handleWebSocketMessage as EventListener,
+      );
+      console.log(
+        "📡 WebSocket message handler unregistered for pillbox config",
+      );
+    };
+  }, []);
+
+  /**
+   * Loads saved pillbox configuration for a specific patient from the database via WebSocket
    * @function loadPillboxConfig
    * @param {string} patientId - The patient ID to load configuration for
    * @returns {Promise<SavedPillboxConfig | null>} The configuration or null if not found
@@ -652,39 +758,47 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     }
 
     try {
-      console.log(`Loading pillbox config for patient: ${patientId}`);
-
-      const response = await fetch(
-        getRouteAPI("/getPillboxConfig"),
-        fetchOptions<TypeBodyGetPillboxConfig>("POST", {
-          userId: userData.userId,
-          patientId: patientId,
-        }),
+      console.log(
+        `Loading pillbox config for patient via WebSocket: ${patientId}`,
       );
 
-      if (response.ok) {
-        const data: ResponseGetPillboxConfig = await response.json();
-        if (data.config) {
-          // Convert lastUpdated string back to Date object
-          const configWithDate = {
-            ...data.config,
-            lastUpdated: new Date(data.config.lastUpdated),
-          };
-          console.log(`Successfully loaded config for patient: ${patientId}`);
-          return configWithDate;
+      return new Promise((resolve) => {
+        // Set up a temporary listener for the response
+        const originalSendMessage = sendMessage;
+
+        // Send the request
+        const message = {
+          type: "get-pillbox-config",
+          userId: userData.userId,
+          patientId: patientId,
+        };
+
+        console.log("📤 Sending load config message:", message);
+        sendMessage(message);
+
+        // Since WebSocket is async, we'll return null and handle the response in a listener
+        // For now, we'll use the existing savedConfigs state
+        const existingConfig = savedConfigs.find(
+          (config) => config.patientId === patientId,
+        );
+        if (existingConfig) {
+          console.log(
+            `Found existing config in state for patient: ${patientId}`,
+          );
+          resolve(existingConfig);
+        } else {
+          console.log(`No existing config found for patient: ${patientId}`);
+          resolve(null);
         }
-      } else {
-        console.log(`No config found for patient: ${patientId}`);
-      }
+      });
     } catch (error) {
       console.error(`Error loading config for patient ${patientId}:`, error);
+      return null;
     }
-
-    return null;
   };
 
   /**
-   * Saves a pillbox configuration to the database
+   * Saves a pillbox configuration to the database via WebSocket
    * @function savePillboxConfig
    * @param {string} patientId - The patient ID
    * @param {string} pillboxId - The pillbox ID
@@ -702,40 +816,23 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     }
 
     try {
-      const response = await fetch(
-        getRouteAPI("/savePillboxConfig"),
-        fetchOptions<TypeBodySavePillboxConfig>("POST", {
-          userId: userData.userId,
-          patientId,
-          pillboxId,
-          compartments,
-        }),
-      );
+      console.log("💊 Saving pillbox config via WebSocket...");
 
-      if (response.ok) {
-        const data: ResponseSavePillboxConfig = await response.json();
-        if (data.success && data.config) {
-          // Convert lastUpdated string back to Date object
-          const configWithDate = {
-            ...data.config,
-            lastUpdated: new Date(data.config.lastUpdated),
-          };
+      // Send message via WebSocket
+      const message = {
+        type: "save-pillbox-config",
+        userId: userData.userId,
+        patientId,
+        pillboxId,
+        compartments,
+      };
 
-          // Update local state
-          setSavedConfigs((prev) => {
-            const filtered = prev.filter(
-              (config) => config.patientId !== patientId,
-            );
-            return [...filtered, configWithDate];
-          });
-        } else {
-          console.error("Error saving config:", data.error);
-          showSnackbar("Error al guardar la configuración");
-        }
-      } else {
-        console.error("Error response from save config API");
-        showSnackbar("Error al guardar la configuración");
-      }
+      console.log("📤 Sending save config message:", message);
+      sendMessage(message);
+
+      // Note: Response will be handled by WebSocket listener
+      // We don't need to wait for response here since it's async
+      console.log("✅ Save config message sent via WebSocket");
     } catch (error) {
       console.error("Error saving config:", error);
       showSnackbar("Error al guardar la configuración");
@@ -743,7 +840,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Removes a saved pillbox configuration from the database
+   * Removes a saved pillbox configuration from the database via WebSocket
    * @function removePillboxConfig
    * @param {string} patientId - The patient ID
    */
@@ -768,127 +865,95 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     console.log("🔍 Existing config found:", existingConfig);
 
     try {
-      console.log("🌐 Making API call to delete pillbox config...");
-      console.log("📤 Request data:", {
-        userId: userData.userId,
-        patientId: patientId,
-        url: getRouteAPI("/deletePillboxConfig"),
-      });
+      console.log("🌐 Making WebSocket call to delete pillbox config...");
 
-      const response = await fetch(
-        getRouteAPI("/deletePillboxConfig"),
-        fetchOptions<TypeBodyDeletePillboxConfig>("POST", {
-          userId: userData.userId,
-          patientId,
-        }),
+      const message = {
+        type: "delete-pillbox-config",
+        userId: userData.userId,
+        patientId,
+      };
+
+      console.log("� Sending delete config message:", message);
+      sendMessage(message);
+
+      // Update local state immediately (optimistic update)
+      console.log("🔄 Updating local savedConfigs state optimistically...");
+      console.log(
+        "📋 Current savedConfigs before update:",
+        savedConfigs.map((c) => ({
+          patientId: c.patientId,
+          pillboxId: c.pillboxId,
+        })),
       );
 
-      console.log("📡 Response status:", response.status);
-      console.log("📡 Response ok:", response.ok);
+      setSavedConfigs((prev) => {
+        const newConfigs = prev.filter(
+          (config) => config.patientId !== patientId,
+        );
+        console.log("📋 Configs before filtering:", prev.length);
+        console.log("📋 Configs after filtering:", newConfigs.length);
+        console.log(
+          "📋 Filtered configs details:",
+          newConfigs.map((c) => ({
+            patientId: c.patientId,
+            pillboxId: c.pillboxId,
+          })),
+        );
+        return newConfigs;
+      });
 
-      if (response.ok) {
-        const data: ResponseDeletePillboxConfig = await response.json();
-        console.log("📊 API Response received:", JSON.stringify(data, null, 2));
+      // If the removed config is for the currently selected patient, reset everything
+      if (selectedPatient === patientId) {
+        console.log(
+          "🔄 Current patient matches removed patient, resetting form...",
+        );
 
-        if (data.success) {
-          console.log("✅ API confirmed successful deletion from database");
+        // Clear pillbox ID
+        console.log("🆔 Clearing pillbox ID from:", pillboxId, "to empty");
+        setPillboxId("");
 
-          // Update local state - remove from saved configs
-          console.log("🔄 Updating local savedConfigs state...");
-          console.log(
-            "📋 Current savedConfigs before update:",
-            savedConfigs.map((c) => ({
-              patientId: c.patientId,
-              pillboxId: c.pillboxId,
-            })),
-          );
+        // Reset all compartments to empty state
+        console.log("💊 Resetting all compartments...");
+        const emptyCompartments = Array.from({ length: 10 }, (_, index) => ({
+          id: index + 1,
+          medication: "",
+          dosage: "",
+          timeSlots: [],
+        }));
+        setCompartments(emptyCompartments);
 
-          setSavedConfigs((prev) => {
-            const newConfigs = prev.filter(
-              (config) => config.patientId !== patientId,
-            );
-            console.log("📋 Configs before filtering:", prev.length);
-            console.log("📋 Configs after filtering:", newConfigs.length);
-            console.log(
-              "📋 Filtered configs details:",
-              newConfigs.map((c) => ({
-                patientId: c.patientId,
-                pillboxId: c.pillboxId,
-              })),
-            );
-            return newConfigs;
-          });
+        // Clear validation states
+        console.log("✅ Clearing validation states...");
+        setValidMedications({});
+        setShowSuggestions({});
+        setMedicationSuggestions({});
+        setTimeScheduleStates({});
 
-          // If the removed config is for the currently selected patient, reset everything
-          if (selectedPatient === patientId) {
-            console.log(
-              "🔄 Current patient matches removed patient, resetting form...",
-            );
+        // Show pillbox ID input for new assignment
+        console.log("📝 Showing pillbox ID input...");
+        setShowPillboxIdInput(true);
 
-            // Clear pillbox ID
-            console.log("🆔 Clearing pillbox ID from:", pillboxId, "to empty");
-            setPillboxId("");
+        console.log("🎯 Form reset completed for current patient");
 
-            // Reset all compartments to empty state
-            console.log("💊 Resetting all compartments...");
-            const emptyCompartments = Array.from(
-              { length: 10 },
-              (_, index) => ({
-                id: index + 1,
-                medication: "",
-                dosage: "",
-                timeSlots: [],
-              }),
-            );
-            setCompartments(emptyCompartments);
-
-            // Clear validation states
-            console.log("✅ Clearing validation states...");
-            setValidMedications({});
-            setShowSuggestions({});
-            setMedicationSuggestions({});
-            setTimeScheduleStates({});
-
-            // Show pillbox ID input for new assignment
-            console.log("📝 Showing pillbox ID input...");
-            setShowPillboxIdInput(true);
-
-            console.log("🎯 Form reset completed for current patient");
-
-            // Force re-render by updating a state
-            console.log("🔄 Forcing component re-render...");
-            setLoadingPatientData(false);
-          } else {
-            console.log(
-              "ℹ️ Removed patient is not currently selected, keeping current form",
-            );
-          }
-
-          showSnackbar("Configuración eliminada exitosamente");
-          console.log("🎉 Removal process completed successfully");
-
-          // Log final state after a delay to see the actual update
-          setTimeout(() => {
-            console.log("🔍 Final state check:");
-            console.log("  - pillboxId:", pillboxId);
-            console.log("  - showPillboxIdInput:", showPillboxIdInput);
-            console.log("  - savedConfigs count:", savedConfigs.length);
-          }, 1000);
-        } else {
-          console.error("❌ API returned error:", data.error);
-          showSnackbar(
-            "Error al eliminar la configuración: " +
-              (data.error?.message || "Error desconocido"),
-          );
-        }
+        // Force re-render by updating a state
+        console.log("🔄 Forcing component re-render...");
+        setLoadingPatientData(false);
       } else {
-        const errorText = await response.text();
-        console.error("❌ API response not OK:");
-        console.error("  - Status:", response.status);
-        console.error("  - Status Text:", response.statusText);
-        console.error("  - Response body:", errorText);
-        showSnackbar(`Error al eliminar la configuración (${response.status})`);
+        console.log(
+          "ℹ️ Removed patient is not currently selected, keeping current form",
+        );
       }
+
+      showSnackbar("Configuración eliminada exitosamente");
+      console.log("🎉 Removal process completed successfully");
+
+      // Log final state after a delay to see the actual update
+      setTimeout(() => {
+        console.log("🔍 Final state check:");
+        console.log("  - pillboxId:", pillboxId);
+        console.log("  - showPillboxIdInput:", showPillboxIdInput);
+        console.log("  - savedConfigs count:", savedConfigs.length);
+      }, 1000);
     } catch (error) {
       console.error("❌ Exception during removal:", error);
       console.error("❌ Error details:", {

@@ -548,6 +548,254 @@ const handleCapsyPillRequest = (
   ws.send(JSON.stringify(capsyAlert));
 };
 
+// Nuevo manejador para guardar configuración del pastillero
+const handleSavePillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "save-pillbox-config") return;
+
+  console.log("💊 handleSavePillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId, pillboxId, compartments } = parsedMessage;
+
+    if (!userId || !patientId || !pillboxId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Missing required fields: userId, patientId, or pillboxId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    // Validate compartments
+    if (!compartments || !Array.isArray(compartments)) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Invalid compartments data",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Validation passed, saving to database...");
+    const db = await getDatabase();
+
+    const configWithTimestamp = {
+      userId,
+      patientId,
+      pillboxId,
+      compartments,
+      lastUpdated: new Date(),
+    };
+
+    console.log("💾 Saving pillbox config:", configWithTimestamp);
+
+    // Use upsert to either insert new config or update existing one
+    const result = await db
+      .collection("pillboxConfigs")
+      .replaceOne({ userId, patientId }, configWithTimestamp, { upsert: true });
+
+    console.log("📊 Upsert result:", result);
+
+    if (!result.acknowledged) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Failed to save pillbox configuration",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config saved successfully via WebSocket");
+    const response: WebSocketResponse = {
+      type: "pillbox-config-saved",
+      success: true,
+      config: configWithTimestamp,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error saving pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-saved",
+      success: false,
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
+// Nuevo manejador para cargar configuración del pastillero
+const handleGetPillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "get-pillbox-config") return;
+
+  console.log("🔍 handleGetPillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId } = parsedMessage;
+
+    if (!userId || !patientId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-loaded",
+        error: {
+          message: "Missing required fields: userId or patientId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("🔍 Searching for pillbox config...");
+    const db = await getDatabase();
+
+    const config = await db
+      .collection("pillboxConfigs")
+      .findOne({ userId, patientId });
+
+    if (!config) {
+      console.log(
+        "❌ No pillbox config found for user:",
+        userId,
+        "patient:",
+        patientId,
+      );
+      const response: WebSocketResponse = {
+        type: "pillbox-config-loaded",
+        error: {
+          message: "No pillbox configuration found",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config found via WebSocket:", config);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-loaded",
+      config: config,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error retrieving pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-loaded",
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
+// Nuevo manejador para eliminar configuración del pastillero
+const handleDeletePillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "delete-pillbox-config") return;
+
+  console.log("🗑️ handleDeletePillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId } = parsedMessage;
+
+    if (!userId || !patientId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-deleted",
+        success: false,
+        error: {
+          message: "Missing required fields: userId or patientId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("🗑️ Deleting pillbox config...");
+    const db = await getDatabase();
+
+    const result = await db
+      .collection("pillboxConfigs")
+      .deleteOne({ userId, patientId });
+
+    if (result.deletedCount === 0) {
+      console.log(
+        "❌ No pillbox config found to delete for user:",
+        userId,
+        "patient:",
+        patientId,
+      );
+      const response: WebSocketResponse = {
+        type: "pillbox-config-deleted",
+        success: false,
+        error: {
+          message: "No pillbox configuration found to delete",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config deleted successfully via WebSocket");
+    const response: WebSocketResponse = {
+      type: "pillbox-config-deleted",
+      success: true,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error deleting pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-deleted",
+      success: false,
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
 // Nuevo manejador para confirmación de medicación tomada
 const handleMedicationTaken = (
   capsyId: string,
@@ -647,6 +895,18 @@ export const setupWebSocket = async (server: HTTPServer) => {
           case "medication-taken":
             if (!clientId || !isCapsyConnection) break;
             handleMedicationTaken(clientId, ws, parsedMessage);
+            break;
+          case "save-pillbox-config":
+            if (!clientId) break;
+            handleSavePillboxConfig(clientId, ws, parsedMessage);
+            break;
+          case "get-pillbox-config":
+            if (!clientId) break;
+            handleGetPillboxConfig(clientId, ws, parsedMessage);
+            break;
+          case "delete-pillbox-config":
+            if (!clientId) break;
+            handleDeletePillboxConfig(clientId, ws, parsedMessage);
             break;
           default:
             break;

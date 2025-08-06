@@ -68,6 +68,23 @@ export type WebSocketMessage =
   | {
       type: "capsy-pill-request";
       pastilla: { id: number; cantidad: number }[];
+    }
+  | {
+      type: "save-pillbox-config";
+      userId: string;
+      patientId: string;
+      pillboxId: string;
+      compartments: any[];
+    }
+  | {
+      type: "get-pillbox-config";
+      userId: string;
+      patientId: string;
+    }
+  | {
+      type: "delete-pillbox-config";
+      userId: string;
+      patientId: string;
     };
 
 export type Notification = {
@@ -117,6 +134,25 @@ export type WebSocketResponse =
   | {
       type: "capsy-alert";
       pastilla: { id: number; cantidad: number };
+      timestamp: string;
+    }
+  | {
+      type: "pillbox-config-saved";
+      success: boolean;
+      config?: any;
+      error?: { message: string; timestamp: string };
+      timestamp: string;
+    }
+  | {
+      type: "pillbox-config-loaded";
+      config?: any;
+      error?: { message: string; timestamp: string };
+      timestamp: string;
+    }
+  | {
+      type: "pillbox-config-deleted";
+      success: boolean;
+      error?: { message: string; timestamp: string };
       timestamp: string;
     };
 

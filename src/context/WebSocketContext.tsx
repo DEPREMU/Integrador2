@@ -90,20 +90,6 @@ const getWebSocket = (
     };
     socket.send(JSON.stringify(message));
     log("WebSocket message sent:", message);
-    setTimeout(() => {
-      const message: WebSocketMessage = {
-        type: "test",
-        testing: "waitForCapsy",
-        data: {
-          "test-capsule": {
-            id: 1,
-            type: "timeout",
-            timeout: 10000,
-          },
-        },
-      };
-      socket.send(JSON.stringify(message));
-    }, 5000);
   };
 
   socket.onmessage = async (event) => {
@@ -143,6 +129,16 @@ const getWebSocket = (
         break;
       case "pong":
         log("WebSocket pong received:", parsedMessage.timestamp);
+        break;
+      case "pillbox-config-saved":
+      case "pillbox-config-loaded":
+      case "pillbox-config-deleted":
+        // Emit custom event for pillbox configuration messages
+        const event = new CustomEvent("pillbox-config-message", {
+          detail: parsedMessage,
+        });
+        window.dispatchEvent(event);
+        log("Pillbox config message dispatched:", parsedMessage.type);
         break;
       default:
         log("Unknown message type:", parsedMessage);
