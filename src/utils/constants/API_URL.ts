@@ -2,7 +2,7 @@
 // This file is auto-generated. Do not edit it manually if it's not necessary.
 // Generated on 2025-08-06T18:42:33.710Z
 import { Platform } from "react-native";
-const isDev = process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV !== "development";
 export const API_URL = !isDev
   ? "http://141.148.162.194:8080/api/v1"
   : Platform.OS === "web"

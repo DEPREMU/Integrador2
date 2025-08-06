@@ -26,17 +26,47 @@ const getNextScheduledTime = (
 
   baseTime.setHours(hours, minutes, 0, 0);
 
-  // Si es hoy y aún no ha llegado la hora
+  console.log(
+    `⏰ getNextScheduledTime - startTime: ${startTime}, intervalMs: ${intervalMs}ms (${intervalMs / 3600000}h)`,
+  );
+  console.log(
+    `⏰ Current time: ${now.toLocaleTimeString()}, Target time: ${baseTime.toLocaleTimeString()}`,
+  );
+
+  // Si es hoy y aún no ha llegado la hora (futuro cercano)
   if (baseTime > now) {
-    return baseTime.getTime() - now.getTime();
+    const timeUntil = baseTime.getTime() - now.getTime();
+    console.log(
+      `⏰ Time until target: ${timeUntil}ms (${Math.round(timeUntil / 60000)} minutes)`,
+    );
+    return timeUntil;
   }
 
-  // Calcular cuántos intervalos han pasado desde la hora base
+  // Si la hora ya pasó hoy, calcular la próxima ocurrencia
   const timeSinceBase = now.getTime() - baseTime.getTime();
+  console.log(
+    `⏰ Time since base: ${timeSinceBase}ms (${Math.round(timeSinceBase / 60000)} minutes)`,
+  );
+
+  // Si han pasado menos de 30 minutos desde la hora programada, usar la siguiente ocurrencia del intervalo
+  if (timeSinceBase < 30 * 60000) {
+    // Menos de 30 minutos
+    console.log(
+      `⏰ Recent time slot, scheduling next interval in ${intervalMs}ms`,
+    );
+    return intervalMs;
+  }
+
+  // Para casos donde la hora ya pasó hace más tiempo, calcular la próxima ocurrencia
   const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
   const nextInterval = baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
+  const timeUntilNext = nextInterval - now.getTime();
 
-  return nextInterval - now.getTime();
+  console.log(
+    `⏰ Intervals passed: ${intervalsPassed}, next in: ${timeUntilNext}ms (${Math.round(timeUntilNext / 60000)} minutes)`,
+  );
+
+  return timeUntilNext;
 };
 
 export const isConnectedUser = (clientId: string): boolean => {
@@ -592,6 +622,13 @@ const startPillboxSchedule = async (
     .map((comp) => {
       const timeSlot = comp.timeSlots?.[0]; // Usar el primer horario configurado
 
+      console.log(`🔍 Processing compartment ${comp.id}:`, {
+        medication: comp.medication,
+        timeSlot: timeSlot,
+        hasStartTime: !!timeSlot?.startTime,
+        intervalHours: timeSlot?.intervalHours,
+      });
+
       if (!timeSlot) {
         console.log(`⚠️ No time slot configured for compartment ${comp.id}`);
         return null;
@@ -601,16 +638,32 @@ const startPillboxSchedule = async (
 
       if (timeSlot.startTime) {
         // Configuración con hora específica (tipo scheduled)
+        const intervalMs = timeSlot.intervalHours * 3600000;
+        console.log(
+          `⏰ Creating scheduled config for compartment ${comp.id}:`,
+          {
+            startTime: timeSlot.startTime,
+            intervalHours: timeSlot.intervalHours,
+            intervalMs: intervalMs,
+            quantity: quantity,
+          },
+        );
+
         return {
           id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
           cantidad: quantity,
           type: "scheduled" as const,
           timeout: timeSlot.intervalHours * 3600000, // Requerido por compatibilidad
           startTime: timeSlot.startTime,
-          intervalMs: timeSlot.intervalHours * 3600000, // Convertir horas a ms
+          intervalMs: intervalMs, // Convertir horas a ms
         };
       } else if (timeSlot.intervalHours) {
         // Configuración con intervalo (tipo interval)
+        console.log(`🔄 Creating interval config for compartment ${comp.id}:`, {
+          intervalHours: timeSlot.intervalHours,
+          quantity: quantity,
+        });
+
         return {
           id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
           cantidad: quantity,
@@ -619,11 +672,15 @@ const startPillboxSchedule = async (
         };
       }
 
+      console.log(`⚠️ No valid configuration for compartment ${comp.id}`);
       return null;
     })
     .filter((item) => item !== null);
 
-  console.log("💊 Pastilla array for schedule:", pastillaArray);
+  console.log(
+    "💊 Final pastilla array for schedule:",
+    JSON.stringify(pastillaArray, null, 2),
+  );
 
   // Configurar horarios específicos para este pastillero
   pastillaArray.forEach((value) => {
@@ -690,6 +747,15 @@ const startPillboxSchedule = async (
       case "scheduled": {
         if (!value.startTime || !value.intervalMs) return;
 
+        console.log(
+          `⏰ Setting up scheduled timer for compartment ${value.id}:`,
+        );
+        console.log(`   - Start time: ${value.startTime}`);
+        console.log(
+          `   - Interval: ${value.intervalMs}ms (${value.intervalMs / 3600000} hours)`,
+        );
+        console.log(`   - Current time: ${new Date().toLocaleTimeString()}`);
+
         // Primera ejecución: setTimeout hasta la hora específica
         const timeUntilStart = getNextScheduledTime(
           value.startTime,
@@ -697,13 +763,19 @@ const startPillboxSchedule = async (
         );
 
         console.log(
-          `⏰ Scheduling compartment ${value.id} in ${timeUntilStart}ms (${Math.round(timeUntilStart / 60000)} minutes)`,
+          `⏰ Final scheduling result for compartment ${value.id}: ${timeUntilStart}ms (${Math.round(timeUntilStart / 60000)} minutes)`,
         );
 
         timerId = setTimeout(() => {
+          console.log(
+            `🔔 Executing scheduled reminder for compartment ${value.id} at ${new Date().toLocaleTimeString()}`,
+          );
           handler(); // Ejecutar primera vez
 
           // Configurar intervalo para repetir
+          console.log(
+            `🔄 Setting up repeating interval of ${value.intervalMs}ms for compartment ${value.id}`,
+          );
           const intervalId = setInterval(handler, value.intervalMs!);
           const uniqueIntervalKey = `${pillboxId}_${value.id}_interval`;
           if (userClient.intervalCapsy) {
