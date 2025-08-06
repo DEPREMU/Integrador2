@@ -37,7 +37,7 @@ const getNextScheduledTime = (
   if (baseTime > now) {
     const timeUntil = baseTime.getTime() - now.getTime();
     console.log(
-      `⏰ Time until target: ${timeUntil}ms (${Math.round(timeUntil / 60000)} minutes)`,
+      `⏰ Time until target (future): ${timeUntil}ms (${Math.round(timeUntil / 60000)} minutes)`,
     );
     return timeUntil;
   }
@@ -45,28 +45,42 @@ const getNextScheduledTime = (
   // Si la hora ya pasó hoy, calcular la próxima ocurrencia
   const timeSinceBase = now.getTime() - baseTime.getTime();
   console.log(
-    `⏰ Time since base: ${timeSinceBase}ms (${Math.round(timeSinceBase / 60000)} minutes)`,
+    `⏰ Time since base (past): ${timeSinceBase}ms (${Math.round(timeSinceBase / 60000)} minutes)`,
   );
 
-  // Si han pasado menos de 30 minutos desde la hora programada, usar la siguiente ocurrencia del intervalo
-  if (timeSinceBase < 30 * 60000) {
-    // Menos de 30 minutos
+  // Para casos donde la hora ya pasó, calcular cuándo será la próxima ocurrencia basada en el intervalo
+  if (timeSinceBase > 0) {
+    // Calcular cuántos intervalos completos han pasado desde la hora base
+    const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
     console.log(
-      `⏰ Recent time slot, scheduling next interval in ${intervalMs}ms`,
+      `⏰ Complete intervals passed since base time: ${intervalsPassed}`,
     );
-    return intervalMs;
+
+    // Calcular el tiempo de la próxima ocurrencia
+    const nextOccurrence =
+      baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
+    const timeUntilNext = nextOccurrence - now.getTime();
+
+    console.log(
+      `⏰ Next occurrence scheduled in: ${timeUntilNext}ms (${Math.round(timeUntilNext / 60000)} minutes)`,
+    );
+
+    // Si la próxima ocurrencia es muy pronto (menos de 1 minuto), usar el siguiente intervalo
+    if (timeUntilNext < 60000) {
+      const nextAfterThat = nextOccurrence + intervalMs;
+      const timeUntilNextAfterThat = nextAfterThat - now.getTime();
+      console.log(
+        `⏰ Next occurrence too soon, using subsequent one: ${timeUntilNextAfterThat}ms (${Math.round(timeUntilNextAfterThat / 60000)} minutes)`,
+      );
+      return timeUntilNextAfterThat;
+    }
+
+    return timeUntilNext;
   }
 
-  // Para casos donde la hora ya pasó hace más tiempo, calcular la próxima ocurrencia
-  const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
-  const nextInterval = baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
-  const timeUntilNext = nextInterval - now.getTime();
-
-  console.log(
-    `⏰ Intervals passed: ${intervalsPassed}, next in: ${timeUntilNext}ms (${Math.round(timeUntilNext / 60000)} minutes)`,
-  );
-
-  return timeUntilNext;
+  // Fallback: si algo sale mal, usar el intervalo completo
+  console.log(`⏰ Fallback: using full interval ${intervalMs}ms`);
+  return intervalMs;
 };
 
 export const isConnectedUser = (clientId: string): boolean => {
