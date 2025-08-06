@@ -225,6 +225,7 @@ export type typeLanguages = {
   noMedicationsReportMessage: string;
   errorTitle: string;
   generating: string;
+  loadingPatient: string;
   // PDF Content translations
   pdfMedicalReportTitle: string;
   pdfGeneratedOn: string;

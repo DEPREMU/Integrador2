@@ -4,7 +4,7 @@ import Header from "@components/common/Header";
 import SnackbarAlert from "@components/common/SnackbarAlert";
 import { useLanguage } from "@context/LanguageContext";
 import { stylesPatientScreen } from "@styles/screens/stylesPatientScreen";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@navigation/navigationTypes";
 import { useResponsiveLayout } from "@context/LayoutContext";
@@ -35,10 +35,13 @@ type PatientScreenNavigationProp = NativeStackNavigationProp<
   "Patient"
 >;
 
+type PatientScreenRouteProp = RouteProp<RootStackParamList, "Patient">;
+
 const PatientScreen: React.FC = () => {
   const styles = stylesPatientScreen();
   const { translations } = useLanguage();
   const navigation = useNavigation<PatientScreenNavigationProp>();
+  const route = useRoute<PatientScreenRouteProp>();
   const { isPhone } = useResponsiveLayout();
   const { userData } = useUserContext();
   const [medications, setMedications] = useState<MedicationUser[]>([]);
@@ -49,8 +52,11 @@ const PatientScreen: React.FC = () => {
   const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
   const { generateMedicationReport, isGenerating } = usePDFReport();
 
-  const loadUserMedications = async () => {
-    if (!userData?.userId) {
+  const loadUserMedications = async (targetPatientId?: string) => {
+    // Use the targetPatientId if provided, otherwise use selectedPatient, fallback to userData
+    const patientId = targetPatientId || selectedPatient?.userId || userData?.userId;
+    
+    if (!patientId) {
       setLoading(false);
       return;
     }
@@ -59,14 +65,14 @@ const PatientScreen: React.FC = () => {
       const response: ResponseGetUserMedications = await fetch(
         getRouteAPI("/getUserMedications"),
         fetchOptions<TypeBodyGetUserMedications>("POST", {
-          userId: userData.userId,
+          userId: patientId, // Use the specific patient's ID
         })
       ).then((res) => res.json());
 
       if (response.error) {
         console.error("Error loading medications:", response.error);
       } else {
-        log("Loaded medications:", response.medications);
+        log(`Loaded medications for patient ${patientId}:`, response.medications);
         setMedications(response.medications || []);
       }
     } catch (error) {
@@ -80,6 +86,8 @@ const PatientScreen: React.FC = () => {
     if (!userData?.patientUserIds || userData.patientUserIds.length === 0)
       return;
 
+    setLoading(true); // Start loading
+    
     const data: ResponseGetUserPatients = await fetch(
       getRouteAPI("/getUserPatients"),
       fetchOptions("POST", { userId: userData.userId })
@@ -87,12 +95,38 @@ const PatientScreen: React.FC = () => {
 
     if (data.error) {
       console.error("Error fetching patients:", data.error);
+      setLoading(false);
       return;
     }
     const { patients } = data;
     log(patients, "patients");
-    if (patients.length === 0) return;
-    setSelectedPatient(patients[0]);
+    if (patients.length === 0) {
+      setLoading(false);
+      return;
+    }
+    
+    // Check if we have a specific patient from navigation params
+    const patientIdFromRoute = route.params?.patientId;
+    if (patientIdFromRoute) {
+      const targetPatient = patients.find(patient => patient.userId === patientIdFromRoute);
+      if (targetPatient) {
+        log(`Setting selected patient from route: ${targetPatient.name} (${targetPatient.userId})`);
+        setSelectedPatient(targetPatient);
+        // Load medications for this specific patient
+        await loadUserMedications(targetPatient.userId);
+      } else {
+        log(`Patient with ID ${patientIdFromRoute} not found, defaulting to first patient`);
+        setSelectedPatient(patients[0]);
+        // Load medications for the first patient
+        await loadUserMedications(patients[0].userId);
+      }
+    } else {
+      setSelectedPatient(patients[0]);
+      // Load medications for the first patient
+      await loadUserMedications(patients[0].userId);
+    }
+    
+    setLoading(false); // End loading after patient is selected and medications loaded
   };
 
   const handleDeleteMedication = async (medicationId: string) => {
@@ -120,24 +154,25 @@ const PatientScreen: React.FC = () => {
 
   useEffect(() => {
     if (userData) {
-      loadPatients();
+      loadPatients(); // This now loads both patients and medications for the selected patient
     }
-    loadUserMedications();
-  }, [userData?.userId]);
+  }, [userData?.userId, route.params?.patientId]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      log("PatientScreen focused, reloading medications...");
-      loadUserMedications();
+      log("PatientScreen focused, reloading medications for selected patient...");
+      if (selectedPatient?.userId) {
+        loadUserMedications(selectedPatient.userId);
+      }
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, selectedPatient?.userId]);
 
   const handleGeneratePDF = async () => {
     try {
-      const patientName = selectedPatient?.name || userData?.name || translations.patientName;
-      const patientId = selectedPatient?.userId || userData?.userId || 'unknown';
+      const patientName = selectedPatient?.name || translations.patientName;
+      const patientId = selectedPatient?.userId || 'unknown';
       
       await generateMedicationReport(medications, patientName, patientId);
       
@@ -157,20 +192,29 @@ const PatientScreen: React.FC = () => {
     <View style={styles.container}>
       <Header />
       
-      <View style={styles.contentContainer}>
-        <View style={styles.patientInfo}>
-          <Text style={styles.patientName}>
-            {selectedPatient?.name || userData?.name || translations.patientName}
-          </Text>
-          <Text style={styles.patientDescription}>
-            {translations.patientDescription}
+      {/* Show loading when navigating to a specific patient or when loading */}
+      {(loading || (route.params?.patientId && !selectedPatient) || (route.params?.patientId && selectedPatient?.userId !== route.params.patientId)) ? (
+        <View style={[styles.contentContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#00a69d" />
+          <Text style={{ marginTop: 16, color: '#666', fontSize: 16 }}>
+            {translations.loadingPatient}
           </Text>
         </View>
+      ) : (
+        <View style={styles.contentContainer}>
+          <View style={styles.patientInfo}>
+            <Text style={styles.patientName}>
+              {selectedPatient?.name || translations.patientName}
+            </Text>
+            <Text style={styles.patientDescription}>
+              {selectedPatient?.description || translations.patientDescription}
+            </Text>
+          </View>
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("Schedule")}
+            onPress={() => navigation.navigate("Schedule", { patientId: selectedPatient?.userId })}
             activeOpacity={0.8}
           >
             <View style={styles.buttonContent}>
@@ -215,7 +259,8 @@ const PatientScreen: React.FC = () => {
           loading={loading} 
           onDeleteMedication={handleDeleteMedication}
         />
-      </View>
+        </View>
+      )}
       
       <SnackbarAlert
         visible={snackbarVisible}
