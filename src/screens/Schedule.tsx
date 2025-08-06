@@ -62,7 +62,7 @@ import Button from "@components/common/Button";
 import Header from "@components/common/Header";
 import SnackbarAlert from "@components/common/SnackbarAlert";
 import { useLanguage } from "@context/LanguageContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useUserContext } from "@context/UserContext";
 import { TextInput, Text } from "react-native-paper";
 import { RootStackParamList } from "@navigation/navigationTypes";
@@ -84,6 +84,8 @@ type ScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Schedule"
 >;
+
+type ScheduleScreenRouteProp = RouteProp<RootStackParamList, "Schedule">;
 
 /**
  * Medication data structure for search and selection
@@ -112,9 +114,9 @@ type Medication = {
  * @returns {JSX.Element} The rendered medication scheduler interface
  * 
  * @example
- * ```tsx
+ * tsx
  * <MedicationScheduler />
- * ```
+ * 
  * 
  * @hooks
  * - useStylesScheduleMedication: Custom styling with responsive design
@@ -154,6 +156,7 @@ type Medication = {
 const MedicationScheduler: React.FC = () => {
   const { styles, isPhone } = useStylesScheduleMedication();
   const navigation = useNavigation<ScheduleScreenNavigationProp>();
+  const route = useRoute<ScheduleScreenRouteProp>();
   const { userData } = useUserContext();
   const { language, translations } = useLanguage();
 
@@ -257,16 +260,16 @@ const MedicationScheduler: React.FC = () => {
     urgency: false,
   });
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  
+
   // Snackbar states
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
 
-  const startEntranceAnimations = useCallback(() => {}, []);
-  const startPulseAnimation = useCallback(() => {}, []);
-  const animateButtonPress = useCallback(() => {}, []);
-  const animateIconRotation = useCallback(() => {}, []);
+  const startEntranceAnimations = useCallback(() => { }, []);
+  const startPulseAnimation = useCallback(() => { }, []);
+  const animateButtonPress = useCallback(() => { }, []);
+  const animateIconRotation = useCallback(() => { }, []);
   const resetForm = useCallback(() => {
     setMedication(null);
     setDose("");
@@ -277,7 +280,7 @@ const MedicationScheduler: React.FC = () => {
     setRequiredDoses(0);
     setUrgency({ low: getUrgencyValue('low') });
     setTime(new Date());
-            // Reset validation states when form is reset
+    // Reset validation states when form is reset
     setHasAttemptedSubmit(false);
     setFieldErrors({
       medication: false,
@@ -297,7 +300,7 @@ const MedicationScheduler: React.FC = () => {
       intervalHours: intervalHours <= 0,
       urgency: !urgency || Object.keys(urgency).length === 0,
     };
-    
+
     setFieldErrors(errors);
     return !Object.values(errors).some(error => error);
   }, [medication, dose, selectedDays, intervalHours, urgency]);
@@ -305,43 +308,43 @@ const MedicationScheduler: React.FC = () => {
   const getValidationErrors = useCallback(() => {
     const errors = [];
     const doseValue = parseFloat(dose);
-    
+
     if (!medication) {
       errors.push(translations.medicationRequired);
     }
-    
+
     if (!dose || dose.trim() === "" || isNaN(doseValue) || doseValue <= 0) {
       errors.push(translations.dosageRequired);
     }
-    
+
     if (!selectedDays || Object.keys(selectedDays).length === 0) {
       errors.push(translations.daysRequired);
     }
-    
+
     if (intervalHours <= 0) {
       errors.push(translations.intervalRequired);
     }
-    
+
     if (!urgency || Object.keys(urgency).length === 0) {
       errors.push(translations.urgencyRequired);
     }
-    
+
     return errors;
   }, [medication, dose, selectedDays, intervalHours, urgency, translations]);
 
   const isFormValid = useMemo(() => {
     const doseValue = parseFloat(dose);
-    const isValid = medication && 
-           dose && 
-           dose.trim() !== "" && 
-           !isNaN(doseValue) && 
-           doseValue > 0 &&
-           selectedDays && 
-           Object.keys(selectedDays).length > 0 && 
-           intervalHours > 0 && 
-           urgency && 
-           Object.keys(urgency).length > 0;
-    
+    const isValid = medication &&
+      dose &&
+      dose.trim() !== "" &&
+      !isNaN(doseValue) &&
+      doseValue > 0 &&
+      selectedDays &&
+      Object.keys(selectedDays).length > 0 &&
+      intervalHours > 0 &&
+      urgency &&
+      Object.keys(urgency).length > 0;
+
     if (isValid && hasAttemptedSubmit) {
       setTimeout(() => {
         setFieldErrors({
@@ -353,7 +356,7 @@ const MedicationScheduler: React.FC = () => {
         });
       }, 50);
     }
-    
+
     return isValid;
   }, [medication, dose, selectedDays, intervalHours, urgency, hasAttemptedSubmit]);
 
@@ -370,7 +373,7 @@ const MedicationScheduler: React.FC = () => {
           urgency: !urgency || Object.keys(urgency).length === 0,
         }));
       }, 100);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [hasAttemptedSubmit, medication, dose, selectedDays, intervalHours, urgency]);
@@ -394,7 +397,20 @@ const MedicationScheduler: React.FC = () => {
       const { patients } = data;
       log(patients, "patients");
       if (patients.length === 0) return;
-      setSelectedPatient(patients[0]);
+
+      // Use route parameter to select specific patient if available
+      const patientIdFromRoute = route.params?.patientId;
+      if (patientIdFromRoute) {
+        const specificPatient = patients.find(p => p.userId === patientIdFromRoute);
+        if (specificPatient) {
+          setSelectedPatient(specificPatient);
+        } else {
+          setSelectedPatient(patients[0]);
+        }
+      } else {
+        setSelectedPatient(patients[0]);
+      }
+
       setPatients(patients);
       patients.forEach((patient: User) => log("patient:", patient));
     };
@@ -403,10 +419,10 @@ const MedicationScheduler: React.FC = () => {
       console.log("getMedications() started");
       log("Fetching medications...");
       setIsMedicationsLoading(true);
-      
+
       try {
         console.log("About to call fetch with URL:", getRouteAPI("/getAllMedications"));
-        
+
         const response = await fetch(
           getRouteAPI("/getAllMedications"),
           fetchOptions<TypeBodyGetAllMedications>("POST", {
@@ -419,13 +435,13 @@ const MedicationScheduler: React.FC = () => {
         );
 
         console.log("Response received:", response.status, response.statusText);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data: ResponseGetAllMedications = await response.json();
-        
+
         console.log("JSON parsed successfully. Data preview:", {
           hasError: !!data.error,
           medicationsCount: data.medications?.length,
@@ -454,7 +470,7 @@ const MedicationScheduler: React.FC = () => {
         setMedicationsList(medicationsWithStringIds);
         setIsMedicationsLoading(false);
         console.log("getMedications() completed successfully");
-        
+
       } catch (error) {
         console.error("getMedications() failed with error:", error);
         console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available');
@@ -465,7 +481,7 @@ const MedicationScheduler: React.FC = () => {
 
     const getUserScheduledMedications = async () => {
       if (!userData?.userId) return;
-      
+
       log("Fetching user scheduled medications...");
       const data: ResponseGetUserMedications = await fetch(
         getRouteAPI("/getUserMedications"),
@@ -478,7 +494,7 @@ const MedicationScheduler: React.FC = () => {
         console.error("Error fetching user medications:", data.error);
         return;
       }
-      
+
       log("User medications loaded:", data.medications);
       setSchedules(data.medications || []);
     };
@@ -502,7 +518,7 @@ const MedicationScheduler: React.FC = () => {
       urgency: !!urgency,
       isFormValid
     });
-    
+
     if (isFormValid) {
       startPulseAnimation();
     }
@@ -513,7 +529,7 @@ const MedicationScheduler: React.FC = () => {
       const timeoutId = setTimeout(() => {
         validateFields();
       }, 150);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [hasAttemptedSubmit, validateFields]);
@@ -528,13 +544,13 @@ const MedicationScheduler: React.FC = () => {
   const handleAddSchedule = useCallback(async () => {
     console.log("handleAddSchedule called");
     animateButtonPress();
-    
+
     if (!validateFields()) {
       console.warn("Form validation failed");
       setHasAttemptedSubmit(true);
       return;
     }
-    
+
     if (!selectedPatient || !medication || !userData?.userId) {
       console.error("Missing required data:", { selectedPatient, medication, userData: userData?.userId });
       alert("Por favor selecciona un paciente y un medicamento");
@@ -542,9 +558,9 @@ const MedicationScheduler: React.FC = () => {
       return;
     }
 
-    console.log("Required data available:", { 
-      selectedPatient: selectedPatient.name, 
-      medication: medication.name 
+    console.log("Required data available:", {
+      selectedPatient: selectedPatient.name,
+      medication: medication.name
     });
 
     setIsSubmitting(true);
@@ -552,11 +568,11 @@ const MedicationScheduler: React.FC = () => {
     const medicationAPI = medicationsList?.find(
       (med) => med._id === medication?._id
     ) as Medication;
-    
+
     const newSchedule: Omit<MedicationUser, "_id"> = {
       medicationId: medication._id,
       name: medicationAPI?.name || translations.unknown,
-      userId: userData.userId,
+      userId: selectedPatient.userId,
       dosage: dosageType,
       startHour: time.toTimeString().slice(0, 5),
       days: [...Object.keys(selectedDays || {})],
@@ -571,7 +587,7 @@ const MedicationScheduler: React.FC = () => {
 
     try {
       console.log("Sending request to backend...");
-      
+
       const response: ResponseAddUserMedication = await fetch(
         getRouteAPI("/addUserMedication"),
         fetchOptions<TypeBodyAddUserMedication>("POST", {
@@ -582,13 +598,13 @@ const MedicationScheduler: React.FC = () => {
       if (response.success) {
         console.log("Medication saved successfully!");
         showSnackbar(translations.medicationAddedSuccessfully, "success");
-        
+
         setSchedules((prev) => [...prev, response.medication!]);
-        
+
         resetForm();
-        
+
         setTimeout(() => {
-          navigation.navigate("Patient");
+          navigation.navigate("Patient", { patientId: selectedPatient?.userId });
         }, 300);
       } else {
         console.error("Error saving medication:", response.error);
@@ -624,7 +640,7 @@ const MedicationScheduler: React.FC = () => {
   const toggleDay = useCallback((day: DayOfWeek) => {
     setSelectedDays((prev) => {
       if (!prev) return { [day]: daysOfWeek[day] } as DaysOfWeek;
-      
+
       const newSelectedDays = { ...prev };
       if (Object.keys(newSelectedDays).includes(day)) {
         delete newSelectedDays[day];
@@ -677,12 +693,12 @@ const MedicationScheduler: React.FC = () => {
 
     setIsSearchingMedications(true);
     setHasSearched(true);
-    
+
     try {
       const found = medicationsList?.filter((med) =>
         med[language !== "en" ? `name_${language}` : "name"]?.toLowerCase()?.includes(searchValue.toLowerCase())
       );
-      
+
       log(found?.length, "foundMedications", searchValue);
       if (found) setSearchMedicationsList(found);
       else setSearchMedicationsList([]);
@@ -708,7 +724,7 @@ const MedicationScheduler: React.FC = () => {
   });
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.screenContainer,
         {
@@ -719,29 +735,31 @@ const MedicationScheduler: React.FC = () => {
     >
       {/* Back Button - rendered before Header to ensure it stays behind menu */}
       <Pressable
-        onPress={() => navigation.navigate("Patient")}
+        onPress={() => navigation.navigate("Patient", { patientId: selectedPatient?.userId })}
         style={styles.backButton}
         android_ripple={{ color: isPhone ? "rgba(255,255,255,0.2)" : "rgba(0,166,157,0.2)", radius: 24 }}
       >
         <Ionicons name="arrow-back" size={24} color={isPhone ? "white" : "#00a69d"} />
       </Pressable>
-      
+
       <Header />
-      
-      <ScrollView 
-        style={styles.container} 
+
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
+        <Animated.View
           style={[
             styles.pageHeader,
             {
               opacity: headerAnim,
-              transform: [{ translateY: Animated.multiply(headerAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0],
-              }), 1) }],
+              transform: [{
+                translateY: Animated.multiply(headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }), 1)
+              }],
             }
           ]}
         >
@@ -749,15 +767,17 @@ const MedicationScheduler: React.FC = () => {
           <Text style={styles.pageSubtitle}>{translations.manageMedicationsDescription}</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           style={[
             styles.header,
             {
               opacity: patientAnim,
-              transform: [{ translateY: Animated.multiply(patientAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0],
-              }), 1) }],
+              transform: [{
+                translateY: Animated.multiply(patientAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }), 1)
+              }],
             }
           ]}
         >
@@ -770,7 +790,7 @@ const MedicationScheduler: React.FC = () => {
                   style={[
                     styles.patientButton,
                     selectedPatient?.userId === patient.userId &&
-                      styles.selectedPatient,
+                    styles.selectedPatient,
                   ]}
                   onPress={() => {
                     animateButtonPress();
@@ -792,547 +812,549 @@ const MedicationScheduler: React.FC = () => {
           </View>
         </Animated.View>
 
-      <Animated.View 
-        style={[
-          styles.formContainer,
-          {
-            opacity: formAnim,
-            transform: [{ translateY: Animated.multiply(formAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0],
-            }), 1) }],
-          }
-        ]}
-      >
-        <View style={styles.formContent}>
-        <View style={styles.inputGroup}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.label, fieldErrors.medication && hasAttemptedSubmit && styles.labelError]}>
-              {translations.medicationText}:
-            </Text>
-            {fieldErrors.medication && hasAttemptedSubmit && (
-              <Text style={styles.requiredIndicator}>●</Text>
-            )}
-          </View>
-          {fieldErrors.medication && hasAttemptedSubmit && (
-            <Text style={styles.errorText}>{translations.medicationRequired}</Text>
-          )}
-          {!medication && (
-            <TextInput
-              style={styles.input}
-              value={searchValue}
-              onChangeText={(text) => {
-                setSearchValue(text);
-                setHasTriedRetry(false);
-                if (text.length < 3) {
-                  setSearchMedicationsList([]);
-                  setHasSearched(false);
-                } else {
-                  setHasSearched(false);
-                }
-              }}
-              onSubmitEditing={() => {
-                if (searchValue.length >= 3) {
-                  handleSearchMedication();
-                }
-              }}
-              autoCorrect={false}
-              autoCapitalize="none"
-              placeholder={translations.medicationPlaceholder}
-              mode="flat"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              theme={inputTheme}
-              right={
-                <TextInput.Icon 
-                  icon={isSearchingMedications ? "loading" : "magnify"}
-                  onPress={() => {
-                    if (searchValue.length >= 3 && !isSearchingMedications) {
+        <Animated.View
+          style={[
+            styles.formContainer,
+            {
+              opacity: formAnim,
+              transform: [{
+                translateY: Animated.multiply(formAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }), 1)
+              }],
+            }
+          ]}
+        >
+          <View style={styles.formContent}>
+            <View style={styles.inputGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label, fieldErrors.medication && hasAttemptedSubmit && styles.labelError]}>
+                  {translations.medicationText}:
+                </Text>
+                {fieldErrors.medication && hasAttemptedSubmit && (
+                  <Text style={styles.requiredIndicator}>●</Text>
+                )}
+              </View>
+              {fieldErrors.medication && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>{translations.medicationRequired}</Text>
+              )}
+              {!medication && (
+                <TextInput
+                  style={styles.input}
+                  value={searchValue}
+                  onChangeText={(text) => {
+                    setSearchValue(text);
+                    setHasTriedRetry(false);
+                    if (text.length < 3) {
+                      setSearchMedicationsList([]);
+                      setHasSearched(false);
+                    } else {
+                      setHasSearched(false);
+                    }
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchValue.length >= 3) {
                       handleSearchMedication();
                     }
                   }}
-                  disabled={isSearchingMedications || searchValue.length < 3}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  placeholder={translations.medicationPlaceholder}
+                  mode="flat"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  theme={inputTheme}
+                  right={
+                    <TextInput.Icon
+                      icon={isSearchingMedications ? "loading" : "magnify"}
+                      onPress={() => {
+                        if (searchValue.length >= 3 && !isSearchingMedications) {
+                          handleSearchMedication();
+                        }
+                      }}
+                      disabled={isSearchingMedications || searchValue.length < 3}
+                      style={{
+                        transform: isSearchingMedications ? [{ rotate: iconRotation }] : undefined
+                      }}
+                    />
+                  }
+                />
+              )}
+
+              {/* Search requirement hint */}
+              {!medication && searchValue.length > 0 && searchValue.length < 3 && (
+                <Text style={{
+                  color: '#666666',
+                  fontSize: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  fontStyle: 'italic'
+                }}>
+                  {translations.searchHint} ({searchValue.length}/3)
+                </Text>
+              )}
+
+              {/* Search hint when user has enough characters */}
+              {!medication && searchValue.length >= 3 && !isSearchingMedications && searchMedicationsList.length === 0 && (
+                <Text style={{
+                  color: '#00a69d',
+                  fontSize: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  fontStyle: 'italic',
+                  textAlign: 'center'
+                }}>
+                  {language === 'es'
+                    ? 'Presiona Enter o haz clic en la lupa para buscar'
+                    : 'Press Enter or click the magnifying glass to search'
+                  }
+                </Text>
+              )}
+
+              {/* Loading medications message */}
+              {!medication && hasSearched && !isSearchingMedications && searchMedicationsList.length === 0 && searchValue.length >= 3 && isMedicationsLoading && (
+                <Text style={{
+                  color: '#00a69d',
+                  fontSize: 14,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}>
+                  {translations.loadingMedications}
+                </Text>
+              )}
+
+              {/* No medications found message */}
+              {!medication && hasSearched && !isSearchingMedications && searchMedicationsList.length === 0 && searchValue.length >= 3 && !isMedicationsLoading && (
+                <Text style={{
+                  color: '#ff6b6b',
+                  fontSize: 14,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}>
+                  {translations.noMedicationsFoundMessage}
+                </Text>
+              )}
+
+              {medication && (
+                <Button
+                  handlePress={() => {
+                    setMedication(null);
+                    setSearchValue("");
+                    setSearchMedicationsList([]);
+                  }}
+                  children={
+                    <View style={styles.clearMedicationChildren}>
+                      <View style={styles.medicationIcon}>
+                        <Ionicons name="medical" size={16} color="#00a69d" />
+                      </View>
+                      <Text style={styles.clearMedicationText}>
+                        {medication?.[language !== "en" ? `name_${language}` : "name"] || translations.unknown}
+                      </Text>
+                      <View style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>×</Text>
+                      </View>
+                    </View>
+                  }
+                  replaceStyles={{
+                    button: styles.selectedMedButton,
+                    textButton: {},
+                  }}
+                  forceReplaceStyles
+                  touchableOpacity
+                />
+              )}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.medicationScroll}
+              >
+                {searchMedicationsList.length > 0 &&
+                  searchMedicationsList.map((medication, index) => {
+                    log(medication, "searchMedicationsList");
+                    return (
+                      <Animated.View
+                        key={medication._id}
+                        style={{
+                          opacity: formAnim,
+                          transform: [
+                            {
+                              translateY: Animated.multiply(
+                                formAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [20, 0],
+                                }),
+                                1
+                              ),
+                            },
+                          ],
+                        }}
+                      >
+                        <Button
+                          label={medication[language !== "en" ? `name_${language}` : "name"] || translations.unknown}
+                          handlePress={() => {
+                            animateButtonPress();
+                            setSearchValue("");
+                            setSearchMedicationsList([]);
+                            setMedication(medication);
+                          }}
+                          replaceStyles={{
+                            button: styles.medicationButton,
+                            textButton: styles.medicationButtonText,
+                          }}
+                          forceReplaceStyles
+                          touchableOpacity
+                        />
+                      </Animated.View>
+                    );
+                  })}
+              </ScrollView>
+            </View>
+
+            <View style={styles.doseContainer}>
+              <View style={styles.doseInputGroup}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[styles.label, fieldErrors.dose && hasAttemptedSubmit && styles.labelError]}>
+                    {translations.dosage}:
+                  </Text>
+                  {fieldErrors.dose && hasAttemptedSubmit && (
+                    <Text style={styles.requiredIndicator}>●</Text>
+                  )}
+                </View>
+                {fieldErrors.dose && hasAttemptedSubmit && (
+                  <Text style={styles.errorText}>{translations.dosageRequired}</Text>
+                )}
+                <TextInput
+                  style={[styles.input, fieldErrors.dose && hasAttemptedSubmit && styles.inputError]}
+                  keyboardType="numeric"
+                  value={dose}
+                  onChangeText={(text) => {
+                    let numericValue = text.replace(/[^0-9.]/g, '');
+
+                    const parts = numericValue.split('.');
+                    if (parts.length > 2) {
+                      numericValue = parts[0] + '.' + parts.slice(1).join('');
+                    }
+
+                    if (numericValue.length > 1 && numericValue[0] === '0' && numericValue[1] !== '.') {
+                      numericValue = numericValue.substring(1);
+                    }
+
+                    setDose(numericValue);
+                  }}
+                  placeholder={interpolateMessage(translations.dosagePlaceholder, [
+                    "100 ",
+                  ])}
+                  mode="flat"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  theme={inputTheme}
+                />
+              </View>
+
+              <View style={styles.dosageTypeGroup}>
+                <Text style={styles.label}>{translations.type}:</Text>
+                <View style={styles.dosageButtons}>
+                  {dosageTypes.map((type, index) => (
+                    <Pressable
+                      key={index}
+                      style={[
+                        styles.dosageButton,
+                        dosageType === type && styles.selectedDosageButton,
+                      ]}
+                      onPress={() => {
+                        animateButtonPress();
+                        setDosageType(type);
+                      }}
+                    >
+                      <Text
+                        style={
+                          dosageType === type
+                            ? styles.selectedDosageText
+                            : styles.dosageButtonText
+                        }
+                      >
+                        {type}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label, fieldErrors.days && hasAttemptedSubmit && styles.labelError]}>
+                  {translations.daysText}:
+                </Text>
+                {fieldErrors.days && hasAttemptedSubmit && (
+                  <Text style={styles.requiredIndicator}>●</Text>
+                )}
+              </View>
+              {fieldErrors.days && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>{translations.daysRequired}</Text>
+              )}
+              <View style={styles.daysContainer}>
+                {Object.entries(daysOfWeek).map(([key, day], index) => (
+                  <Pressable
+                    key={index}
+                    style={[
+                      styles.dayButton,
+                      Object.values(selectedDays || {}).includes(day) &&
+                      styles.selectedDay,
+                      fieldErrors.days && hasAttemptedSubmit && styles.dayButtonError,
+                    ]}
+                    onPress={() => {
+                      animateButtonPress();
+                      toggleDay(key as DayOfWeek);
+                    }}
+                  >
+                    <Text
+                      style={
+                        Object.values(selectedDays || {}).includes(day)
+                          ? styles.selectedDayText
+                          : styles.dayButtonText
+                      }
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{translations.hour}:</Text>
+              {Platform.OS !== "web" && (
+                <TextInput
+                  style={styles.input}
+                  value={time.toTimeString().slice(0, 5)}
+                  onFocus={() => setShowTimePicker(true)}
+                  showSoftInputOnFocus={false}
+                  placeholder={translations.selectTime}
+                  mode="flat"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  theme={inputTheme}
+                  right={
+                    <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
+                      <TextInput.Icon
+                        icon="clock-outline"
+                        onPress={() => {
+                          animateIconRotation();
+                          setShowTimePicker(true);
+                        }}
+                      />
+                    </Animated.View>
+                  }
+                />
+              )}
+              {Platform.OS !== "web" && showTimePicker && (
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={handleTimeChange}
+                />
+              )}
+              {Platform.OS === "web" && (
+                <input
+                  type="time"
+                  value={time.toTimeString().slice(0, 5)}
+                  onChange={(e) => {
+                    const [hours, minutes] = e.target.value.split(":").map(Number);
+                    const newTime = new Date(time);
+                    newTime.setHours(hours);
+                    newTime.setMinutes(minutes);
+                    setTime(newTime);
+                  }}
                   style={{
-                    transform: isSearchingMedications ? [{ rotate: iconRotation }] : undefined
+                    ...styles.timeButton,
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
                 />
-              }
-            />
-          )}
-          
-          {/* Search requirement hint */}
-          {!medication && searchValue.length > 0 && searchValue.length < 3 && (
-            <Text style={{
-              color: '#666666',
-              fontSize: 12,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              fontStyle: 'italic'
-            }}>
-              {translations.searchHint} ({searchValue.length}/3)
-            </Text>
-          )}
-          
-          {/* Search hint when user has enough characters */}
-          {!medication && searchValue.length >= 3 && !isSearchingMedications && searchMedicationsList.length === 0 && (
-            <Text style={{
-              color: '#00a69d',
-              fontSize: 12,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              fontStyle: 'italic',
-              textAlign: 'center'
-            }}>
-              {language === 'es' 
-                ? 'Presiona Enter o haz clic en la lupa para buscar'
-                : 'Press Enter or click the magnifying glass to search'
-              }
-            </Text>
-          )}
-          
-          {/* Loading medications message */}
-          {!medication && hasSearched && !isSearchingMedications && searchMedicationsList.length === 0 && searchValue.length >= 3 && isMedicationsLoading && (
-            <Text style={{
-              color: '#00a69d',
-              fontSize: 14,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              textAlign: 'center',
-              fontStyle: 'italic'
-            }}>
-              {translations.loadingMedications}
-            </Text>
-          )}
-          
-          {/* No medications found message */}
-          {!medication && hasSearched && !isSearchingMedications && searchMedicationsList.length === 0 && searchValue.length >= 3 && !isMedicationsLoading && (
-            <Text style={{
-              color: '#ff6b6b',
-              fontSize: 14,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              textAlign: 'center',
-              fontStyle: 'italic'
-            }}>
-              {translations.noMedicationsFoundMessage}
-            </Text>
-          )}
-          
-          {medication && (
-            <Button
-              handlePress={() => {
-                setMedication(null);
-                setSearchValue("");
-                setSearchMedicationsList([]);
-              }}
-              children={
-                <View style={styles.clearMedicationChildren}>
-                  <View style={styles.medicationIcon}>
-                    <Ionicons name="medical" size={16} color="#00a69d" />
-                  </View>
-                  <Text style={styles.clearMedicationText}>
-                    {medication?.[language !== "en" ? `name_${language}` : "name"] || translations.unknown}
-                  </Text>
-                  <View style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>×</Text>
-                  </View>
-                </View>
-              }
-              replaceStyles={{
-                button: styles.selectedMedButton,
-                textButton: {},
-              }}
-              forceReplaceStyles
-              touchableOpacity
-            />
-          )}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.medicationScroll}
-          >
-            {searchMedicationsList.length > 0 &&
-              searchMedicationsList.map((medication, index) => {
-                log(medication, "searchMedicationsList");
-                return (
-                  <Animated.View
-                    key={medication._id}
-                    style={{
-                      opacity: formAnim,
-                      transform: [
-                        {
-                          translateY: Animated.multiply(
-                            formAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [20, 0],
-                            }),
-                            1
-                          ),
-                        },
-                      ],
-                    }}
-                  >
-                    <Button
-                      label={medication[language !== "en" ? `name_${language}` : "name"] || translations.unknown}
-                      handlePress={() => {
-                        animateButtonPress();
-                        setSearchValue("");
-                        setSearchMedicationsList([]);
-                        setMedication(medication);
-                      }}
-                      replaceStyles={{
-                        button: styles.medicationButton,
-                        textButton: styles.medicationButtonText,
-                      }}
-                      forceReplaceStyles
-                      touchableOpacity
-                    />
-                  </Animated.View>
-                );
-              })}
-          </ScrollView>
-        </View>
-
-        <View style={styles.doseContainer}>
-          <View style={styles.doseInputGroup}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[styles.label, fieldErrors.dose && hasAttemptedSubmit && styles.labelError]}>
-                {translations.dosage}:
-              </Text>
-              {fieldErrors.dose && hasAttemptedSubmit && (
-                <Text style={styles.requiredIndicator}>●</Text>
               )}
             </View>
-            {fieldErrors.dose && hasAttemptedSubmit && (
-              <Text style={styles.errorText}>{translations.dosageRequired}</Text>
-            )}
-            <TextInput
-              style={[styles.input, fieldErrors.dose && hasAttemptedSubmit && styles.inputError]}
-              keyboardType="numeric"
-              value={dose}
-              onChangeText={(text) => {
-                let numericValue = text.replace(/[^0-9.]/g, '');
-                
-                const parts = numericValue.split('.');
-                if (parts.length > 2) {
-                  numericValue = parts[0] + '.' + parts.slice(1).join('');
-                }
-                
-                if (numericValue.length > 1 && numericValue[0] === '0' && numericValue[1] !== '.') {
-                  numericValue = numericValue.substring(1);
-                }
-                
-                setDose(numericValue);
-              }}
-              placeholder={interpolateMessage(translations.dosagePlaceholder, [
-                "100 ",
-              ])}
-              mode="flat"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              theme={inputTheme}
-            />
-          </View>
 
-          <View style={styles.dosageTypeGroup}>
-            <Text style={styles.label}>{translations.type}:</Text>
-            <View style={styles.dosageButtons}>
-              {dosageTypes.map((type, index) => (
-                <Pressable
-                  key={index}
-                  style={[
-                    styles.dosageButton,
-                    dosageType === type && styles.selectedDosageButton,
-                  ]}
-                  onPress={() => {
-                    animateButtonPress();
-                    setDosageType(type);
-                  }}
-                >
-                  <Text
-                    style={
-                      dosageType === type
-                        ? styles.selectedDosageText
-                        : styles.dosageButtonText
-                    }
-                  >
-                    {type}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.label, fieldErrors.days && hasAttemptedSubmit && styles.labelError]}>
-              {translations.daysText}:
-            </Text>
-            {fieldErrors.days && hasAttemptedSubmit && (
-              <Text style={styles.requiredIndicator}>●</Text>
-            )}
-          </View>
-          {fieldErrors.days && hasAttemptedSubmit && (
-            <Text style={styles.errorText}>{translations.daysRequired}</Text>
-          )}
-          <View style={styles.daysContainer}>
-            {Object.entries(daysOfWeek).map(([key, day], index) => (
-              <Pressable
-                key={index}
-                style={[
-                  styles.dayButton,
-                  Object.values(selectedDays || {}).includes(day) &&
-                    styles.selectedDay,
-                  fieldErrors.days && hasAttemptedSubmit && styles.dayButtonError,
-                ]}
-                onPress={() => {
-                  animateButtonPress();
-                  toggleDay(key as DayOfWeek);
-                }}
-              >
-                <Text
-                  style={
-                    Object.values(selectedDays || {}).includes(day)
-                      ? styles.selectedDayText
-                      : styles.dayButtonText
-                  }
-                >
-                  {day}
+            <View style={styles.inputGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label, fieldErrors.intervalHours && hasAttemptedSubmit && styles.labelError]}>
+                  {translations.intervalHours}:
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.hour}:</Text>
-          {Platform.OS !== "web" && (
-            <TextInput
-              style={styles.input}
-              value={time.toTimeString().slice(0, 5)}
-              onFocus={() => setShowTimePicker(true)}
-              showSoftInputOnFocus={false}
-              placeholder={translations.selectTime}
-              mode="flat"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              theme={inputTheme}
-              right={
-                <Animated.View style={{ transform: [{ rotate: iconRotation }] }}>
-                  <TextInput.Icon 
-                    icon="clock-outline" 
-                    onPress={() => {
-                      animateIconRotation();
-                      setShowTimePicker(true);
-                    }}
-                  />
-                </Animated.View>
-              }
-            />
-          )}
-          {Platform.OS !== "web" && showTimePicker && (
-            <DateTimePicker
-              value={time}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleTimeChange}
-            />
-          )}
-          {Platform.OS === "web" && (
-            <input
-              type="time"
-              value={time.toTimeString().slice(0, 5)}
-              onChange={(e) => {
-                const [hours, minutes] = e.target.value.split(":").map(Number);
-                const newTime = new Date(time);
-                newTime.setHours(hours);
-                newTime.setMinutes(minutes);
-                setTime(newTime);
-              }}
-              style={{
-                ...styles.timeButton,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          )}
-        </View>
-
-        <View style={styles.inputGroup}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.label, fieldErrors.intervalHours && hasAttemptedSubmit && styles.labelError]}>
-              {translations.intervalHours}:
-            </Text>
-            {fieldErrors.intervalHours && hasAttemptedSubmit && (
-              <Text style={styles.requiredIndicator}>●</Text>
-            )}
-          </View>
-          {fieldErrors.intervalHours && hasAttemptedSubmit && (
-            <Text style={styles.errorText}>{translations.intervalRequired}</Text>
-          )}
-          <TextInput
-            style={[styles.input, fieldErrors.intervalHours && hasAttemptedSubmit && styles.inputError]}
-            keyboardType="numeric"
-            value={intervalHours.toString()}
-            onChangeText={(text) => setIntervalHours(Number(text) || 0)}
-            placeholder={translations.intervalHoursPlaceholder}
-            mode="flat"
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            theme={inputTheme}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.stock}:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={stock ? stock.toString() : ""}
-            onChangeText={(text) => setStock(Number(text))}
-            placeholder={translations.stockPlaceholder}
-            mode="flat"
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            theme={inputTheme}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{translations.requiredDoses}:</Text>
-          <Text style={{
-            fontSize: 12,
-            color: '#666666',
-            marginBottom: 8,
-            fontStyle: 'italic',
-            lineHeight: 16
-          }}>
-            {translations.requiredDosesDescription}
-          </Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={requiredDoses ? requiredDoses.toString() : ""}
-            onChangeText={(text) => {
-              const numericValue = Number(text) || 0;
-              if (numericValue >= 0) {
-                setRequiredDoses(numericValue);
-              }
-            }}
-            placeholder={translations.requiredDosesPlaceholder}
-            mode="flat"
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            theme={inputTheme}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.label, fieldErrors.urgency && hasAttemptedSubmit && styles.labelError]}>
-              {translations.urgencyText}:
-            </Text>
-            {fieldErrors.urgency && hasAttemptedSubmit && (
-              <Text style={styles.requiredIndicator}>●</Text>
-            )}
-          </View>
-          {fieldErrors.urgency && hasAttemptedSubmit && (
-            <Text style={styles.errorText}>{translations.urgencyRequired}</Text>
-          )}
-          <View style={styles.urgencyButtons}>
-            {(() => {
-              let urgencyObj: Record<string, string> = {};
-              if (typeof translations.urgency === 'object' && translations.urgency !== null) {
-                urgencyObj = translations.urgency as Record<string, string>;
-              } else if (typeof translations.urgency === 'string') {
-                try {
-                  urgencyObj = JSON.parse(translations.urgency);
-                } catch {
-                  urgencyObj = { low: 'Low', medium: 'Medium', high: 'High' };
-                }
-              }
-              
-              return Object.entries(urgencyObj).map(([key, label]) => (
-                <Pressable
-                  key={key}
-                  style={[
-                    styles.urgencyButton,
-                    Object.values(urgency)[0] === label &&
-                      styles.selectedUrgencyButton,
-                    fieldErrors.urgency && hasAttemptedSubmit && styles.urgencyButtonError,
-                  ]}
-                  onPress={() => {
-                    animateButtonPress();
-                    setUrgency({ [key as UrgencyType]: label as string });
-                  }}
-                >
-                  <Text
-                    style={
-                      Object.values(urgency)[0] === label
-                        ? styles.selectedUrgencyText
-                        : styles.urgencyButtonText
-                    }
-                  >
-                    {label}
-                  </Text>
-                </Pressable>
-              ));
-            })()}
-          </View>
-        </View>
-
-        {/* Validation Summary */}
-        {hasAttemptedSubmit && !isFormValid && (
-          <View style={styles.validationSummary}>
-            <Text style={styles.validationTitle}>
-              {translations.formValidationTitle}
-            </Text>
-            <Text style={styles.validationMessage}>
-              {translations.formValidationMessage}
-            </Text>
-            <View style={styles.validationList}>
-              {getValidationErrors().map((error, index) => (
-                <View key={index} style={styles.validationItem}>
-                  <Text style={styles.validationBullet}>•</Text>
-                  <Text style={styles.validationItemText}>{error}</Text>
-                </View>
-              ))}
+                {fieldErrors.intervalHours && hasAttemptedSubmit && (
+                  <Text style={styles.requiredIndicator}>●</Text>
+                )}
+              </View>
+              {fieldErrors.intervalHours && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>{translations.intervalRequired}</Text>
+              )}
+              <TextInput
+                style={[styles.input, fieldErrors.intervalHours && hasAttemptedSubmit && styles.inputError]}
+                keyboardType="numeric"
+                value={intervalHours.toString()}
+                onChangeText={(text) => setIntervalHours(Number(text) || 0)}
+                placeholder={translations.intervalHoursPlaceholder}
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                theme={inputTheme}
+              />
             </View>
-          </View>
-        )}
 
-        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-          <Button
-            label={isSubmitting ? "..." : ["+", translations.addSchedule].join(" ")}
-            handlePress={handleAddSchedule}
-            replaceStyles={{
-              button: [
-                styles.addButton,
-                isSubmitting && { opacity: 0.7 },
-                !isFormValid && styles.addButtonDisabled
-              ],
-              textButton: [
-                styles.addButtonText,
-                !isFormValid && styles.addButtonTextDisabled
-              ],
-            }}
-            forceReplaceStyles
-            touchableOpacity
-            disabled={isSubmitting || !isFormValid}
-          />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{translations.stock}:</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={stock ? stock.toString() : ""}
+                onChangeText={(text) => setStock(Number(text))}
+                placeholder={translations.stockPlaceholder}
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                theme={inputTheme}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{translations.requiredDoses}:</Text>
+              <Text style={{
+                fontSize: 12,
+                color: '#666666',
+                marginBottom: 8,
+                fontStyle: 'italic',
+                lineHeight: 16
+              }}>
+                {translations.requiredDosesDescription}
+              </Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={requiredDoses ? requiredDoses.toString() : ""}
+                onChangeText={(text) => {
+                  const numericValue = Number(text) || 0;
+                  if (numericValue >= 0) {
+                    setRequiredDoses(numericValue);
+                  }
+                }}
+                placeholder={translations.requiredDosesPlaceholder}
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                theme={inputTheme}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label, fieldErrors.urgency && hasAttemptedSubmit && styles.labelError]}>
+                  {translations.urgencyText}:
+                </Text>
+                {fieldErrors.urgency && hasAttemptedSubmit && (
+                  <Text style={styles.requiredIndicator}>●</Text>
+                )}
+              </View>
+              {fieldErrors.urgency && hasAttemptedSubmit && (
+                <Text style={styles.errorText}>{translations.urgencyRequired}</Text>
+              )}
+              <View style={styles.urgencyButtons}>
+                {(() => {
+                  let urgencyObj: Record<string, string> = {};
+                  if (typeof translations.urgency === 'object' && translations.urgency !== null) {
+                    urgencyObj = translations.urgency as Record<string, string>;
+                  } else if (typeof translations.urgency === 'string') {
+                    try {
+                      urgencyObj = JSON.parse(translations.urgency);
+                    } catch {
+                      urgencyObj = { low: 'Low', medium: 'Medium', high: 'High' };
+                    }
+                  }
+
+                  return Object.entries(urgencyObj).map(([key, label]) => (
+                    <Pressable
+                      key={key}
+                      style={[
+                        styles.urgencyButton,
+                        Object.values(urgency)[0] === label &&
+                        styles.selectedUrgencyButton,
+                        fieldErrors.urgency && hasAttemptedSubmit && styles.urgencyButtonError,
+                      ]}
+                      onPress={() => {
+                        animateButtonPress();
+                        setUrgency({ [key as UrgencyType]: label as string });
+                      }}
+                    >
+                      <Text
+                        style={
+                          Object.values(urgency)[0] === label
+                            ? styles.selectedUrgencyText
+                            : styles.urgencyButtonText
+                        }
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  ));
+                })()}
+              </View>
+            </View>
+
+            {/* Validation Summary */}
+            {hasAttemptedSubmit && !isFormValid && (
+              <View style={styles.validationSummary}>
+                <Text style={styles.validationTitle}>
+                  {translations.formValidationTitle}
+                </Text>
+                <Text style={styles.validationMessage}>
+                  {translations.formValidationMessage}
+                </Text>
+                <View style={styles.validationList}>
+                  {getValidationErrors().map((error, index) => (
+                    <View key={index} style={styles.validationItem}>
+                      <Text style={styles.validationBullet}>•</Text>
+                      <Text style={styles.validationItemText}>{error}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+              <Button
+                label={isSubmitting ? "..." : ["+", translations.addSchedule].join(" ")}
+                handlePress={handleAddSchedule}
+                replaceStyles={{
+                  button: [
+                    styles.addButton,
+                    isSubmitting && { opacity: 0.7 },
+                    !isFormValid && styles.addButtonDisabled
+                  ],
+                  textButton: [
+                    styles.addButtonText,
+                    !isFormValid && styles.addButtonTextDisabled
+                  ],
+                }}
+                forceReplaceStyles
+                touchableOpacity
+                disabled={isSubmitting || !isFormValid}
+              />
+            </Animated.View>
+          </View>
         </Animated.View>
-        </View>
-      </Animated.View>
-    </ScrollView>
-    
-    {/* Snackbar for notifications */}
-    <SnackbarAlert
-      visible={snackbarVisible}
-      onDismiss={() => setSnackbarVisible(false)}
-      message={snackbarMessage}
-      type={snackbarType}
-    />
+      </ScrollView>
+
+      {/* Snackbar for notifications */}
+      <SnackbarAlert
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        message={snackbarMessage}
+        type={snackbarType}
+      />
     </Animated.View>
   );
 };
