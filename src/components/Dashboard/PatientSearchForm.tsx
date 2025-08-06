@@ -175,18 +175,11 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
   };
 
   return (
-    <View style={{
-      width: '100%',
-      height: '100%',
-      alignSelf: 'center',
-    }}>
+    <View style={styles.fixedContainer}>
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.flexGrow}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 80, // Suficiente padding para mobile
-        }}
+        contentContainerStyle={styles.formWrapper}
         nestedScrollEnabled={true}
       >
         {/* Search Input */}
@@ -241,7 +234,13 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
               }
             ]}>
               {/* User Info Row */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 16,
+                width: '100%',
+                maxWidth: '100%'
+              }}>
                 {/* Photo */}
                 {searchResult.imageId ? (
                   <Image
@@ -264,14 +263,19 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
                     backgroundColor: '#e0e0e0',
                     marginRight: 12,
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    flexShrink: 0 // Evitar que se encoja
                   }}>
                     <Text style={{ color: '#999', fontSize: 9 }}>Sin foto</Text>
                   </View>
                 )}
 
                 {/* User Details */}
-                <View style={{ flex: 1 }}>
+                <View style={{
+                  flex: 1,
+                  minWidth: 0,
+                  maxWidth: '100%'
+                }}>
                   <Text style={styles.resultTitle}>{searchResult.name}</Text>
 
                   {/* Show only the field that was actually searched for */}
@@ -294,7 +298,10 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
                     paddingHorizontal: 8,
                     paddingVertical: 4,
                     borderRadius: 12,
-                    backgroundColor: searchResult.role === "caregiver" ? '#ffcdd2' : '#e8f5e8'
+                    backgroundColor: searchResult.role === "caregiver" ? '#ffcdd2' : '#e8f5e8',
+                    width: '100%',
+                    maxWidth: '100%',
+                    flexShrink: 1
                   }}>
                     <Text style={[
                       styles.resultText,
@@ -302,7 +309,9 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
                         color: searchResult.role === "caregiver" ? '#d32f2f' : '#2e7d32',
                         fontWeight: '600',
                         fontSize: 12,
-                        textTransform: 'capitalize'
+                        textTransform: 'capitalize',
+                        flexShrink: 1,
+                        maxWidth: '100%'
                       }]}>
                       {t("roleLabel")}: {searchResult.role === "caregiver" ? t("roleCaregiver") : t("rolePatient")}
                     </Text>
@@ -319,7 +328,11 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
                   borderRadius: 6,
                   borderLeftWidth: 3,
                   borderLeftColor: '#f44336',
-                  marginBottom: 8
+                  marginBottom: 8,
+                  width: '100%',
+                  maxWidth: '100%',
+                  alignSelf: 'stretch',
+                  flexShrink: 1
                 }}>
                   <Text style={[
                     styles.resultText,
@@ -328,7 +341,9 @@ const PatientSearchForm: React.FC<PatientSearchFormProps> = ({ onPatientSelected
                       fontSize: 11,
                       fontWeight: '500',
                       textAlign: 'center',
-                      lineHeight: 14
+                      lineHeight: 14,
+                      flexShrink: 1,
+                      maxWidth: '100%'
                     }
                   ]}>
                     ! {t("caregiverCannotBePatient")}
