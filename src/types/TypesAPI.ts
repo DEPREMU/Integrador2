@@ -1,5 +1,3 @@
-
-
 export type UrgencyType = "low" | "medium" | "high";
 export type RoleType = "caregiver" | "patient" | "both";
 
@@ -146,4 +144,58 @@ export type ResponseUpdateUserData = {
   success: boolean;
   error?: { message: string; timestamp: string };
   user?: User;
+};
+
+// Pillbox Configuration Types
+export type TimeSlot = {
+  startTime: string;
+  intervalHours: number;
+};
+
+export type Compartment = {
+  id: number;
+  medication: string;
+  dosage: string;
+  timeSlots: TimeSlot[];
+};
+
+export type PillboxConfig = {
+  userId: string;
+  patientId: string;
+  pillboxId: string;
+  compartments: Compartment[];
+  lastUpdated: Date;
+};
+
+export type TypeBodySavePillboxConfig = {
+  userId: string;
+  patientId: string;
+  pillboxId: string;
+  compartments: Compartment[];
+};
+
+export type ResponseSavePillboxConfig = {
+  success: boolean;
+  config?: PillboxConfig;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyGetPillboxConfig = {
+  userId: string;
+  patientId: string;
+};
+
+export type ResponseGetPillboxConfig = {
+  config?: PillboxConfig;
+  error?: { message: string; timestamp: string };
+};
+
+export type TypeBodyDeletePillboxConfig = {
+  userId: string;
+  patientId: string;
+};
+
+export type ResponseDeletePillboxConfig = {
+  success: boolean;
+  error?: { message: string; timestamp: string };
 };
