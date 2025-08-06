@@ -15,27 +15,62 @@ import { WebSocketServer, WebSocket } from "ws";
 let clients: Record<string, UserWebSocket> = {};
 const clientsCapsy: Record<string, CapsyWebSocket> = {};
 
+// Función para obtener la hora actual en zona horaria de México
+const getMexicoTime = (): Date => {
+  const now = new Date();
+  // Convertir a hora de México (UTC-6)
+  const mexicoTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/Mexico_City" }),
+  );
+  return mexicoTime;
+};
+
+// Función para crear una fecha en zona horaria de México
+const createMexicoDate = (hours: number, minutes: number): Date => {
+  const mexicoNow = getMexicoTime();
+  const mexicoDate = new Date(mexicoNow);
+  mexicoDate.setHours(hours, minutes, 0, 0);
+  return mexicoDate;
+};
+
 // Función para calcular la próxima ocurrencia considerando el intervalo
 const getNextScheduledTime = (
   startTime: string,
   intervalMs: number,
 ): number => {
   const [hours, minutes] = startTime.split(":").map(Number);
-  const now = new Date();
-  const baseTime = new Date();
 
-  baseTime.setHours(hours, minutes, 0, 0);
+  // Usar hora de México en lugar de hora del servidor
+  const now = getMexicoTime();
+  const baseTime = createMexicoDate(hours, minutes);
 
-  // Crear formateo consistente para debugging
+  // Crear formateo consistente para debugging con zona horaria local
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("es-ES", {
       hour12: false,
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
+      timeZone: "America/Mexico_City",
     });
   };
 
+  // Agregar información de zona horaria para debugging
+  const serverNow = new Date();
+  const timezoneOffset = serverNow.getTimezoneOffset();
+  const mexicoOffset = 6 * 60; // México está UTC-6 (360 minutos)
+
+  console.log(
+    `🌍 Server time: ${serverNow.toLocaleTimeString("es-ES", { hour12: false })}`,
+  );
+  console.log(`🌍 Mexico time: ${formatTime(now)}`);
+  console.log(`🌍 Server timezone offset: ${timezoneOffset} minutes from UTC`);
+
+  if (Math.abs(timezoneOffset - mexicoOffset) > 60) {
+    console.warn(
+      `⚠️  TIMEZONE MISMATCH: Using Mexico timezone for calculations!`,
+    );
+  }
   console.log(
     `⏰ getNextScheduledTime - startTime: ${startTime}, intervalMs: ${intervalMs}ms (${intervalMs / 3600000}h)`,
   );
@@ -783,7 +818,15 @@ const startPillboxSchedule = async (
         console.log(
           `   - Interval: ${value.intervalMs}ms (${value.intervalMs / 3600000} hours)`,
         );
-        console.log(`   - Current time: ${new Date().toLocaleTimeString()}`);
+        console.log(
+          `   - Current time: ${new Date().toLocaleTimeString("es-ES", { hour12: false, timeZone: "America/Mexico_City" })}`,
+        );
+        console.log(
+          `   - Server time: ${new Date().toLocaleTimeString("es-ES", { hour12: false })} (server timezone)`,
+        );
+        console.log(
+          `   - Timezone offset: ${new Date().getTimezoneOffset()} minutes from UTC`,
+        );
 
         // Primera ejecución: setTimeout hasta la hora específica
         const timeUntilStart = getNextScheduledTime(
