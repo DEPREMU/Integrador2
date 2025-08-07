@@ -322,6 +322,7 @@ const es: typeLanguages = {
   noMedicationsReportMessage: "No hay medicamentos para incluir en el reporte.",
   errorTitle: "Error",
   generating: "Generando...",
+  loadingPatient: "Cargando paciente ...",
   // PDF Content translations
   pdfMedicalReportTitle: "Reporte Médico de Medicamentos",
   pdfGeneratedOn: "Generado el",

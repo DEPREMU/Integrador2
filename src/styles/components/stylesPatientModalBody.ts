@@ -5,7 +5,10 @@ export const useStylesPatientModalBody = () =>
   StyleSheet.create({
     container: {
       width: "100%",
+      maxWidth: 400,
       alignContent: "center",
+      alignSelf: "center",
+      overflow: "hidden",
     },
     tabContainer: {
       flexDirection: "row",
@@ -33,10 +36,13 @@ export const useStylesPatientModalBody = () =>
     fixedContainer: {
       position: "relative",
       width: "100%",
+      maxWidth: "100%",
       overflow: "hidden",
     },
     flexGrow: {
       flex: 1,
+      width: "100%",
+      maxWidth: "100%",
     },
     formWrapper: {
       paddingHorizontal: 0,

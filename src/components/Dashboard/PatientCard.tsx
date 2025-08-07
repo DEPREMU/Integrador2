@@ -87,10 +87,10 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, descri
               accessibilityLabel={`Editar paciente ${name}`}
               accessibilityRole="button"
             >
-              <Ionicons 
-                name="pencil" 
-                size={16} 
-                color="#fff" 
+              <Ionicons
+                name="pencil"
+                size={16}
+                color="#fff"
               />
             </TouchableOpacity>
           )}
@@ -109,10 +109,10 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, descri
               accessibilityLabel={`Desasignar paciente ${name}`}
               accessibilityRole="button"
             >
-              <Ionicons 
-                name="trash-outline" 
-                size={16} 
-                color="#fff" 
+              <Ionicons
+                name="trash-outline"
+                size={16}
+                color="#fff"
               />
             </TouchableOpacity>
           )}
@@ -144,13 +144,6 @@ const PatientCard: React.FC<PatientCardProps> = ({ name, photoUrl, pills, descri
           {description}
         </Text>
       )}
-      <View style={styles.pillList}>
-        {pills.map((p, i) => (
-          <View key={i} style={styles.pill}>
-            <Text style={styles.pillText}>{p}</Text>
-          </View>
-        ))}
-      </View>
     </Pressable>
   );
 };
