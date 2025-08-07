@@ -9,7 +9,8 @@ export type CollectionName =
   | "medicationsUser"
   | "conversations"
   | "topics_es"
-  | "topics_en";
+  | "topics_en"
+  | "pillboxConfigs";
 
 // types.ts
 
@@ -87,6 +88,27 @@ export type UserConfig = {
   userId: string;
   language: string;
   pushNotifications: boolean;
+};
+
+export type TimeSlot = {
+  startTime: string;
+  intervalHours: number;
+};
+
+export type Compartment = {
+  id: number;
+  medication: string;
+  dosage: string;
+  timeSlots: TimeSlot[];
+};
+
+export type PillboxConfig = {
+  _id?: ObjectId;
+  userId: string;
+  patientId: string;
+  pillboxId: string;
+  compartments: Compartment[];
+  lastUpdated: Date;
 };
 
 export type Message = {

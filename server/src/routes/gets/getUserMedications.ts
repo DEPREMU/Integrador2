@@ -2,8 +2,9 @@ import {
   ResponseGetUserMedications,
   TypeBodyGetUserMedications,
 } from "../../types";
-import { MedicationUser } from "../../types/Database.js";
 import { getDatabase } from "../../database/functions.js";
+import { getCollection } from "../../database/functions.js";
+import { MedicationUser } from "../../types/Database.js";
 import { Request, Response } from "express";
 
 export const getUserMedications = async (
@@ -12,7 +13,7 @@ export const getUserMedications = async (
 ) => {
   const { userId } = req.body;
   console.log("getUserMedications called with userId:", userId);
-  
+
   if (!userId) {
     res.status(400).json({
       medications: [],
@@ -25,10 +26,25 @@ export const getUserMedications = async (
   }
 
   try {
+    const coll = await getCollection<MedicationUser>("medicationsUser");
+    const medications = await coll?.find({ userId }).toArray();
+
+    if (!medications || medications.length === 0) {
+      console.log("No medications found for user:", userId);
+      res.status(200).json({
+        medications: [],
+      });
+      return;
+    }
+
+    console.log(`Found ${medications.length} medications for user:`, userId);
+    res.status(200).json({
+      medications: medications as MedicationUser[],
+    });
     const db = await getDatabase();
-    
+
     // Get medications for the user
-    const medications = await db
+    const medicationsUser = await db
       .collection<MedicationUser>("medicationsUser")
       .find({ userId })
       .toArray();
@@ -36,7 +52,7 @@ export const getUserMedications = async (
     console.log(`Found ${medications.length} medications for user ${userId}`);
 
     res.status(200).json({
-      medications: medications,
+      medications: medicationsUser,
     });
   } catch (error) {
     console.error("Error fetching user medications:", error);

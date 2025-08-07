@@ -21,6 +21,7 @@ export const backupDatabase = async () => {
       "userConfig",
       "imagePaths",
       "medicationsUser",
+      "pillboxConfigs",
     ];
     const db = await getDatabase();
     const arrCollections = await Promise.all(

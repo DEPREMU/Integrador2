@@ -12,6 +12,7 @@ import PatientScreen from "@screens/PatientScreen";
 import DashboardScreen from "@screens/DashboardScreen";
 import HowToCodeExample from "@screens/auth/HowToCodeExample";
 import MedicationScheduler from "@screens/Schedule";
+import PillboxSettings from "@screens/PillboxSettings";
 import React, { useEffect } from "react";
 import { RootStackParamList } from "./navigationTypes";
 import { BackgroundTaskProvider } from "@context/BackgroundTaskContext";
@@ -58,6 +59,9 @@ const screens: Screens = {
   Settings: {
     component: Settings,
   },
+  PillboxSettings: {
+    component: PillboxSettings,
+  },
   Chatbot: {
     component: Chatbot,
   },
@@ -88,7 +92,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <BackgroundTaskProvider>
-        <Stack.Navigator initialRouteName="Patient">{allScreens}</Stack.Navigator>
+        <Stack.Navigator initialRouteName="Home">{allScreens}</Stack.Navigator>
       </BackgroundTaskProvider>
     </NavigationContainer>
   );

@@ -15,28 +15,122 @@ import { WebSocketServer, WebSocket } from "ws";
 let clients: Record<string, UserWebSocket> = {};
 const clientsCapsy: Record<string, CapsyWebSocket> = {};
 
+// Función para obtener la hora actual en zona horaria de México
+const getMexicoTime = (): Date => {
+  const now = new Date();
+  // Convertir a hora de México (UTC-6)
+  const mexicoTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/Mexico_City" }),
+  );
+  return mexicoTime;
+};
+
+// Función para crear una fecha en zona horaria de México
+const createMexicoDate = (hours: number, minutes: number): Date => {
+  const mexicoNow = getMexicoTime();
+  const mexicoDate = new Date(mexicoNow);
+  mexicoDate.setHours(hours, minutes, 0, 0);
+  return mexicoDate;
+};
+
 // Función para calcular la próxima ocurrencia considerando el intervalo
 const getNextScheduledTime = (
   startTime: string,
   intervalMs: number,
 ): number => {
   const [hours, minutes] = startTime.split(":").map(Number);
-  const now = new Date();
-  const baseTime = new Date();
 
-  baseTime.setHours(hours, minutes, 0, 0);
+  // Usar hora de México en lugar de hora del servidor
+  const now = getMexicoTime();
+  const baseTime = createMexicoDate(hours, minutes);
 
-  // Si es hoy y aún no ha llegado la hora
+  // Crear formateo consistente para debugging con zona horaria local
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("es-ES", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "America/Mexico_City",
+    });
+  };
+
+  // Agregar información de zona horaria para debugging
+  const serverNow = new Date();
+  const timezoneOffset = serverNow.getTimezoneOffset();
+  const mexicoOffset = 6 * 60; // México está UTC-6 (360 minutos)
+
+  console.log(
+    `🌍 Server time: ${serverNow.toLocaleTimeString("es-ES", { hour12: false })}`,
+  );
+  console.log(`🌍 Mexico time: ${formatTime(now)}`);
+  console.log(`🌍 Server timezone offset: ${timezoneOffset} minutes from UTC`);
+
+  if (Math.abs(timezoneOffset - mexicoOffset) > 60) {
+    console.warn(
+      `⚠️  TIMEZONE MISMATCH: Using Mexico timezone for calculations!`,
+    );
+  }
+  console.log(
+    `⏰ getNextScheduledTime - startTime: ${startTime}, intervalMs: ${intervalMs}ms (${intervalMs / 3600000}h)`,
+  );
+  console.log(
+    `⏰ Current time: ${formatTime(now)} (${now.getTime()}), Target time: ${formatTime(baseTime)} (${baseTime.getTime()})`,
+  );
+  console.log(
+    `⏰ Debug - Current hour: ${now.getHours()}, Current minute: ${now.getMinutes()}, Target hour: ${hours}, Target minute: ${minutes}`,
+  );
+
+  // Si es hoy y aún no ha llegado la hora (futuro cercano)
   if (baseTime > now) {
-    return baseTime.getTime() - now.getTime();
+    const timeUntil = baseTime.getTime() - now.getTime();
+    console.log(
+      `⏰ Time until target (future): ${timeUntil}ms (${Math.round(timeUntil / 60000)} minutes)`,
+    );
+    return timeUntil;
   }
 
-  // Calcular cuántos intervalos han pasado desde la hora base
+  // Si la hora ya pasó hoy, calcular la próxima ocurrencia
   const timeSinceBase = now.getTime() - baseTime.getTime();
-  const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
-  const nextInterval = baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
+  console.log(
+    `⏰ Time since base (past): ${timeSinceBase}ms (${Math.round(timeSinceBase / 60000)} minutes)`,
+  );
 
-  return nextInterval - now.getTime();
+  // Para casos donde la hora ya pasó, calcular cuándo será la próxima ocurrencia basada en el intervalo
+  if (timeSinceBase > 0) {
+    // Calcular cuántos intervalos completos han pasado desde la hora base
+    const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
+    console.log(
+      `⏰ Complete intervals passed since base time: ${intervalsPassed}`,
+    );
+
+    // Calcular el tiempo de la próxima ocurrencia
+    const nextOccurrence =
+      baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
+    const timeUntilNext = nextOccurrence - now.getTime();
+
+    const nextOccurrenceDate = new Date(nextOccurrence);
+    console.log(
+      `⏰ Next occurrence at: ${formatTime(nextOccurrenceDate)} (in ${timeUntilNext}ms = ${Math.round(timeUntilNext / 60000)} minutes)`,
+    );
+
+    // Si la próxima ocurrencia es muy pronto (menos de 1 minuto), usar el siguiente intervalo
+    if (timeUntilNext < 60000) {
+      const nextAfterThat = nextOccurrence + intervalMs;
+      const timeUntilNextAfterThat = nextAfterThat - now.getTime();
+      const nextAfterThatDate = new Date(nextAfterThat);
+      console.log(
+        `⏰ Next occurrence too soon, using subsequent one at: ${formatTime(nextAfterThatDate)} (in ${timeUntilNextAfterThat}ms = ${Math.round(timeUntilNextAfterThat / 60000)} minutes)`,
+      );
+      return timeUntilNextAfterThat;
+    }
+
+    return timeUntilNext;
+  }
+
+  // Fallback: si algo sale mal, usar el intervalo completo
+  console.log(`⏰ Fallback: using full interval ${intervalMs}ms`);
+  return intervalMs;
 };
 
 export const isConnectedUser = (clientId: string): boolean => {
@@ -548,6 +642,504 @@ const handleCapsyPillRequest = (
   ws.send(JSON.stringify(capsyAlert));
 };
 
+// Función para iniciar el schedule automático del pastillero
+const startPillboxSchedule = async (
+  clientId: string,
+  pillboxId: string,
+  compartments: any[],
+) => {
+  console.log("🚀 Starting pillbox schedule for:", pillboxId);
+
+  const userClient = clients[clientId];
+  if (!userClient) {
+    console.error("❌ User client not found:", clientId);
+    return;
+  }
+
+  const translations = getTranslations(userClient.userConfig?.language || "en");
+  const t = (key: keyof typeof translations) => translations[key];
+
+  // Limpiar intervalos anteriores para este pastillero específico
+  if (userClient.intervalCapsy) {
+    Object.keys(userClient.intervalCapsy).forEach((key) => {
+      if (key.startsWith(`${pillboxId}_`)) {
+        const interval = userClient.intervalCapsy?.[key];
+        if (interval?.id) {
+          if (interval.type === "timeout" || interval.type === "scheduled") {
+            clearTimeout(interval.id as NodeJS.Timeout);
+          } else if (interval.type === "interval") {
+            clearInterval(interval.id as NodeJS.Timeout);
+          }
+        }
+        if (userClient.intervalCapsy) {
+          delete userClient.intervalCapsy[key];
+        }
+      }
+    });
+  } else {
+    userClient.intervalCapsy = {};
+  }
+
+  // Crear pastilla array basado en los compartments configurados
+  const pastillaArray = compartments
+    .filter((comp) => comp.medication && comp.medication.trim() !== "")
+    .map((comp) => {
+      const timeSlot = comp.timeSlots?.[0]; // Usar el primer horario configurado
+
+      console.log(`🔍 Processing compartment ${comp.id}:`, {
+        medication: comp.medication,
+        timeSlot: timeSlot,
+        hasStartTime: !!timeSlot?.startTime,
+        intervalHours: timeSlot?.intervalHours,
+      });
+
+      if (!timeSlot) {
+        console.log(`⚠️ No time slot configured for compartment ${comp.id}`);
+        return null;
+      }
+
+      const quantity = extractQuantityFromDosage(comp.dosage);
+
+      if (timeSlot.startTime) {
+        // Configuración con hora específica (tipo scheduled)
+        const intervalMs = timeSlot.intervalHours * 3600000;
+        console.log(
+          `⏰ Creating scheduled config for compartment ${comp.id}:`,
+          {
+            startTime: timeSlot.startTime,
+            intervalHours: timeSlot.intervalHours,
+            intervalMs: intervalMs,
+            quantity: quantity,
+          },
+        );
+
+        return {
+          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          cantidad: quantity,
+          type: "scheduled" as const,
+          timeout: timeSlot.intervalHours * 3600000, // Requerido por compatibilidad
+          startTime: timeSlot.startTime,
+          intervalMs: intervalMs, // Convertir horas a ms
+        };
+      } else if (timeSlot.intervalHours) {
+        // Configuración con intervalo (tipo interval)
+        console.log(`🔄 Creating interval config for compartment ${comp.id}:`, {
+          intervalHours: timeSlot.intervalHours,
+          quantity: quantity,
+        });
+
+        return {
+          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          cantidad: quantity,
+          type: "interval" as const,
+          timeout: timeSlot.intervalHours * 3600000,
+        };
+      }
+
+      console.log(`⚠️ No valid configuration for compartment ${comp.id}`);
+      return null;
+    })
+    .filter((item) => item !== null);
+
+  console.log(
+    "💊 Final pastilla array for schedule:",
+    JSON.stringify(pastillaArray, null, 2),
+  );
+
+  // Configurar horarios específicos para este pastillero
+  pastillaArray.forEach((value) => {
+    if (!value?.id || !value?.type || !value?.cantidad) return;
+
+    const handler = () => {
+      // Verificar si el pastillero específico está conectado
+      const capsyDevice = clientsCapsy[pillboxId];
+      if (!capsyDevice || capsyDevice.ws?.readyState !== WebSocket.OPEN) {
+        console.log(
+          `⚠️ Capsy ${pillboxId} not connected, sending notification to user only`,
+        );
+
+        const response: WebSocketResponse = {
+          type: "notification",
+          notification: {
+            reason: "Capsy not connected",
+            title: t("capsyNotConnectedTitle") || "Pastillero no conectado",
+            body:
+              t("capsyNotConnectedBody") ||
+              "El pastillero no está conectado. Por favor revisa la conexión.",
+            screen: "PillboxSettings",
+            trigger: null,
+          },
+          timestamp: new Date().toISOString(),
+        };
+        userClient.ws?.send(JSON.stringify(response));
+        return;
+      }
+
+      // Notificar al usuario
+      const userNotification: WebSocketResponse = {
+        type: "notification",
+        notification: {
+          reason: "Medication Reminder",
+          title: t("medicationReminderTitle") || "Recordatorio de medicación",
+          body: `${t("medicationReminderBody")} - Pastillero ${pillboxId}`,
+          screen: "Home",
+          trigger: null,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      userClient.ws?.send(JSON.stringify(userNotification));
+
+      // Enviar solicitud al pastillero específico
+      const capsyRequest: WebSocketResponse = {
+        type: "capsy-alert",
+        pastilla: { id: value.id, cantidad: value.cantidad },
+        timestamp: new Date().toISOString(),
+      };
+      capsyDevice.ws?.send(JSON.stringify(capsyRequest));
+    };
+
+    let timerId: NodeJS.Timeout | number;
+    let timerType: TimerType = value.type;
+
+    // Manejar diferentes tipos de configuración
+    switch (value.type) {
+      case "interval":
+        if (!value.timeout) return;
+        timerId = setInterval(handler, value.timeout);
+        break;
+
+      case "scheduled": {
+        if (!value.startTime || !value.intervalMs) return;
+
+        console.log(
+          `⏰ Setting up scheduled timer for compartment ${value.id}:`,
+        );
+        console.log(`   - Start time: ${value.startTime}`);
+        console.log(
+          `   - Interval: ${value.intervalMs}ms (${value.intervalMs / 3600000} hours)`,
+        );
+        console.log(
+          `   - Current time: ${new Date().toLocaleTimeString("es-ES", { hour12: false, timeZone: "America/Mexico_City" })}`,
+        );
+        console.log(
+          `   - Server time: ${new Date().toLocaleTimeString("es-ES", { hour12: false })} (server timezone)`,
+        );
+        console.log(
+          `   - Timezone offset: ${new Date().getTimezoneOffset()} minutes from UTC`,
+        );
+
+        // Primera ejecución: setTimeout hasta la hora específica
+        const timeUntilStart = getNextScheduledTime(
+          value.startTime,
+          value.intervalMs,
+        );
+
+        console.log(
+          `⏰ Final scheduling result for compartment ${value.id}: ${timeUntilStart}ms (${Math.round(timeUntilStart / 60000)} minutes)`,
+        );
+
+        timerId = setTimeout(() => {
+          console.log(
+            `🔔 Executing scheduled reminder for compartment ${value.id} at ${new Date().toLocaleTimeString()}`,
+          );
+          handler(); // Ejecutar primera vez
+
+          // Configurar intervalo para repetir
+          console.log(
+            `🔄 Setting up repeating interval of ${value.intervalMs}ms for compartment ${value.id}`,
+          );
+          const intervalId = setInterval(handler, value.intervalMs!);
+          const uniqueIntervalKey = `${pillboxId}_${value.id}_interval`;
+          if (userClient.intervalCapsy) {
+            userClient.intervalCapsy[uniqueIntervalKey] = {
+              id: intervalId,
+              type: "interval",
+            };
+          }
+        }, timeUntilStart);
+        timerType = "scheduled";
+        break;
+      }
+
+      default:
+        return;
+    }
+
+    // Usar una clave única que incluya el pillboxId
+    const uniqueKey = `${pillboxId}_${value.id}`;
+    if (userClient.intervalCapsy) {
+      userClient.intervalCapsy[uniqueKey] = {
+        id: timerId,
+        type: timerType,
+      };
+    }
+  });
+
+  console.log(
+    `✅ Schedule started for pillbox ${pillboxId} with ${pastillaArray.length} compartments`,
+  );
+};
+
+// Función auxiliar para extraer cantidad de la dosis
+const extractQuantityFromDosage = (dosage: string): number => {
+  if (!dosage) return 1;
+  const match = dosage.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+};
+
+// Nuevo manejador para guardar configuración del pastillero
+const handleSavePillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "save-pillbox-config") return;
+
+  console.log("💊 handleSavePillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId, pillboxId, compartments } = parsedMessage;
+
+    if (!userId || !patientId || !pillboxId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Missing required fields: userId, patientId, or pillboxId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    // Validate compartments
+    if (!compartments || !Array.isArray(compartments)) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Invalid compartments data",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Validation passed, saving to database...");
+    const db = await getDatabase();
+
+    const configWithTimestamp = {
+      userId,
+      patientId,
+      pillboxId,
+      compartments,
+      lastUpdated: new Date(),
+    };
+
+    console.log("💾 Saving pillbox config:", configWithTimestamp);
+
+    // Use upsert to either insert new config or update existing one
+    const result = await db
+      .collection("pillboxConfigs")
+      .replaceOne({ userId, patientId }, configWithTimestamp, { upsert: true });
+
+    console.log("📊 Upsert result:", result.modifiedCount);
+
+    if (!result.acknowledged) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-saved",
+        success: false,
+        error: {
+          message: "Failed to save pillbox configuration",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config saved successfully via WebSocket");
+
+    // Después de guardar la configuración, iniciar automáticamente el schedule
+    console.log("⏰ Starting automatic schedule for pillbox:", pillboxId);
+    await startPillboxSchedule(clientId, pillboxId, compartments);
+
+    const response: WebSocketResponse = {
+      type: "pillbox-config-saved",
+      success: true,
+      config: configWithTimestamp,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error saving pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-saved",
+      success: false,
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
+// Nuevo manejador para cargar configuración del pastillero
+const handleGetPillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "get-pillbox-config") return;
+
+  console.log("🔍 handleGetPillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId } = parsedMessage;
+
+    if (!userId || !patientId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-loaded",
+        error: {
+          message: "Missing required fields: userId or patientId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("🔍 Searching for pillbox config...");
+    const db = await getDatabase();
+
+    const config = await db
+      .collection("pillboxConfigs")
+      .findOne({ userId, patientId });
+
+    if (!config) {
+      console.log(
+        "❌ No pillbox config found for user:",
+        userId,
+        "patient:",
+        patientId,
+      );
+      const response: WebSocketResponse = {
+        type: "pillbox-config-loaded",
+        error: {
+          message: "No pillbox configuration found",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config found via WebSocket:", config);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-loaded",
+      config: config,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error retrieving pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-loaded",
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
+// Nuevo manejador para eliminar configuración del pastillero
+const handleDeletePillboxConfig = async (
+  clientId: string,
+  ws: WebSocket,
+  parsedMessage: WebSocketMessage,
+) => {
+  if (parsedMessage.type !== "delete-pillbox-config") return;
+
+  console.log("🗑️ handleDeletePillboxConfig called via WebSocket");
+
+  try {
+    const { userId, patientId } = parsedMessage;
+
+    if (!userId || !patientId) {
+      const response: WebSocketResponse = {
+        type: "pillbox-config-deleted",
+        success: false,
+        error: {
+          message: "Missing required fields: userId or patientId",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("🗑️ Deleting pillbox config...");
+    const db = await getDatabase();
+
+    const result = await db
+      .collection("pillboxConfigs")
+      .deleteOne({ userId, patientId });
+
+    if (result.deletedCount === 0) {
+      console.log(
+        "❌ No pillbox config found to delete for user:",
+        userId,
+        "patient:",
+        patientId,
+      );
+      const response: WebSocketResponse = {
+        type: "pillbox-config-deleted",
+        success: false,
+        error: {
+          message: "No pillbox configuration found to delete",
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(response));
+      return;
+    }
+
+    console.log("✅ Pillbox config deleted successfully via WebSocket");
+    const response: WebSocketResponse = {
+      type: "pillbox-config-deleted",
+      success: true,
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  } catch (error) {
+    console.error("❌ Error deleting pillbox config via WebSocket:", error);
+    const response: WebSocketResponse = {
+      type: "pillbox-config-deleted",
+      success: false,
+      error: {
+        message: "Internal server error",
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    ws.send(JSON.stringify(response));
+  }
+};
+
 // Nuevo manejador para confirmación de medicación tomada
 const handleMedicationTaken = (
   capsyId: string,
@@ -647,6 +1239,18 @@ export const setupWebSocket = async (server: HTTPServer) => {
           case "medication-taken":
             if (!clientId || !isCapsyConnection) break;
             handleMedicationTaken(clientId, ws, parsedMessage);
+            break;
+          case "save-pillbox-config":
+            if (!clientId) break;
+            handleSavePillboxConfig(clientId, ws, parsedMessage);
+            break;
+          case "get-pillbox-config":
+            if (!clientId) break;
+            handleGetPillboxConfig(clientId, ws, parsedMessage);
+            break;
+          case "delete-pillbox-config":
+            if (!clientId) break;
+            handleDeletePillboxConfig(clientId, ws, parsedMessage);
             break;
           default:
             break;

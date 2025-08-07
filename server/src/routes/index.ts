@@ -21,6 +21,11 @@ import {
 } from "./patientManagement.js";
 import { addUserMedicationHandler } from "./addUserMedication.js";
 import { deleteUserMedicationHandler } from "./deleteUserMedication.js";
+import {
+  savePillboxConfigHandler,
+  getPillboxConfigHandler,
+  deletePillboxConfigHandler,
+} from "./pillboxConfig.js";
 import express from "express";
 import { RoutesAPI } from "../types/TypesAPI.js";
 import { logsHandler } from "./logs.js";
@@ -72,6 +77,9 @@ const routes: Record<RoutesAPI, RouteConfig> = {
   "/chatbot/getConversations": { handler: getConversationsHandler },
   "/chatbot/sendMessage": { handler: sendMessageHandler },
   "/chatbot/clearHistory": { handler: clearHistoryHandler },
+  "/savePillboxConfig": { handler: savePillboxConfigHandler },
+  "/getPillboxConfig": { handler: getPillboxConfigHandler },
+  "/deletePillboxConfig": { handler: deletePillboxConfigHandler },
 };
 
 Object.entries(routes).forEach(([path, { handler, middlewares = [] }]) => {
