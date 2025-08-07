@@ -1,21 +1,29 @@
 import app from "./app.js";
-import { createServer } from "http";
-import { port, hostname } from "./config.js";
+import fs from "fs";
+import https from "https";
+import { hostname } from "./config.js";
 import { setupWebSocket } from "./websocket.js";
 import { backupDatabase } from "./backupDB.js";
 
 backupDatabase();
 
-const server = createServer(app);
+const sslOptions = {
+  key: fs.readFileSync("/etc/letsencrypt/live/api.meditime.space/privkey.pem"),
+  cert: fs.readFileSync(
+    "/etc/letsencrypt/live/api.meditime.space/fullchain.pem",
+  ),
+};
+
+const server = https.createServer(sslOptions, app);
 
 setupWebSocket(server);
 
-server.listen(port, hostname, () => {
-  console.log(`HTTP Server listening on http://${hostname}:${port}`);
-  console.log(`WebSocket server running on ws://${hostname}:${port}`);
+server.listen(443, hostname, () => {
+  console.log(`✅ HTTPS Server listening on https://${hostname}`);
+  console.log(`✅ WebSocket server running on wss://${hostname}`);
 });
 
 server.on("error", (error) => {
-  console.error("Error starting server:", error);
+  console.error("❌ Error starting HTTPS server:", error);
   process.exit(1);
 });
