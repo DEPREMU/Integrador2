@@ -32,7 +32,11 @@ interface DayCarouselProps {
  * @returns {JSX.Element}
  */
 
-const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDeleteMedication }) => {
+const DayCarousel: React.FC<DayCarouselProps> = ({
+  medications,
+  loading,
+  onDeleteMedication,
+}) => {
   const { translations } = useLanguage();
   const { styles, customStyles, isPhone, isWeb } = stylesDayCarousel();
   const { openModal, closeModal, setCustomStyles } = useModal();
@@ -43,13 +47,13 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const formatTime = (timeString: string): string => {
-    if (!timeString) return '';
-    
+    if (!timeString) return "";
+
     try {
-      const [hours, minutes] = timeString.split(':');
+      const [hours, minutes] = timeString.split(":");
       const hour24 = parseInt(hours);
       const hour12 = hour24 % 12 || 12;
-      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      const ampm = hour24 >= 12 ? "PM" : "AM";
       return `${hour12}:${minutes} ${ampm}`;
     } catch {
       return timeString;
@@ -58,151 +62,168 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
 
   const translateDosageType = (dosageType: string): string => {
     const dosageMap: { [key: string]: number } = {
-      'pills': 0,
-      'pastillas': 0,
-      'mg': 1,
-      'units': 2,
-      'unidades': 2
+      pills: 0,
+      pastillas: 0,
+      mg: 1,
+      units: 2,
+      unidades: 2,
     };
-    
+
     const index = dosageMap[dosageType.toLowerCase()];
-    
-    // Handle both array and JSON string formats
+
     let dosageTypes: string[] = [];
     if (Array.isArray(translations.dosageTypes)) {
       dosageTypes = translations.dosageTypes;
-    } else if (typeof translations.dosageTypes === 'string') {
+    } else if (typeof translations.dosageTypes === "string") {
       try {
         dosageTypes = JSON.parse(translations.dosageTypes);
       } catch {
         dosageTypes = [];
       }
     }
-    
+
     return index !== undefined ? dosageTypes[index] || dosageType : dosageType;
   };
 
   const translateUrgency = (urgencyLevel: string): string => {
     if (!urgencyLevel) return urgencyLevel;
-    
+
     const normalizedUrgency = urgencyLevel.toLowerCase().trim();
-    
-    // Handle both object and JSON string formats
+
     let urgencyObj: Record<string, string> = {};
-    if (typeof translations.urgency === 'object' && translations.urgency !== null) {
+    if (
+      typeof translations.urgency === "object" &&
+      translations.urgency !== null
+    ) {
       urgencyObj = translations.urgency as Record<string, string>;
-    } else if (typeof translations.urgency === 'string') {
+    } else if (typeof translations.urgency === "string") {
       try {
         urgencyObj = JSON.parse(translations.urgency);
       } catch {
         urgencyObj = {};
       }
     }
-    
-    // Map different possible values to the translation keys
+
     const urgencyMap: { [key: string]: string } = {
-      'high': 'high',
-      'alta': 'high',
-      'alto': 'high',
-      'medium': 'medium',
-      'media': 'medium',
-      'medio': 'medium',
-      'low': 'low',
-      'baja': 'low',
-      'bajo': 'low'
+      high: "high",
+      alta: "high",
+      alto: "high",
+      medium: "medium",
+      media: "medium",
+      medio: "medium",
+      low: "low",
+      baja: "low",
+      bajo: "low",
     };
-    
+
     const mappedKey = urgencyMap[normalizedUrgency];
     if (mappedKey && urgencyObj[mappedKey]) {
       return urgencyObj[mappedKey];
     }
-    
-    // Fallback to original value
+
     return urgencyLevel;
   };
 
   const getUrgencyColor = (urgency: string): string => {
-    if (!urgency) return '#333333';
-    
+    if (!urgency) return "#333333";
+
     const normalizedUrgency = urgency.toLowerCase().trim();
-    console.log('🔍 Urgency value:', urgency, '-> normalized:', normalizedUrgency);
-    
+    console.log(
+      "🔍 Urgency value:",
+      urgency,
+      "-> normalized:",
+      normalizedUrgency,
+    );
+
     switch (normalizedUrgency) {
-      case 'high':
-      case 'alta':
-      case 'alto':
-        return '#FF0000';
-      case 'medium':
-      case 'media':
-      case 'medio':
-        return '#FF8C00';
-      case 'low':
-      case 'baja':
-      case 'bajo':
-        return '#008000';
+      case "high":
+      case "alta":
+      case "alto":
+        return "#FF0000";
+      case "medium":
+      case "media":
+      case "medio":
+        return "#FF8C00";
+      case "low":
+      case "baja":
+      case "bajo":
+        return "#008000";
       default:
-        console.log('⚠️ Unknown urgency value:', urgency);
-        return '#333333';
+        console.log("⚠️ Unknown urgency value:", urgency);
+        return "#333333";
     }
   };
 
-  const handleDeleteMedication = (medicationId: string, medicationName: string) => {
-    console.log('🗑️ handleDeleteMedication called with:', { medicationId, medicationName });
-    
+  const handleDeleteMedication = (
+    medicationId: string,
+    medicationName: string,
+  ) => {
+    console.log("🗑️ handleDeleteMedication called with:", {
+      medicationId,
+      medicationName,
+    });
+
     if (onDeleteMedication) {
-      console.log('✅ onDeleteMedication callback exists');
-      
-      // Cerrar el modal actual primero
+      console.log("✅ onDeleteMedication callback exists");
+
       closeModal();
-      console.log('📝 Modal closed, opening confirmation modal...');
-      
-      // Abrir el modal de confirmación después de un pequeño delay
+      console.log("📝 Modal closed, opening confirmation modal...");
+
       setTimeout(() => {
-        console.log('⏰ Opening confirmation modal now');
+        console.log("⏰ Opening confirmation modal now");
         openModal(
-          translations.deleteMedication || 'Delete Medication',
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Ionicons name="warning-outline" size={48} color="#FF8C00" style={{ marginBottom: 16 }} />
-            <Text style={{ 
-              fontSize: 16, 
-              textAlign: 'center', 
-              marginBottom: 8,
-              color: '#333'
-            }}>
+          translations.deleteMedication || "Delete Medication",
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <Ionicons
+              name="warning-outline"
+              size={48}
+              color="#FF8C00"
+              style={{ marginBottom: 16 }}
+            />
+            <Text
+              style={{
+                fontSize: 16,
+                textAlign: "center",
+                marginBottom: 8,
+                color: "#333",
+              }}
+            >
               ¿Estás seguro de que quieres eliminar:
             </Text>
-            <Text style={{ 
-              fontSize: 18, 
-              fontWeight: 'bold',
-              textAlign: 'center', 
-              marginBottom: 20,
-              color: '#d32f2f'
-            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                textAlign: "center",
+                marginBottom: 20,
+                color: "#d32f2f",
+              }}
+            >
               "{capitalize(medicationName)}"?
             </Text>
           </View>,
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable 
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <Pressable
               onPress={() => {
-                console.log('❌ User cancelled deletion');
+                console.log("❌ User cancelled deletion");
                 closeModal();
               }}
               style={{
                 flex: 1,
                 paddingVertical: 12,
                 paddingHorizontal: 20,
-                backgroundColor: '#e0e0e0',
+                backgroundColor: "#e0e0e0",
                 borderRadius: 8,
-                alignItems: 'center'
+                alignItems: "center",
               }}
             >
-              <Text style={{ color: '#666', fontWeight: 'bold', fontSize: 16 }}>
+              <Text style={{ color: "#666", fontWeight: "bold", fontSize: 16 }}>
                 Cancelar
               </Text>
             </Pressable>
-            <Pressable 
+            <Pressable
               onPress={() => {
-                console.log('✅ User confirmed deletion');
+                console.log("✅ User confirmed deletion");
                 onDeleteMedication(medicationId);
                 closeModal();
               }}
@@ -210,29 +231,29 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
                 flex: 1,
                 paddingVertical: 12,
                 paddingHorizontal: 20,
-                backgroundColor: '#d32f2f',
+                backgroundColor: "#d32f2f",
                 borderRadius: 8,
-                alignItems: 'center'
+                alignItems: "center",
               }}
             >
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
                 Eliminar
               </Text>
             </Pressable>
-          </View>
+          </View>,
         );
       }, 100);
     } else {
-      console.log('❌ No onDeleteMedication callback provided');
+      console.log("❌ No onDeleteMedication callback provided");
     }
   };
 
   useEffect(() => {
     if (loading) return;
-    
+
     const dayNames = [
       "monday",
-      "tuesday", 
+      "tuesday",
       "wednesday",
       "thursday",
       "friday",
@@ -241,19 +262,21 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
     ];
 
     const organizedDays: Day[] = dayNames.map((dayKey) => {
-      const dayName = typeof translations[dayKey as keyof typeof translations] === 'string' 
-        ? translations[dayKey as keyof typeof translations] as string 
-        : dayKey;
-      
-      const dayMedications = medications.filter(medication => 
-        medication.days && medication.days.includes(dayKey)
+      const dayName =
+        typeof translations[dayKey as keyof typeof translations] === "string"
+          ? (translations[dayKey as keyof typeof translations] as string)
+          : dayKey;
+
+      const dayMedications = medications.filter(
+        (medication) => medication.days && medication.days.includes(dayKey),
       );
 
       return {
         name: dayName,
         medications: dayMedications,
       };
-    });log("Organized days:", organizedDays);
+    });
+    log("Organized days:", organizedDays);
 
     setDays(organizedDays);
   }, [medications, loading, translations]);
@@ -262,29 +285,38 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
 
   const handleCardPress = (day: Day) => {
     const hasmedications = day?.medications?.length > 0;
-    
+
     openModal(
-      `${translations.medicationText || 'Medications'} - ${day.name}`,
+      `${translations.medicationText || "Medications"} - ${day.name}`,
       hasmedications ? (
-        <ScrollView 
-          style={{ maxHeight: 400 }} 
+        <ScrollView
+          style={{ maxHeight: 400 }}
           showsVerticalScrollIndicator={true}
           contentContainerStyle={{ paddingBottom: 20 }}
         >
           {day.medications.map((med, index) => (
             <View key={index} style={styles.modalMedicationCard}>
-              <View style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-              }}>
-                <Text style={[styles.modalMedicationName, { flex: 1, textAlign: "left" }]}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalMedicationName,
+                    { flex: 1, textAlign: "left" },
+                  ]}
+                >
                   {capitalize(med.name)}
                 </Text>
                 {onDeleteMedication && med._id && (
                   <Pressable
-                    onPress={() => handleDeleteMedication(String(med._id!), med.name)}
+                    onPress={() =>
+                      handleDeleteMedication(String(med._id!), med.name)
+                    }
                     style={({ pressed }) => [
                       {
                         padding: 8,
@@ -295,23 +327,25 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
                           cursor: "pointer",
                           transition: "all 0.2s ease",
                         }),
-                      }
+                      },
                     ]}
                   >
                     {({ pressed }) => (
-                      <Ionicons 
-                        name="trash-outline" 
-                        size={18} 
-                        color={pressed ? "#d32f2f" : "#666666"} 
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color={pressed ? "#d32f2f" : "#666666"}
                       />
                     )}
                   </Pressable>
                 )}
               </View>
-              
+
               <View style={styles.modalDetailRow}>
                 <Ionicons name="time-outline" size={16} color="#00a69d" />
-                <Text style={styles.modalDetailLabel}>{translations.hour || 'Time'}:</Text>
+                <Text style={styles.modalDetailLabel}>
+                  {translations.hour || "Time"}:
+                </Text>
                 <Text style={styles.modalDetailValue}>
                   {formatTime(med.startHour)}
                 </Text>
@@ -319,51 +353,68 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
 
               <View style={styles.modalDetailRow}>
                 <Ionicons name="medical-outline" size={16} color="#00a69d" />
-                <Text style={styles.modalDetailLabel}>{translations.dosage || 'Dosage'}:</Text>
+                <Text style={styles.modalDetailLabel}>
+                  {translations.dosage || "Dosage"}:
+                </Text>
                 <Text style={styles.modalDetailValue}>
-                  {translateDosageType(med.dosage)} {med.grams > 0 ? `(${med.grams}g)` : ''}
+                  {translateDosageType(med.dosage)}{" "}
+                  {med.grams > 0 ? `(${med.grams}g)` : ""}
                 </Text>
               </View>
 
               <View style={styles.modalDetailRow}>
                 <Ionicons name="refresh-outline" size={16} color="#00a69d" />
-                <Text style={styles.modalDetailLabel}>{translations.intervalHours || 'Interval'}:</Text>
+                <Text style={styles.modalDetailLabel}>
+                  {translations.intervalHours || "Interval"}:
+                </Text>
                 <Text style={styles.modalDetailValue}>
-                  {med.intervalHours} {med.intervalHours === 1 ? translations.hour : translations.hours}
+                  {med.intervalHours}{" "}
+                  {med.intervalHours === 1
+                    ? translations.hour
+                    : translations.hours}
                 </Text>
               </View>
 
               <View style={styles.modalDetailRow}>
                 <Ionicons name="cube-outline" size={16} color="#00a69d" />
-                <Text style={styles.modalDetailLabel}>{translations.stock || 'Stock'}:</Text>
-                <Text style={styles.modalDetailValue}>
-                  {med.stock}
+                <Text style={styles.modalDetailLabel}>
+                  {translations.stock || "Stock"}:
                 </Text>
+                <Text style={styles.modalDetailValue}>{med.stock}</Text>
               </View>
 
               <View style={styles.modalDetailRow}>
                 <Ionicons name="calculator-outline" size={16} color="#00a69d" />
-                <Text style={styles.modalDetailLabel}>{translations.requiredDoses || 'Required Doses'}:</Text>
-                <Text style={styles.modalDetailValue}>
-                  {med.grams || 0}
+                <Text style={styles.modalDetailLabel}>
+                  {translations.requiredDoses || "Required Doses"}:
                 </Text>
+                <Text style={styles.modalDetailValue}>{med.grams || 0}</Text>
               </View>
 
               <View style={styles.modalDetailRow}>
-                <Ionicons 
-                  name={med.urgency === 'high' ? 'alert-circle-outline' : 
-                       med.urgency === 'medium' ? 'warning-outline' : 'checkmark-circle-outline'} 
-                  size={16} 
+                <Ionicons
+                  name={
+                    med.urgency === "high"
+                      ? "alert-circle-outline"
+                      : med.urgency === "medium"
+                        ? "warning-outline"
+                        : "checkmark-circle-outline"
+                  }
+                  size={16}
                   color="#00a69d"
                 />
-                <Text style={styles.modalDetailLabel}>{translations.urgencyText || 'Urgency'}:</Text>
-                <Text style={[
-                  styles.modalDetailValue,
-                  { 
-                    color: getUrgencyColor(med.urgency),
-                    fontWeight: 'bold'
-                  }
-                ]}>
+                <Text style={styles.modalDetailLabel}>
+                  {translations.urgencyText || "Urgency"}:
+                </Text>
+                <Text
+                  style={[
+                    styles.modalDetailValue,
+                    {
+                      color: getUrgencyColor(med.urgency),
+                      fontWeight: "bold",
+                    },
+                  ]}
+                >
                   {translateUrgency(med.urgency)} {/* DEBUG: "{med.urgency}" */}
                 </Text>
               </View>
@@ -397,7 +448,7 @@ const DayCarousel: React.FC<DayCarouselProps> = ({ medications, loading, onDelet
         >
           {translations.close}
         </Text>
-      </Pressable>
+      </Pressable>,
     );
   };
 

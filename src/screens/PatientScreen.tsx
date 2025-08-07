@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import React, { useEffect, useState } from "react";
 import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import Header from "@components/common/Header";
@@ -18,7 +19,7 @@ import {
   TypeBodyGetUserMedications,
   ResponseDeleteUserMedication,
   TypeBodyDeleteUserMedication,
-  ResponseGetUserPatients
+  ResponseGetUserPatients,
 } from "@typesAPI";
 import { log, getRouteAPI, fetchOptions } from "@utils";
 import DayCarousel from "@components/PatientScreen/DayCarousel";
@@ -49,12 +50,14 @@ const PatientScreen: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success",
+  );
   const { generateMedicationReport, isGenerating } = usePDFReport();
 
   const loadUserMedications = async (targetPatientId?: string) => {
-    // Use the targetPatientId if provided, otherwise use selectedPatient, fallback to userData
-    const patientId = targetPatientId || selectedPatient?.userId || userData?.userId;
+    const patientId =
+      targetPatientId || selectedPatient?.userId || userData?.userId;
 
     if (!patientId) {
       setLoading(false);
@@ -66,13 +69,16 @@ const PatientScreen: React.FC = () => {
         getRouteAPI("/getUserMedications"),
         fetchOptions<TypeBodyGetUserMedications>("POST", {
           userId: patientId, // Use the specific patient's ID
-        })
+        }),
       ).then((res) => res.json());
 
       if (response.error) {
         console.error("Error loading medications:", response.error);
       } else {
-        log(`Loaded medications for patient ${patientId}:`, response.medications);
+        log(
+          `Loaded medications for patient ${patientId}:`,
+          response.medications,
+        );
         setMedications(response.medications || []);
       }
     } catch (error) {
@@ -90,7 +96,7 @@ const PatientScreen: React.FC = () => {
 
     const data: ResponseGetUserPatients = await fetch(
       getRouteAPI("/getUserPatients"),
-      fetchOptions("POST", { userId: userData.userId })
+      fetchOptions("POST", { userId: userData.userId }),
     ).then((res) => res.json());
 
     if (data.error) {
@@ -108,14 +114,20 @@ const PatientScreen: React.FC = () => {
     // Check if we have a specific patient from navigation params
     const patientIdFromRoute = route.params?.patientId;
     if (patientIdFromRoute) {
-      const targetPatient = patients.find(patient => patient.userId === patientIdFromRoute);
+      const targetPatient = patients.find(
+        (patient) => patient.userId === patientIdFromRoute,
+      );
       if (targetPatient) {
-        log(`Setting selected patient from route: ${targetPatient.name} (${targetPatient.userId})`);
+        log(
+          `Setting selected patient from route: ${targetPatient.name} (${targetPatient.userId})`,
+        );
         setSelectedPatient(targetPatient);
         // Load medications for this specific patient
         await loadUserMedications(targetPatient.userId);
       } else {
-        log(`Patient with ID ${patientIdFromRoute} not found, defaulting to first patient`);
+        log(
+          `Patient with ID ${patientIdFromRoute} not found, defaulting to first patient`,
+        );
         setSelectedPatient(patients[0]);
         // Load medications for the first patient
         await loadUserMedications(patients[0].userId);
@@ -135,16 +147,17 @@ const PatientScreen: React.FC = () => {
         getRouteAPI("/deleteUserMedication"),
         fetchOptions<TypeBodyDeleteUserMedication>("POST", {
           medicationId: medicationId,
-        })
+        }),
       ).then((res) => res.json());
 
       if (response.success) {
         log("Medication deleted successfully");
-        // Recargar los medicamentos después de eliminar
         await loadUserMedications();
       } else {
         console.error("Error deleting medication:", response.error);
-        alert("Error al eliminar el medicamento. Por favor, inténtalo de nuevo.");
+        alert(
+          "Error al eliminar el medicamento. Por favor, inténtalo de nuevo.",
+        );
       }
     } catch (error) {
       console.error("Network error deleting medication:", error);
@@ -159,8 +172,10 @@ const PatientScreen: React.FC = () => {
   }, [userData?.userId, route.params?.patientId]);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      log("PatientScreen focused, reloading medications for selected patient...");
+    const unsubscribe = navigation.addListener("focus", () => {
+      log(
+        "PatientScreen focused, reloading medications for selected patient...",
+      );
       if (selectedPatient?.userId) {
         loadUserMedications(selectedPatient.userId);
       }
@@ -172,16 +187,14 @@ const PatientScreen: React.FC = () => {
   const handleGeneratePDF = async () => {
     try {
       const patientName = selectedPatient?.name || translations.patientName;
-      const patientId = selectedPatient?.userId || 'unknown';
+      const patientId = selectedPatient?.userId || "unknown";
 
       await generateMedicationReport(medications, patientName, patientId);
 
-      // Mostrar notificación de éxito
       setSnackbarMessage("PDF generado exitosamente");
       setSnackbarType("success");
       setSnackbarVisible(true);
-    } catch (error) {
-      // Mostrar notificación de error
+    } catch {
       setSnackbarMessage("Error al generar el PDF");
       setSnackbarType("error");
       setSnackbarVisible(true);
@@ -193,10 +206,18 @@ const PatientScreen: React.FC = () => {
       <Header />
 
       {/* Show loading when navigating to a specific patient or when loading */}
-      {(loading || (route.params?.patientId && !selectedPatient) || (route.params?.patientId && selectedPatient?.userId !== route.params.patientId)) ? (
-        <View style={[styles.contentContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+      {loading ||
+      (route.params?.patientId && !selectedPatient) ||
+      (route.params?.patientId &&
+        selectedPatient?.userId !== route.params.patientId) ? (
+        <View
+          style={[
+            styles.contentContainer,
+            { justifyContent: "center", alignItems: "center" },
+          ]}
+        >
           <ActivityIndicator size="large" color="#00a69d" />
-          <Text style={{ marginTop: 16, color: '#666', fontSize: 16 }}>
+          <Text style={{ marginTop: 16, color: "#666", fontSize: 16 }}>
             {translations.loadingPatient}
           </Text>
         </View>
@@ -214,12 +235,23 @@ const PatientScreen: React.FC = () => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => navigation.navigate("Schedule", { patientId: selectedPatient?.userId })}
+              onPress={() =>
+                navigation.navigate("Schedule", {
+                  patientId: selectedPatient?.userId,
+                })
+              }
               activeOpacity={0.8}
             >
               <View style={styles.buttonContent}>
-                <Ionicons name="add-circle" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>{translations.addMedication}</Text>
+                <Ionicons
+                  name="add-circle"
+                  size={20}
+                  color="white"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.buttonText}>
+                  {translations.addMedication}
+                </Text>
               </View>
             </TouchableOpacity>
 
@@ -231,13 +263,26 @@ const PatientScreen: React.FC = () => {
             >
               {isGenerating ? (
                 <View style={styles.buttonContent}>
-                  <ActivityIndicator size="small" color="white" style={styles.buttonIcon} />
-                  <Text style={styles.buttonText}>{translations.generating}</Text>
+                  <ActivityIndicator
+                    size="small"
+                    color="white"
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={styles.buttonText}>
+                    {translations.generating}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.buttonContent}>
-                  <Ionicons name="download" size={20} color="white" style={styles.buttonIcon} />
-                  <Text style={styles.buttonText}>{translations.generateReport}</Text>
+                  <Ionicons
+                    name="download"
+                    size={20}
+                    color="white"
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={styles.buttonText}>
+                    {translations.generateReport}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>

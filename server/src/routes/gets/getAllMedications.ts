@@ -14,9 +14,11 @@ export const getAllMedications = async (
   console.log("getAllMedications called with body:", body);
 
   const db = await getCollection<MedicationApi>("medicationsApi");
-  
+
   if (!body) {
-    console.log("No body provided in request to getAllMedications, sending all medications");
+    console.log(
+      "No body provided in request to getAllMedications, sending all medications",
+    );
     const medications = await db?.find({}).toArray();
     if (!medications) {
       console.error("No medications found in the database");
@@ -37,31 +39,30 @@ export const getAllMedications = async (
 
   const { onlyGetTheseColumns, onlyGetTheseMedicationsById } = body;
 
-  // Build MongoDB query and projection for optimal performance
   const query: any = {};
   const projection: any = {};
-  
-  // Filter by specific medication IDs if provided
+
   if (onlyGetTheseMedicationsById && onlyGetTheseMedicationsById.length > 0) {
     console.log("Filtering medications by IDs:", onlyGetTheseMedicationsById);
     query._id = { $in: onlyGetTheseMedicationsById };
   }
 
-  // Use MongoDB projection to only fetch required columns
   if (onlyGetTheseColumns && onlyGetTheseColumns.length > 0) {
     console.log("Using MongoDB projection for columns:", onlyGetTheseColumns);
     onlyGetTheseColumns.forEach((column) => {
       projection[column] = 1;
     });
-    // Always include 'name' field for fallback logic
-    if (onlyGetTheseColumns.includes("name_es") || onlyGetTheseColumns.includes("name_fr")) {
+    if (
+      onlyGetTheseColumns.includes("name_es") ||
+      onlyGetTheseColumns.includes("name_fr")
+    ) {
       projection.name = 1;
     }
   }
 
   try {
     const medications = await db?.find(query, { projection }).toArray();
-    
+
     if (!medications) {
       console.error("No medications found in the database");
       res.status(505).json({
@@ -74,16 +75,22 @@ export const getAllMedications = async (
       return;
     }
 
-    // Apply fallback logic for missing translated names
     let filteredMedications = medications;
     if (onlyGetTheseColumns && onlyGetTheseColumns.length > 0) {
       filteredMedications = medications.map((medication) => {
         const result = { ...medication };
-        // Apply fallback for name_es and name_fr
-        if (onlyGetTheseColumns.includes("name_es") && !result.name_es && result.name) {
+        if (
+          onlyGetTheseColumns.includes("name_es") &&
+          !result.name_es &&
+          result.name
+        ) {
           result.name_es = result.name;
         }
-        if (onlyGetTheseColumns.includes("name_fr") && !result.name_fr && result.name) {
+        if (
+          onlyGetTheseColumns.includes("name_fr") &&
+          !result.name_fr &&
+          result.name
+        ) {
           result.name_fr = result.name;
         }
         return result;

@@ -19,6 +19,7 @@
     "build:android": "npm run clean && eas build --clear-cache --platform android --profile preview && npm run install-all",
     "build-dev:android": "npm run clean && eas build --clear-cache --platform android --profile development && npm run install-all",
     "getLocalIP": "node ./getLocalApiUrl.js",
+    "build:web": "npx expo export --platform web",
     "install-all": "npm install & cd server & npm install",
     "project": "concurrently \"npm run app\" \"npm run backend\"",
     "start": "npm run getLocalIP & npm run install-all & npm run project",

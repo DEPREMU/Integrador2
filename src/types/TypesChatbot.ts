@@ -11,7 +11,6 @@ export type Conversation = {
   messages: Message[];
 };
 
-// Tipos para las requests de la API del chatbot
 export type RequestSendMessage = {
   userId: string;
   message: string;

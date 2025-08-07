@@ -9,6 +9,7 @@ export default {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
+    platforms: ["ios", "android", "web"],
     extra: {
       eas: {
         projectId: "a8d93e97-dd8d-4d17-b4fe-7bcb33a1c989",

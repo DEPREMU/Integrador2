@@ -5,6 +5,7 @@ import {
   WebSocketMessage,
   WebSocketResponse,
   TimerType,
+  IdCapsyCase,
 } from "./types/WebSocket.js";
 import { getDatabase } from "./database/functions.js";
 import { getTranslations } from "./translates/getTranslations.js";
@@ -15,17 +16,14 @@ import { WebSocketServer, WebSocket } from "ws";
 let clients: Record<string, UserWebSocket> = {};
 const clientsCapsy: Record<string, CapsyWebSocket> = {};
 
-// Función para obtener la hora actual en zona horaria de México
 const getMexicoTime = (): Date => {
   const now = new Date();
-  // Convertir a hora de México (UTC-6)
   const mexicoTime = new Date(
     now.toLocaleString("en-US", { timeZone: "America/Mexico_City" }),
   );
   return mexicoTime;
 };
 
-// Función para crear una fecha en zona horaria de México
 const createMexicoDate = (hours: number, minutes: number): Date => {
   const mexicoNow = getMexicoTime();
   const mexicoDate = new Date(mexicoNow);
@@ -33,18 +31,15 @@ const createMexicoDate = (hours: number, minutes: number): Date => {
   return mexicoDate;
 };
 
-// Función para calcular la próxima ocurrencia considerando el intervalo
 const getNextScheduledTime = (
   startTime: string,
   intervalMs: number,
 ): number => {
   const [hours, minutes] = startTime.split(":").map(Number);
 
-  // Usar hora de México en lugar de hora del servidor
   const now = getMexicoTime();
   const baseTime = createMexicoDate(hours, minutes);
 
-  // Crear formateo consistente para debugging con zona horaria local
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("es-ES", {
       hour12: false,
@@ -55,10 +50,9 @@ const getNextScheduledTime = (
     });
   };
 
-  // Agregar información de zona horaria para debugging
   const serverNow = new Date();
   const timezoneOffset = serverNow.getTimezoneOffset();
-  const mexicoOffset = 6 * 60; // México está UTC-6 (360 minutos)
+  const mexicoOffset = 6 * 60;
 
   console.log(
     `🌍 Server time: ${serverNow.toLocaleTimeString("es-ES", { hour12: false })}`,
@@ -68,7 +62,7 @@ const getNextScheduledTime = (
 
   if (Math.abs(timezoneOffset - mexicoOffset) > 60) {
     console.warn(
-      `⚠️  TIMEZONE MISMATCH: Using Mexico timezone for calculations!`,
+      "⚠️  TIMEZONE MISMATCH: Using Mexico timezone for calculations!",
     );
   }
   console.log(
@@ -81,7 +75,6 @@ const getNextScheduledTime = (
     `⏰ Debug - Current hour: ${now.getHours()}, Current minute: ${now.getMinutes()}, Target hour: ${hours}, Target minute: ${minutes}`,
   );
 
-  // Si es hoy y aún no ha llegado la hora (futuro cercano)
   if (baseTime > now) {
     const timeUntil = baseTime.getTime() - now.getTime();
     console.log(
@@ -90,21 +83,17 @@ const getNextScheduledTime = (
     return timeUntil;
   }
 
-  // Si la hora ya pasó hoy, calcular la próxima ocurrencia
   const timeSinceBase = now.getTime() - baseTime.getTime();
   console.log(
     `⏰ Time since base (past): ${timeSinceBase}ms (${Math.round(timeSinceBase / 60000)} minutes)`,
   );
 
-  // Para casos donde la hora ya pasó, calcular cuándo será la próxima ocurrencia basada en el intervalo
   if (timeSinceBase > 0) {
-    // Calcular cuántos intervalos completos han pasado desde la hora base
     const intervalsPassed = Math.floor(timeSinceBase / intervalMs);
     console.log(
       `⏰ Complete intervals passed since base time: ${intervalsPassed}`,
     );
 
-    // Calcular el tiempo de la próxima ocurrencia
     const nextOccurrence =
       baseTime.getTime() + (intervalsPassed + 1) * intervalMs;
     const timeUntilNext = nextOccurrence - now.getTime();
@@ -114,7 +103,6 @@ const getNextScheduledTime = (
       `⏰ Next occurrence at: ${formatTime(nextOccurrenceDate)} (in ${timeUntilNext}ms = ${Math.round(timeUntilNext / 60000)} minutes)`,
     );
 
-    // Si la próxima ocurrencia es muy pronto (menos de 1 minuto), usar el siguiente intervalo
     if (timeUntilNext < 60000) {
       const nextAfterThat = nextOccurrence + intervalMs;
       const timeUntilNextAfterThat = nextAfterThat - now.getTime();
@@ -128,7 +116,6 @@ const getNextScheduledTime = (
     return timeUntilNext;
   }
 
-  // Fallback: si algo sale mal, usar el intervalo completo
   console.log(`⏰ Fallback: using full interval ${intervalMs}ms`);
   return intervalMs;
 };
@@ -351,15 +338,12 @@ const handleCapsyWebSocket = (
   );
   const t = (key: keyof typeof translations) => translations[key];
 
-  // No crear handler aquí, cada pastillero tendrá su propia configuración
-
   parsedMessage.pastilla.forEach((value) => {
     if (!value?.id || !value?.type || !value?.timeout || !value?.cantidad)
       return;
     const id =
       value.type === "timeout"
         ? setTimeout(() => {
-            // Solo notificar al usuario, no enviar a todos los Capsy
             const response: WebSocketResponse = {
               type: "notification",
               notification: {
@@ -374,7 +358,6 @@ const handleCapsyWebSocket = (
             ws.send(JSON.stringify(response));
           }, value.timeout)
         : setInterval(() => {
-            // Solo notificar al usuario, no enviar a todos los Capsy
             const response: WebSocketResponse = {
               type: "notification",
               notification: {
@@ -417,7 +400,6 @@ const handleAddCapsyWebSocket = (
     timestamp: new Date().toISOString(),
   };
 
-  // Verificar si el Capsy existe en clientsCapsy
   if (!clientsCapsy[capsyId]) {
     response = {
       type: "error-capsy",
@@ -428,7 +410,6 @@ const handleAddCapsyWebSocket = (
     return;
   }
 
-  // Vincular el Capsy al usuario
   if (!clients[clientId].wsCapsy) {
     clients[clientId].wsCapsy = {};
   }
@@ -437,7 +418,6 @@ const handleAddCapsyWebSocket = (
     userId: clientId,
   };
 
-  // Actualizar la referencia del usuario en el Capsy
   clientsCapsy[capsyId].userId = clientId;
 
   response = {
@@ -454,7 +434,6 @@ const handleAddCapsyWebSocket = (
   ws.send(JSON.stringify(response));
 };
 
-// Nueva función para configurar un pastillero específico
 const handleCapsyIndividualConfig = (
   clientId: string,
   capsyId: string,
@@ -469,7 +448,6 @@ const handleCapsyIndividualConfig = (
   const translations = getTranslations(userClient.userConfig?.language || "en");
   const t = (key: keyof typeof translations) => translations[key];
 
-  // Limpiar intervalos anteriores para este Capsy específico
   if (userClient.intervalCapsy) {
     Object.keys(userClient.intervalCapsy).forEach((key) => {
       if (key.startsWith(`${capsyId}_`)) {
@@ -489,12 +467,10 @@ const handleCapsyIndividualConfig = (
     userClient.intervalCapsy = {};
   }
 
-  // Configurar horarios específicos para este Capsy
   parsedMessage.pastilla.forEach((value) => {
     if (!value?.id || !value?.type || !value?.cantidad) return;
 
     const handler = () => {
-      // Verificar si el Capsy específico está conectado
       const capsyDevice = clientsCapsy[capsyId];
       if (!capsyDevice || capsyDevice.ws?.readyState !== WebSocket.OPEN) {
         const response: WebSocketResponse = {
@@ -511,7 +487,6 @@ const handleCapsyIndividualConfig = (
         return;
       }
 
-      // Notificar al usuario
       const userNotification: WebSocketResponse = {
         type: "notification",
         notification: {
@@ -525,7 +500,6 @@ const handleCapsyIndividualConfig = (
       };
       userClient.ws?.send(JSON.stringify(userNotification));
 
-      // Enviar solicitud solo al Capsy específico
       const capsyRequest: WebSocketResponse = {
         type: "capsy-alert",
         pastilla: { id: value.id, cantidad: value.cantidad },
@@ -537,7 +511,6 @@ const handleCapsyIndividualConfig = (
     let timerId: NodeJS.Timeout | number;
     let timerType: TimerType = value.type;
 
-    // Manejar diferentes tipos de configuración
     switch (value.type) {
       case "timeout":
         if (!value.timeout) return;
@@ -552,19 +525,15 @@ const handleCapsyIndividualConfig = (
       case "scheduled": {
         if (!value.startTime || !value.intervalMs) return;
 
-        // Primera ejecución: setTimeout hasta la hora específica
         const timeUntilStart = getNextScheduledTime(
           value.startTime,
           value.intervalMs,
         );
         timerId = setTimeout(() => {
-          // Ejecutar la primera vez
           handler();
 
-          // Luego programar el intervalo repetitivo
           const intervalId = setInterval(handler, value.intervalMs || 0);
 
-          // Actualizar la referencia del timer con el interval
           const uniqueKey = `${capsyId}_${value.id}`;
           if (userClient.intervalCapsy) {
             userClient.intervalCapsy[uniqueKey] = {
@@ -581,7 +550,6 @@ const handleCapsyIndividualConfig = (
         return;
     }
 
-    // Usar una clave única que incluya el capsyId
     const uniqueKey = `${capsyId}_${value.id}`;
     if (userClient.intervalCapsy) {
       userClient.intervalCapsy[uniqueKey] = {
@@ -599,7 +567,6 @@ const handleCapsyIndividualConfig = (
   ws.send(JSON.stringify(response));
 };
 
-// Nuevo manejador para solicitudes de pastillas desde Capsy
 const handleCapsyPillRequest = (
   capsyId: string,
   ws: WebSocket,
@@ -619,7 +586,6 @@ const handleCapsyPillRequest = (
   const translations = getTranslations(userConfig?.language || "en");
   const t = (key: keyof typeof translations) => translations[key];
 
-  // Notificar al usuario que es hora de tomar medicación
   const userNotification: WebSocketResponse = {
     type: "notification",
     notification: {
@@ -633,20 +599,23 @@ const handleCapsyPillRequest = (
   };
   userClient.ws.send(JSON.stringify(userNotification));
 
-  // Enviar alerta al Capsy para que emita sonido
   const capsyAlert: WebSocketResponse = {
     type: "capsy-alert",
-    pastilla: parsedMessage.pastilla[0], // Asumiendo una pastilla por vez
+    pastilla: parsedMessage.pastilla[0],
     timestamp: new Date().toISOString(),
   };
   ws.send(JSON.stringify(capsyAlert));
 };
 
-// Función para iniciar el schedule automático del pastillero
 const startPillboxSchedule = async (
   clientId: string,
   pillboxId: string,
-  compartments: any[],
+  compartments: {
+    id: string;
+    medication: string;
+    timeSlots: { startTime: string; intervalHours: number }[];
+    dosage: string;
+  }[],
 ) => {
   console.log("🚀 Starting pillbox schedule for:", pillboxId);
 
@@ -659,7 +628,6 @@ const startPillboxSchedule = async (
   const translations = getTranslations(userClient.userConfig?.language || "en");
   const t = (key: keyof typeof translations) => translations[key];
 
-  // Limpiar intervalos anteriores para este pastillero específico
   if (userClient.intervalCapsy) {
     Object.keys(userClient.intervalCapsy).forEach((key) => {
       if (key.startsWith(`${pillboxId}_`)) {
@@ -680,11 +648,10 @@ const startPillboxSchedule = async (
     userClient.intervalCapsy = {};
   }
 
-  // Crear pastilla array basado en los compartments configurados
   const pastillaArray = compartments
     .filter((comp) => comp.medication && comp.medication.trim() !== "")
     .map((comp) => {
-      const timeSlot = comp.timeSlots?.[0]; // Usar el primer horario configurado
+      const timeSlot = comp.timeSlots?.[0];
 
       console.log(`🔍 Processing compartment ${comp.id}:`, {
         medication: comp.medication,
@@ -699,9 +666,11 @@ const startPillboxSchedule = async (
       }
 
       const quantity = extractQuantityFromDosage(comp.dosage);
+      const id = (
+        typeof comp.id === "string" ? parseInt(comp.id, 10) : comp.id
+      ) as IdCapsyCase;
 
       if (timeSlot.startTime) {
-        // Configuración con hora específica (tipo scheduled)
         const intervalMs = timeSlot.intervalHours * 3600000;
         console.log(
           `⏰ Creating scheduled config for compartment ${comp.id}:`,
@@ -714,22 +683,21 @@ const startPillboxSchedule = async (
         );
 
         return {
-          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          id,
           cantidad: quantity,
           type: "scheduled" as const,
-          timeout: timeSlot.intervalHours * 3600000, // Requerido por compatibilidad
+          timeout: timeSlot.intervalHours * 3600000,
           startTime: timeSlot.startTime,
-          intervalMs: intervalMs, // Convertir horas a ms
+          intervalMs: intervalMs,
         };
       } else if (timeSlot.intervalHours) {
-        // Configuración con intervalo (tipo interval)
         console.log(`🔄 Creating interval config for compartment ${comp.id}:`, {
           intervalHours: timeSlot.intervalHours,
           quantity: quantity,
         });
 
         return {
-          id: comp.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+          id,
           cantidad: quantity,
           type: "interval" as const,
           timeout: timeSlot.intervalHours * 3600000,
@@ -746,12 +714,10 @@ const startPillboxSchedule = async (
     JSON.stringify(pastillaArray, null, 2),
   );
 
-  // Configurar horarios específicos para este pastillero
   pastillaArray.forEach((value) => {
     if (!value?.id || !value?.type || !value?.cantidad) return;
 
     const handler = () => {
-      // Verificar si el pastillero específico está conectado
       const capsyDevice = clientsCapsy[pillboxId];
       if (!capsyDevice || capsyDevice.ws?.readyState !== WebSocket.OPEN) {
         console.log(
@@ -775,7 +741,6 @@ const startPillboxSchedule = async (
         return;
       }
 
-      // Notificar al usuario
       const userNotification: WebSocketResponse = {
         type: "notification",
         notification: {
@@ -789,7 +754,6 @@ const startPillboxSchedule = async (
       };
       userClient.ws?.send(JSON.stringify(userNotification));
 
-      // Enviar solicitud al pastillero específico
       const capsyRequest: WebSocketResponse = {
         type: "capsy-alert",
         pastilla: { id: value.id, cantidad: value.cantidad },
@@ -801,7 +765,6 @@ const startPillboxSchedule = async (
     let timerId: NodeJS.Timeout | number;
     let timerType: TimerType = value.type;
 
-    // Manejar diferentes tipos de configuración
     switch (value.type) {
       case "interval":
         if (!value.timeout) return;
@@ -828,7 +791,6 @@ const startPillboxSchedule = async (
           `   - Timezone offset: ${new Date().getTimezoneOffset()} minutes from UTC`,
         );
 
-        // Primera ejecución: setTimeout hasta la hora específica
         const timeUntilStart = getNextScheduledTime(
           value.startTime,
           value.intervalMs,
@@ -842,13 +804,12 @@ const startPillboxSchedule = async (
           console.log(
             `🔔 Executing scheduled reminder for compartment ${value.id} at ${new Date().toLocaleTimeString()}`,
           );
-          handler(); // Ejecutar primera vez
+          handler();
 
-          // Configurar intervalo para repetir
           console.log(
             `🔄 Setting up repeating interval of ${value.intervalMs}ms for compartment ${value.id}`,
           );
-          const intervalId = setInterval(handler, value.intervalMs!);
+          const intervalId = setInterval(handler, value.intervalMs || 0);
           const uniqueIntervalKey = `${pillboxId}_${value.id}_interval`;
           if (userClient.intervalCapsy) {
             userClient.intervalCapsy[uniqueIntervalKey] = {
@@ -865,7 +826,6 @@ const startPillboxSchedule = async (
         return;
     }
 
-    // Usar una clave única que incluya el pillboxId
     const uniqueKey = `${pillboxId}_${value.id}`;
     if (userClient.intervalCapsy) {
       userClient.intervalCapsy[uniqueKey] = {
@@ -880,14 +840,12 @@ const startPillboxSchedule = async (
   );
 };
 
-// Función auxiliar para extraer cantidad de la dosis
 const extractQuantityFromDosage = (dosage: string): number => {
   if (!dosage) return 1;
   const match = dosage.match(/^(\d+)/);
   return match ? parseInt(match[1], 10) : 1;
 };
 
-// Nuevo manejador para guardar configuración del pastillero
 const handleSavePillboxConfig = async (
   clientId: string,
   ws: WebSocket,
@@ -914,7 +872,6 @@ const handleSavePillboxConfig = async (
       return;
     }
 
-    // Validate compartments
     if (!compartments || !Array.isArray(compartments)) {
       const response: WebSocketResponse = {
         type: "pillbox-config-saved",
@@ -942,7 +899,6 @@ const handleSavePillboxConfig = async (
 
     console.log("💾 Saving pillbox config:", configWithTimestamp);
 
-    // Use upsert to either insert new config or update existing one
     const result = await db
       .collection("pillboxConfigs")
       .replaceOne({ userId, patientId }, configWithTimestamp, { upsert: true });
@@ -965,7 +921,6 @@ const handleSavePillboxConfig = async (
 
     console.log("✅ Pillbox config saved successfully via WebSocket");
 
-    // Después de guardar la configuración, iniciar automáticamente el schedule
     console.log("⏰ Starting automatic schedule for pillbox:", pillboxId);
     await startPillboxSchedule(clientId, pillboxId, compartments);
 
@@ -991,7 +946,6 @@ const handleSavePillboxConfig = async (
   }
 };
 
-// Nuevo manejador para cargar configuración del pastillero
 const handleGetPillboxConfig = async (
   clientId: string,
   ws: WebSocket,
@@ -1064,7 +1018,6 @@ const handleGetPillboxConfig = async (
   }
 };
 
-// Nuevo manejador para eliminar configuración del pastillero
 const handleDeletePillboxConfig = async (
   clientId: string,
   ws: WebSocket,
@@ -1140,7 +1093,6 @@ const handleDeletePillboxConfig = async (
   }
 };
 
-// Nuevo manejador para confirmación de medicación tomada
 const handleMedicationTaken = (
   capsyId: string,
   ws: WebSocket,
@@ -1160,7 +1112,6 @@ const handleMedicationTaken = (
   const translations = getTranslations(userConfig?.language || "en");
   const t = (key: keyof typeof translations) => translations[key];
 
-  // Notificar al usuario que la medicación fue tomada
   const confirmation: WebSocketResponse = {
     type: "notification",
     notification: {
@@ -1203,7 +1154,6 @@ export const setupWebSocket = async (server: HTTPServer) => {
         switch (parsedMessage.type) {
           case "init":
             clientId = handleInitWebSocket(ws, parsedMessage);
-            // Determinar si es una conexión Capsy
             if (parsedMessage.capsyId) {
               isCapsyConnection = true;
             }

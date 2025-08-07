@@ -30,7 +30,6 @@ export const addUserMedicationHandler = async (
     const { medication } = body;
     console.log("💊 Medication data:", medication);
 
-    // Validate required fields
     if (!medication.userId || !medication.medicationId || !medication.name || 
         !medication.startHour || !medication.days || medication.days.length === 0) {
       console.error("❌ Missing required medication fields:", medication);
@@ -70,7 +69,6 @@ export const addUserMedicationHandler = async (
       return;
     }
 
-    // Return the created medication with its ID
     const createdMedication = {
       ...medicationWithTimestamp,
       _id: result.insertedId,
