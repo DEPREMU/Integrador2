@@ -245,6 +245,19 @@ const es: typeLanguages = {
   medication: "Medicamento",
   dose: "Dosis",
   dosePlaceholder: "ej: 500mg",
+  invalidMedication: "Medicamento no válido. Selecciona uno de la lista.",
+  validMedication: "✓ Medicamento válido",
+  errorSavingConfiguration: "Error al guardar la configuración",
+  configurationDeletedSuccessfully: "Configuración eliminada exitosamente",
+  errorDeletingConfiguration: "Error al eliminar la configuración",
+  invalidMedicationsInCompartments:
+    "Los compartimientos {numbers} contienen medicamentos no válidos. Por favor, selecciona medicamentos de la lista de sugerencias.",
+  compartmentsRequireSchedule:
+    "Los compartimientos {numbers} requieren al menos un horario de administración.",
+  unknownError: "Error desconocido",
+  confirmDeleteConfiguration:
+    "¿Estás seguro de que deseas eliminar la configuración del pastillero de {name}? Toda la configuración se perderá.",
+  userNotIdentified: "Error: Usuario no identificado",
   sendToPillbox: "Enviar al Pastillero",
   connecting: "Conectando...",
   confirmSend: "Confirmar Envío",
@@ -274,6 +287,8 @@ const es: typeLanguages = {
   invalidTimeFormat: "Formato de hora inválido",
   timeSlotAdded: "Horario agregado",
   timeSlotRemoved: "Horario eliminado",
+  compartmentAlreadyHasTimeSlot:
+    "Este compartimento ya tiene un horario. Elimina el horario existente antes de agregar uno nuevo.",
   schedulingOptional: "La configuración de horarios es opcional",
   schedulingRequired:
     "La configuración de horarios es obligatoria - agrega al menos un horario",

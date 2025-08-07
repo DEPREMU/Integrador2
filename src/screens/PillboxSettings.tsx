@@ -53,12 +53,14 @@ interface TimeSlot {
  * @property {number} id - Unique identifier for the compartment (1-10)
  * @property {string} medication - Name of the medication stored in this compartment
  * @property {string} dosage - Dosage information (e.g., "2 pills", "1 gram")
+ * @property {string} stock - Current stock/quantity of pills in the compartment
  * @property {TimeSlot[]} timeSlots - Array of time slots for medication administration
  */
 interface Compartment {
   id: number;
   medication: string;
   dosage: string;
+  stock: string;
   timeSlots: TimeSlot[];
 }
 
@@ -111,39 +113,72 @@ interface SavedPillboxConfig {
  * @example
  * <PillboxSettings />
  */
+/**
+ * PillboxSettings Component
+ *
+ * Main component for configuring smart pillboxes and managing medication schedules.
+ * This component provides comprehensive functionality for:
+ * - Patient selection and management
+ * - Pillbox assignment and configuration
+ * - Medication management with autocomplete validation
+ * - Dosage and stock tracking for each compartment
+ * - Time-based scheduling for medication administration
+ * - Real-time WebSocket communication with the server
+ * - Multi-language support (Spanish/English)
+ *
+ * Features:
+ * - 10 configurable compartments per pillbox
+ * - Medication validation against API database
+ * - Stock management for inventory tracking
+ * - Flexible scheduling with start times and intervals
+ * - Auto-save functionality for configurations
+ * - Real-time notifications and feedback
+ *
+ * @component
+ * @returns {JSX.Element} The complete pillbox configuration interface
+ *
+ * @example
+ * ```tsx
+ * import PillboxSettings from './screens/PillboxSettings';
+ *
+ * function App() {
+ *   return <PillboxSettings />;
+ * }
+ * ```
+ *
+ * @author DEPREMU Development Team
+ * @version 2.0.0
+ * @since 2024-01-01
+ */
 const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
-  console.log(
-    "🚀 PillboxSettings component loaded at:",
-    new Date().toISOString(),
-  );
-
-  // Get contexts with error handling
+  /**
+   * Context Initialization and Error Handling
+   *
+   * Safely initializes all required React contexts with proper error handling.
+   * This approach prevents the entire component from crashing if any context
+   * is unavailable, allowing graceful degradation of functionality.
+   *
+   * Contexts initialized:
+   * - UserContext: Authentication and user data
+   * - WebSocketContext: Real-time communication
+   * - LanguageContext: Internationalization support
+   */
   let isLoggedIn = false;
   let userData = null;
-  let sendMessage: any = (...args: any[]) => {
-    console.log("sendMessage not available:", args);
-  };
+  let sendMessage: any = (...args: any[]) => {};
   let t: any = (key: string) => key;
 
   try {
     const userContext = useUserContext();
     isLoggedIn = userContext?.isLoggedIn || false;
     userData = userContext?.userData || null;
-    console.log("UserContext loaded:", {
-      isLoggedIn,
-      userData: userData?.userId,
-    });
   } catch (error) {
     console.error("Error accessing UserContext:", error);
   }
 
   try {
     const webSocketContext = useWebSocket();
-    sendMessage =
-      webSocketContext?.sendMessage ||
-      ((...args: any[]) => {
-        console.log("sendMessage not available:", args);
-      });
+    sendMessage = webSocketContext?.sendMessage || ((...args: any[]) => {});
   } catch (error) {
     console.error("Error accessing WebSocketContext:", error);
   }
@@ -155,6 +190,38 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     console.error("Error accessing LanguageContext:", error);
   }
 
+  /**
+   * Component State Management
+   *
+   * Comprehensive state management for all aspects of pillbox configuration:
+   *
+   * Patient Management:
+   * - selectedPatient: Currently active patient ID
+   * - patients: List of all available patients
+   * - loadingPatientData: Loading state for patient operations
+   *
+   * Pillbox Configuration:
+   * - pillboxId: Unique identifier for the connected device
+   * - savedConfigs: Cached configurations for quick access
+   * - compartments: Complete configuration for all 10 compartments
+   * - showPillboxIdInput: UI state for pillbox assignment flow
+   *
+   * Medication Management:
+   * - allMedications: Complete medication database for validation
+   * - medicationSuggestions: Real-time autocomplete suggestions per compartment
+   * - showSuggestions: UI state for dropdown visibility per compartment
+   * - validMedications: Validation status for each compartment's medication
+   *
+   * UI State:
+   * - isConnecting: Connection status for pillbox communication
+   * - snackbarVisible/snackbarMessage: User feedback system
+   * - loadingMedications: Loading state for medication database
+   * - initializationError: Error tracking for component initialization
+   * - isInitialized: Initialization completion flag
+   *
+   * Time Scheduling:
+   * - timeScheduleStates: Individual timing configuration per compartment
+   */
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
@@ -187,19 +254,44 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     };
   }>({});
 
+  /**
+   * Compartment Configuration State
+   *
+   * Central state for all 10 medication compartments. Each compartment contains:
+   * - id: Unique identifier (1-10)
+   * - medication: Selected medication name (validated against database)
+   * - dosage: User-defined dosage amount (e.g., "2 pills", "500mg")
+   * - stock: Current inventory count for tracking purposes
+   * - timeSlots: Array of scheduled administration times with intervals
+   *
+   * This state is the single source of truth for all compartment data
+   * and drives the entire configuration UI and validation system.
+   */
   const [compartments, setCompartments] = useState<Compartment[]>(
     Array.from({ length: 10 }, (_, index) => ({
       id: index + 1,
       medication: "",
       dosage: "",
+      stock: "",
       timeSlots: [],
     })),
   );
 
   /**
-   * Shows a Snackbar with the specified message
+   * Shows a Snackbar notification with the specified message
+   *
+   * Provides user feedback through a temporary notification that appears
+   * at the bottom of the screen. Used for success messages, errors, and
+   * general status updates throughout the application.
+   *
    * @function showSnackbar
-   * @param {string} message - The message to display
+   * @param {string} message - The message to display to the user
+   *
+   * @example
+   * ```typescript
+   * showSnackbar("Configuration saved successfully!");
+   * showSnackbar(t("errorSavingConfiguration"));
+   * ```
    */
   const showSnackbar = (message: string) => {
     setSnackbarMessage(message);
@@ -207,30 +299,51 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Validates that input contains only numbers
+   * Validates and sanitizes numeric input
+   *
+   * Removes any non-numeric characters from user input to ensure
+   * only valid numbers are processed. Used for time intervals,
+   * stock quantities, and other numeric fields.
+   *
    * @function validateNumericInput
-   * @param {string} value - The input value to validate
-   * @returns {string} The validated numeric value
+   * @param {string} value - The raw input value to validate
+   * @returns {string} The sanitized numeric value (digits only)
+   *
+   * @example
+   * ```typescript
+   * validateNumericInput("123abc") // returns "123"
+   * validateNumericInput("8 hours") // returns "8"
+   * validateNumericInput("abc") // returns ""
+   * ```
    */
   const validateNumericInput = (value: string): string => {
-    // Remove any non-numeric characters
     return value.replace(/[^0-9]/g, "");
   };
 
   /**
-   * Formats time input automatically with colon separator
+   * Formats time input with automatic colon insertion for HH:MM format
+   *
+   * Provides user-friendly time input by automatically formatting raw numeric
+   * input into proper time format. Handles partial input gracefully and
+   * enforces maximum length constraints.
+   *
    * @function formatTimeInput
-   * @param {string} value - The input value to format
-   * @returns {string} The formatted time value (HH:MM)
+   * @param {string} value - The raw time input (numeric characters only)
+   * @returns {string} The formatted time string in HH:MM format
+   *
+   * @example
+   * ```typescript
+   * formatTimeInput("8") // returns "8"
+   * formatTimeInput("830") // returns "8:30"
+   * formatTimeInput("1445") // returns "14:45"
+   * formatTimeInput("12345") // returns "12:34" (truncated)
+   * ```
    */
   const formatTimeInput = (value: string): string => {
-    // Remove any non-numeric characters
     const numericValue = value.replace(/[^0-9]/g, "");
 
-    // Limit to 4 digits maximum (HHMM)
     const limitedValue = numericValue.substring(0, 4);
 
-    // Add colon after 2 digits if we have more than 2 digits
     if (limitedValue.length >= 3) {
       return limitedValue.substring(0, 2) + ":" + limitedValue.substring(2);
     }
@@ -239,15 +352,32 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Loads all medications from the API for autocomplete suggestions
+   * Loads the complete medication database from API for autocomplete functionality
+   *
+   * Fetches all available medications from the server to enable real-time
+   * autocomplete suggestions and medication validation. Implements performance
+   * optimizations including chunked processing to prevent UI blocking.
+   *
+   * Performance Features:
+   * - Lazy loading: Only loads when needed
+   * - Chunked processing: Processes medications in batches
+   * - UI-friendly: Includes delays to prevent interface freezing
+   * - Error handling: Graceful fallback for network issues
+   *
    * @async
    * @function loadAllMedications
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Resolves when medication loading is complete
+   *
+   * @example
+   * ```typescript
+   * // Typically called automatically when user starts typing
+   * await loadAllMedications();
+   * // Medications are now available for autocomplete
+   * ```
    */
   const loadAllMedications = async () => {
     try {
       setLoadingMedications(true);
-      console.log("Loading medications for autocomplete (optimized)...");
 
       const response = await fetch(
         getRouteAPI("/getAllMedications"),
@@ -260,10 +390,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         const data: ResponseGetAllMedications = await response.json();
 
         if (data.medications && data.medications.length > 0) {
-          console.log(
-            `Loaded ${data.medications.length} medications for autocomplete`,
-          );
-          // Procesar medicamentos en chunks pequeños para evitar bloqueo del UI
           const processInChunks = (
             medications: any[],
             chunkSize: number = 100,
@@ -278,11 +404,9 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           const chunks = processInChunks(data.medications);
           let processedMedications: any[] = [];
 
-          // Procesar chunks con delay para no bloquear el UI
           for (let i = 0; i < chunks.length; i++) {
             processedMedications = processedMedications.concat(chunks[i]);
             if (i % 10 === 0) {
-              // Cada 10 chunks, dar tiempo al UI
               await new Promise((resolve) => setTimeout(resolve, 10));
             }
           }
@@ -292,7 +416,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           setAllMedications([]);
         }
       } else {
-        console.error("Failed to load all medications");
         setAllMedications([]);
       }
     } catch (error) {
@@ -304,36 +427,46 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Filters medications based on search term for autocomplete
+   * Filters medications based on search term for real-time autocomplete
+   *
+   * Provides intelligent medication filtering with multiple language support
+   * and performance optimizations. Handles both English and Spanish medication
+   * names for comprehensive search capabilities.
+   *
+   * Search Features:
+   * - Case-insensitive matching
+   * - Multi-language support (English/Spanish)
+   * - Lazy loading integration
+   * - Performance-optimized (limited results)
+   * - Loading state feedback
+   *
    * @function filterMedications
-   * @param {string} searchTerm - The search term to filter by
-   * @returns {string[]} Array of filtered medication names
+   * @param {string} searchTerm - The user's search input (minimum 2 characters)
+   * @returns {string[]} Array of filtered medication names (max 5 results)
+   *
+   * @example
+   * ```typescript
+   * filterMedications("para") // returns ["Paracetamol 500mg", "Paracetamol 1g"]
+   * filterMedications("ib") // returns ["Ibuprofeno 400mg", "Ibuprofeno 600mg"]
+   * filterMedications("a") // returns [] (too short)
+   * ```
    */
   const filterMedications = (searchTerm: string): string[] => {
     if (!searchTerm || searchTerm.length < 2) {
       return [];
     }
 
-    // If medications not loaded yet, trigger lazy load but return loading message
     if (allMedications.length === 0 && !loadingMedications) {
-      console.log(
-        "Triggering lazy load of medications for search:",
-        searchTerm,
-      );
-      // Trigger load asynchronously without blocking UI
       loadAllMedications()
-        .then(() => {
-          console.log("Medications loaded successfully");
-        })
+        .then(() => {})
         .catch((error) => {
           console.error("Failed to load medications:", error);
         });
-      return ["Cargando medicamentos..."]; // Show loading message
+      return [t("loadingMedications")]; 
     }
 
-    // If still loading, show loading message
     if (loadingMedications) {
-      return ["Cargando medicamentos..."];
+      return [t("loadingMedications")];
     }
 
     const normalizedSearch = searchTerm.toLowerCase().trim();
@@ -348,22 +481,39 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       })
       .map((med) => med.name || med.name_es || "")
       .filter((name) => name.length > 0)
-      .slice(0, 5); // Limit to 5 suggestions
+      .slice(0, 5); 
 
     return filtered;
   };
 
   /**
-   * Checks if a medication name is valid (exists in the medications list)
+   * Validates medication names against the official database
+   *
+   * Ensures that user-entered medications are legitimate and available
+   * in the system. Supports both English and Spanish medication names
+   * with case-insensitive matching for better user experience.
+   *
+   * Validation Logic:
+   * - Empty strings are invalid
+   * - If database isn't loaded, assumes valid (graceful degradation)
+   * - Case-insensitive exact matching
+   * - Supports both English and Spanish names
+   *
    * @function isValidMedication
    * @param {string} medicationName - The medication name to validate
-   * @returns {boolean} True if the medication is valid
+   * @returns {boolean} True if medication exists in database or database is unavailable
+   *
+   * @example
+   * ```typescript
+   * isValidMedication("Paracetamol") // returns true (if in database)
+   * isValidMedication("InvalidDrug") // returns false
+   * isValidMedication("") // returns false
+   * isValidMedication("ASPIRIN") // returns true (case-insensitive)
+   * ```
    */
   const isValidMedication = (medicationName: string): boolean => {
     if (!medicationName.trim()) return false;
 
-    // If allMedications is empty, consider all medications as valid
-    // This prevents blocking users when medications haven't loaded yet
     if (allMedications.length === 0) return true;
 
     return allMedications.some(
@@ -375,10 +525,30 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Handles medication input change with autocomplete
+   * Handles medication input changes with real-time validation and autocomplete
+   *
+   * Manages the complete medication input workflow including:
+   * - Real-time validation against database
+   * - Autocomplete suggestions generation
+   * - Visual feedback for validation status
+   * - State synchronization across the component
+   *
+   * Features:
+   * - Instant validation feedback
+   * - Smart autocomplete with fallback suggestions
+   * - Minimum character threshold for performance
+   * - Real and test data integration
+   *
    * @function handleMedicationInputChange
-   * @param {number} compartmentId - The compartment ID
-   * @param {string} value - The input value
+   * @param {number} compartmentId - The ID of the compartment being modified (1-10)
+   * @param {string} value - The new medication name input by the user
+   *
+   * @example
+   * ```typescript
+   * // User types in compartment 1
+   * handleMedicationInputChange(1, "Para");
+   * // Triggers validation and shows autocomplete suggestions
+   * ```
    */
   const handleMedicationInputChange = (
     compartmentId: number,
@@ -386,16 +556,12 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   ) => {
     updateCompartment(compartmentId, "medication", value);
 
-    // Check if medication is valid
     const isValid = isValidMedication(value);
     setValidMedications({ ...validMedications, [compartmentId]: isValid });
 
-    // Update suggestions if we have enough characters
     if (value.length >= 2) {
-      // Try real filtering first
       const realSuggestions = filterMedications(value);
 
-      // If no real suggestions, use test data
       const testSuggestions = [
         "Paracetamol 500mg",
         "Ibuprofeno 400mg",
@@ -425,10 +591,28 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Handles selecting a medication from suggestions
+   * Handles selection of a medication from autocomplete suggestions
+   *
+   * Completes the medication selection process when user chooses from
+   * the autocomplete dropdown. Updates all relevant states and provides
+   * immediate visual feedback.
+   *
+   * Actions Performed:
+   * - Updates compartment medication name
+   * - Marks medication as valid (since it came from suggestions)
+   * - Hides suggestion dropdown
+   * - Clears suggestion state for cleanup
+   *
    * @function selectMedicationSuggestion
-   * @param {number} compartmentId - The compartment ID
-   * @param {string} medicationName - The selected medication name
+   * @param {number} compartmentId - The ID of the target compartment (1-10)
+   * @param {string} medicationName - The selected medication name from suggestions
+   *
+   * @example
+   * ```typescript
+   * // User clicks on "Paracetamol 500mg" suggestion for compartment 3
+   * selectMedicationSuggestion(3, "Paracetamol 500mg");
+   * // Compartment 3 now has valid medication with no dropdown shown
+   * ```
    */
   const selectMedicationSuggestion = (
     compartmentId: number,
@@ -441,24 +625,40 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Loads the list of patients assigned to the current user
-   * Fetches patient data from the API and updates the patients state
-   * Shows error alerts if the request fails
+   * Loads and manages the list of patients assigned to the current user
+   *
+   * Fetches patient data from the API and updates the component state.
+   * Implements robust error handling to prevent UI crashes and provides
+   * appropriate fallbacks for various error scenarios.
+   *
+   * Security Features:
+   * - User authentication validation
+   * - Proper error logging without sensitive data exposure
+   * - Graceful degradation on API failures
+   *
+   * Error Handling:
+   * - Network failures: Logs error, sets empty patient list
+   * - Authentication issues: Safely returns empty list
+   * - API errors: Logs response details for debugging
    *
    * @async
    * @function loadPatients
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Resolves when patient loading is complete
+   *
+   * @example
+   * ```typescript
+   * // Called during component initialization
+   * await loadPatients();
+   * // patients state now contains user's assigned patients
+   * ```
    */
   const loadPatients = async () => {
     if (!userData?.userId) {
-      console.log("No userData available for loading patients");
       setPatients([]);
       return;
     }
 
     try {
-      console.log("Loading patients for user:", userData.userId);
-
       const response = await fetch(
         getRouteAPI("/getUserPatients"),
         fetchOptions<TypeBodyGetUserPatients>("POST", {
@@ -476,44 +676,58 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
             role: user.role,
           }));
 
-          console.log("Successfully loaded patients:", patientsData.length);
           setPatients(patientsData);
         } else {
-          console.log("No patients found for user");
           setPatients([]);
         }
       } else {
         const errorData = await response.json();
         console.error("Error response from getUserPatients API:", errorData);
         setPatients([]);
-        // Don't show alert here, just log the error
       }
     } catch (error) {
       console.error("Error loading patients:", error);
       setPatients([]);
-      // Don't show alert here, just log the error
     }
   };
 
   /**
-   * Loads medications for the selected patient and auto-fills compartments
-   * Fetches medication data from the API and populates the compartments
-   * with the patient's current medication regimen
+   * Loads medications for a selected patient and auto-fills compartments
+   *
+   * Fetches the patient's current medication regimen from the API and
+   * populates the compartment forms with medication names. Implements
+   * the data isolation principle by leaving dosage and stock fields
+   * empty for manual user input.
+   *
+   * Data Loading Strategy:
+   * - Medication names: Auto-filled from patient's prescription
+   * - Dosage amounts: Left empty for manual entry
+   * - Stock quantities: Left empty for manual entry
+   * - Time schedules: Reset to empty for new configuration
+   *
+   * Validation Integration:
+   * - Automatically validates loaded medications
+   * - Updates validation states for immediate feedback
+   * - Handles invalid medications gracefully
    *
    * @async
    * @function loadPatientMedications
-   * @param {string} patientId - The ID of the patient whose medications to load
-   * @returns {Promise<void>}
+   * @param {string} patientId - The unique ID of the patient whose medications to load
+   * @returns {Promise<void>} Resolves when medication loading and validation is complete
+   *
+   * @example
+   * ```typescript
+   * // Load medications for patient with ID "patient-123"
+   * await loadPatientMedications("patient-123");
+   * // Compartments now have medication names but empty dosage/stock
+   * ```
    */
   const loadPatientMedications = async (patientId: string) => {
     if (!patientId) {
-      console.log("No patient ID provided");
       return;
     }
 
     try {
-      console.log("Loading medications for patient:", patientId);
-
       const response = await fetch(
         getRouteAPI("/getUserMedications"),
         fetchOptions<TypeBodyGetUserMedications>("POST", {
@@ -525,15 +739,14 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         const data: ResponseGetUserMedications = await response.json();
 
         if (data.medications && data.medications.length > 0) {
-          console.log("Loaded medications:", data.medications);
-
           const updatedCompartments = compartments.map((comp, index) => {
             const medication = data.medications[index];
             if (medication) {
               return {
                 ...comp,
                 medication: medication.name || "",
-                dosage: medication.dosage || `${medication.grams} grams` || "",
+                dosage: "", 
+                stock: "", 
                 timeSlots: [],
               };
             }
@@ -542,7 +755,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
 
           setCompartments(updatedCompartments);
 
-          // Validate loaded medications
           const newValidMedications: { [key: number]: boolean } = {};
           updatedCompartments.forEach((comp) => {
             if (comp.medication.trim() !== "") {
@@ -551,11 +763,11 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           });
           setValidMedications(newValidMedications);
         } else {
-          console.log("No medications found for patient");
           const emptyCompartments = compartments.map((comp) => ({
             ...comp,
             medication: "",
             dosage: "",
+            stock: "",
             timeSlots: [],
           }));
           setCompartments(emptyCompartments);
@@ -571,6 +783,26 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     }
   };
 
+  /**
+   * Component Initialization Effect
+   *
+   * Handles the initial loading of essential data when the component mounts
+   * or when authentication state changes. Implements error boundary pattern
+   * to ensure the interface remains functional even if initialization fails.
+   *
+   * Initialization Sequence:
+   * 1. Verify user authentication
+   * 2. Load patient list for current user
+   * 3. Set initialization completion flag
+   * 4. Handle any errors gracefully
+   *
+   * Performance Considerations:
+   * - Skips heavy medication loading at startup
+   * - Uses lazy loading for better initial render performance
+   * - Provides error recovery mechanisms
+   *
+   * Dependencies: [isLoggedIn, userData]
+   */
   useEffect(() => {
     const initializeData = async () => {
       if (!isLoggedIn || !userData) {
@@ -580,35 +812,43 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       try {
         setInitializationError("");
 
-        // Load only essential data - don't load all medications at startup
         await loadPatients();
-        // Removed loadAllMedications() to prevent UI freeze
 
         setIsInitialized(true);
       } catch (error) {
         console.error("Error during initialization:", error);
         setInitializationError(`Error de inicialización: ${error}`);
-        setIsInitialized(true); // Set to true anyway to show the interface
+        setIsInitialized(true); 
       }
     };
 
     initializeData();
   }, [isLoggedIn, userData]);
 
-  // Load saved configs after patients are loaded
   useEffect(() => {
-    // No longer needed since we load configs individually per patient
   }, [patients, userData]);
 
+  /**
+   * Patient Selection Change Effect
+   *
+   * Manages the complete workflow when a user selects a different patient.
+   * Handles both loading saved configurations and preparing new setups
+   * with comprehensive error recovery.
+   *
+   * Workflow:
+   * 1. Trigger when selectedPatient changes
+   * 2. Load patient-specific data and configurations
+   * 3. Reset form if no patient selected
+   * 4. Handle errors gracefully with form reset
+   *
+   * Dependencies: [selectedPatient] (optimized to remove unnecessary deps)
+   */
   useEffect(() => {
-    console.log("🔄 Patient selection changed:", selectedPatient);
     const handlePatientChange = async () => {
       try {
         if (selectedPatient) {
-          console.log(`Patient selected: ${selectedPatient}`);
           await loadPatientData(selectedPatient);
         } else {
-          console.log("No patient selected, resetting form");
           resetForm();
         }
       } catch (error) {
@@ -618,10 +858,26 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     };
 
     handlePatientChange();
-  }, [selectedPatient]); // Removed savedConfigs and allMedications dependencies
+  }, [selectedPatient]); 
 
   /**
-   * Auto-saves configuration when compartments change
+   * Auto-save Configuration Effect
+   *
+   * Implements intelligent auto-save functionality that preserves user work
+   * without overwhelming the server with requests. Uses debouncing to
+   * ensure optimal performance and user experience.
+   *
+   * Auto-save Triggers:
+   * - Compartment configuration changes
+   * - Patient selection changes
+   * - Pillbox ID modifications
+   *
+   * Performance Features:
+   * - 1-second debounce delay
+   * - Only saves when meaningful data exists
+   * - Cleanup on component unmount
+   *
+   * Dependencies: [compartments, selectedPatient, pillboxId]
    */
   useEffect(() => {
     if (
@@ -629,7 +885,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       pillboxId &&
       compartments.some((comp) => comp.medication.trim() !== "")
     ) {
-      // Debounce the save operation
       const timeoutId = setTimeout(async () => {
         await savePillboxConfig(selectedPatient, pillboxId, compartments);
       }, 1000);
@@ -639,116 +894,141 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   }, [compartments, selectedPatient, pillboxId]);
 
   /**
-   * WebSocket message handler for pillbox configuration responses
+   * WebSocket Message Handler Effect
+   *
+   * Manages real-time communication with the server for pillbox configuration
+   * operations. Handles multiple message types and provides appropriate user
+   * feedback for each operation result.
+   *
+   * Supported Message Types:
+   * - pillbox-config-saved: Configuration save confirmations
+   * - pillbox-config-loaded: Configuration retrieval responses
+   * - pillbox-config-deleted: Configuration deletion confirmations
+   *
+   * Features:
+   * - Real-time state synchronization
+   * - User feedback via snackbar notifications
+   * - Error handling and reporting
+   * - Date object conversion for proper state management
+   *
+   * Event Lifecycle:
+   * - Registers custom event listener on mount
+   * - Processes messages based on type
+   * - Updates local state accordingly
+   * - Cleans up listener on unmount
    */
   useEffect(() => {
     const handleWebSocketMessage = (event: CustomEvent) => {
       const message = event.detail;
-      console.log("📨 WebSocket message received:", message);
 
       if (!message || !message.type) return;
 
       switch (message.type) {
         case "pillbox-config-saved":
-          console.log("✅ Pillbox config saved response:", message);
           if (message.success && message.config) {
-            // Convert lastUpdated string back to Date object
             const configWithDate = {
               ...message.config,
               lastUpdated: new Date(message.config.lastUpdated),
             };
 
-            // Update local state
             setSavedConfigs((prev) => {
               const filtered = prev.filter(
                 (config) => config.patientId !== message.config.patientId,
               );
               return [...filtered, configWithDate];
             });
-
-            console.log("💾 Config saved successfully via WebSocket");
           } else if (message.error) {
             console.error(
               "❌ Error saving config via WebSocket:",
               message.error,
             );
             showSnackbar(
-              "Error al guardar la configuración: " + message.error.message,
+              t("errorSavingConfiguration") + ": " + message.error.message,
             );
           }
           break;
 
         case "pillbox-config-loaded":
-          console.log("📥 Pillbox config loaded response:", message);
           if (message.config) {
-            // Convert lastUpdated string back to Date object
             const configWithDate = {
               ...message.config,
               lastUpdated: new Date(message.config.lastUpdated),
             };
 
-            // Update savedConfigs state to include this config
             setSavedConfigs((prev) => {
               const filtered = prev.filter(
                 (config) => config.patientId !== message.config.patientId,
               );
               return [...filtered, configWithDate];
             });
-
-            console.log("📥 Config loaded successfully via WebSocket");
           } else if (message.error) {
-            console.log(
-              "ℹ️ No config found via WebSocket:",
-              message.error.message,
-            );
           }
           break;
 
         case "pillbox-config-deleted":
-          console.log("🗑️ Pillbox config deleted response:", message);
           if (message.success) {
-            console.log("✅ Config deleted successfully via WebSocket");
-            showSnackbar("Configuración eliminada exitosamente");
+            showSnackbar(t("configurationDeletedSuccessfully"));
           } else if (message.error) {
             console.error(
               "❌ Error deleting config via WebSocket:",
               message.error,
             );
             showSnackbar(
-              "Error al eliminar la configuración: " + message.error.message,
+              t("errorDeletingConfiguration") + ": " + message.error.message,
             );
           }
           break;
 
         default:
-          // Not a pillbox config message, ignore
           break;
       }
     };
 
-    // Add event listener for custom pillbox config messages
     window.addEventListener(
       "pillbox-config-message",
       handleWebSocketMessage as EventListener,
     );
-    console.log("📡 WebSocket message handler registered for pillbox config");
 
     return () => {
       window.removeEventListener(
         "pillbox-config-message",
         handleWebSocketMessage as EventListener,
       );
-      console.log(
-        "📡 WebSocket message handler unregistered for pillbox config",
-      );
     };
   }, []);
 
   /**
-   * Loads saved pillbox configuration for a specific patient from the database via WebSocket
+   * Loads saved pillbox configuration for a specific patient via WebSocket
+   *
+   * Retrieves patient-specific pillbox configurations from the database
+   * using WebSocket communication. Implements async pattern with Promise
+   * resolution for seamless integration with React state management.
+   *
+   * WebSocket Integration:
+   * - Sends get-pillbox-config message
+   * - Handles async response via existing WebSocket listener
+   * - Falls back to local state for immediate availability
+   *
+   * Error Handling:
+   * - Network failures: Returns null gracefully
+   * - Authentication issues: Validates user data first
+   * - Missing configs: Normal behavior for new patients
+   *
    * @function loadPillboxConfig
-   * @param {string} patientId - The patient ID to load configuration for
+   * @param {string} patientId - The unique identifier of the patient
    * @returns {Promise<SavedPillboxConfig | null>} The configuration or null if not found
+   *
+   * @example
+   * ```typescript
+   * const config = await loadPillboxConfig("patient-123");
+   * if (config) {
+   *   // Load existing configuration
+   *   setCompartments(config.compartments);
+   * } else {
+   *   // Setup new configuration
+   *   loadPatientMedications(patientId);
+   * }
+   * ```
    */
   const loadPillboxConfig = async (
     patientId: string,
@@ -758,36 +1038,23 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     }
 
     try {
-      console.log(
-        `Loading pillbox config for patient via WebSocket: ${patientId}`,
-      );
-
       return new Promise((resolve) => {
-        // Set up a temporary listener for the response
         const originalSendMessage = sendMessage;
 
-        // Send the request
         const message = {
           type: "get-pillbox-config",
           userId: userData.userId,
           patientId: patientId,
         };
 
-        console.log("📤 Sending load config message:", message);
         sendMessage(message);
 
-        // Since WebSocket is async, we'll return null and handle the response in a listener
-        // For now, we'll use the existing savedConfigs state
         const existingConfig = savedConfigs.find(
           (config) => config.patientId === patientId,
         );
         if (existingConfig) {
-          console.log(
-            `Found existing config in state for patient: ${patientId}`,
-          );
           resolve(existingConfig);
         } else {
-          console.log(`No existing config found for patient: ${patientId}`);
           resolve(null);
         }
       });
@@ -798,11 +1065,40 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   };
 
   /**
-   * Saves a pillbox configuration to the database via WebSocket
+   * Saves pillbox configuration to database via WebSocket
+   *
+   * Persists the complete pillbox configuration including all compartments,
+   * medications, dosages, stock levels, and scheduling information. Uses
+   * WebSocket for real-time communication and immediate feedback.
+   *
+   * Configuration Data Saved:
+   * - Patient assignment (patientId)
+   * - Device identification (pillboxId)
+   * - Complete compartment configurations
+   * - Medication names and dosages
+   * - Stock levels for inventory tracking
+   * - Time-based scheduling information
+   *
+   * Communication Flow:
+   * 1. Validates user authentication
+   * 2. Sends save-pillbox-config WebSocket message
+   * 3. Receives confirmation via WebSocket listener
+   * 4. Updates local state automatically
+   *
    * @function savePillboxConfig
-   * @param {string} patientId - The patient ID
-   * @param {string} pillboxId - The pillbox ID
-   * @param {Compartment[]} compartments - The compartments configuration
+   * @param {string} patientId - The unique identifier of the patient
+   * @param {string} pillboxId - The unique identifier of the pillbox device
+   * @param {Compartment[]} compartments - Complete array of compartment configurations
+   *
+   * @example
+   * ```typescript
+   * await savePillboxConfig(
+   *   "patient-123",
+   *   "PILLBOX-456",
+   *   compartmentsArray
+   * );
+   * // Configuration is now saved and synchronized
+   * ```
    */
   const savePillboxConfig = async (
     patientId: string,
@@ -811,14 +1107,11 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
   ) => {
     if (!userData?.userId) {
       console.error("No user ID available for saving config");
-      showSnackbar("Error: Usuario no identificado");
+      showSnackbar(t("userNotIdentified"));
       return;
     }
 
     try {
-      console.log("💊 Saving pillbox config via WebSocket...");
-
-      // Send message via WebSocket
       const message = {
         type: "save-pillbox-config",
         userId: userData.userId,
@@ -827,15 +1120,11 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         compartments,
       };
 
-      console.log("📤 Sending save config message:", message);
       sendMessage(message);
 
-      // Note: Response will be handled by WebSocket listener
-      // We don't need to wait for response here since it's async
-      console.log("✅ Save config message sent via WebSocket");
     } catch (error) {
       console.error("Error saving config:", error);
-      showSnackbar("Error al guardar la configuración");
+      showSnackbar(t("errorSavingConfiguration"));
     }
   };
 
@@ -845,28 +1134,17 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
    * @param {string} patientId - The patient ID
    */
   const removePillboxConfig = async (patientId: string) => {
-    console.log("🗑️ removePillboxConfig called with patient:", patientId);
-
-    console.log("🗑️ Starting removal process for patient:", patientId);
-    console.log("👤 Current userData:", userData?.userId);
-    console.log("📊 Current savedConfigs:", savedConfigs);
-    console.log("🔍 Selected patient:", selectedPatient);
-
     if (!userData?.userId) {
       console.error("❌ No user ID available for removing config");
-      showSnackbar("Error: Usuario no identificado");
+      showSnackbar(t("userNotIdentified"));
       return;
     }
 
-    // Check if config exists before deletion
     const existingConfig = savedConfigs.find(
       (config) => config.patientId === patientId,
     );
-    console.log("🔍 Existing config found:", existingConfig);
 
     try {
-      console.log("🌐 Making WebSocket call to delete pillbox config...");
-
       const message = {
         type: "delete-pillbox-config",
         userId: userData.userId,
@@ -876,7 +1154,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       console.log("� Sending delete config message:", message);
       sendMessage(message);
 
-      // Update local state immediately (optimistic update)
       console.log("🔄 Updating local savedConfigs state optimistically...");
       console.log(
         "📋 Current savedConfigs before update:",
@@ -902,58 +1179,36 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         return newConfigs;
       });
 
-      // If the removed config is for the currently selected patient, reset everything
       if (selectedPatient === patientId) {
         console.log(
           "🔄 Current patient matches removed patient, resetting form...",
         );
 
-        // Clear pillbox ID
         console.log("🆔 Clearing pillbox ID from:", pillboxId, "to empty");
         setPillboxId("");
 
-        // Reset all compartments to empty state
         console.log("💊 Resetting all compartments...");
         const emptyCompartments = Array.from({ length: 10 }, (_, index) => ({
           id: index + 1,
           medication: "",
           dosage: "",
+          stock: "",
           timeSlots: [],
         }));
         setCompartments(emptyCompartments);
 
-        // Clear validation states
         console.log("✅ Clearing validation states...");
         setValidMedications({});
         setShowSuggestions({});
         setMedicationSuggestions({});
         setTimeScheduleStates({});
 
-        // Show pillbox ID input for new assignment
-        console.log("📝 Showing pillbox ID input...");
         setShowPillboxIdInput(true);
 
-        console.log("🎯 Form reset completed for current patient");
-
-        // Force re-render by updating a state
-        console.log("🔄 Forcing component re-render...");
         setLoadingPatientData(false);
-      } else {
-        console.log(
-          "ℹ️ Removed patient is not currently selected, keeping current form",
-        );
       }
 
-      showSnackbar("Configuración eliminada exitosamente");
-      console.log("🎉 Removal process completed successfully");
-
-      // Log final state after a delay to see the actual update
-      setTimeout(() => {
-        console.log("🔍 Final state check:");
-        console.log("  - pillboxId:", pillboxId);
-        console.log("  - showPillboxIdInput:", showPillboxIdInput);
-        console.log("  - savedConfigs count:", savedConfigs.length);
-      }, 1000);
+      showSnackbar(t("configurationDeletedSuccessfully"));
     } catch (error) {
       console.error("❌ Exception during removal:", error);
       console.error("❌ Error details:", {
@@ -962,8 +1217,9 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         stack: error instanceof Error ? error.stack : "No stack trace",
       });
       showSnackbar(
-        "Error al eliminar la configuración: " +
-          (error instanceof Error ? error.message : "Error desconocido"),
+        t("errorDeletingConfiguration") +
+          ": " +
+          (error instanceof Error ? error.message : t("unknownError")),
       );
     }
   };
@@ -979,18 +1235,15 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     try {
       console.log(`Loading data for patient: ${patientId}`);
 
-      // Load configuration for this specific patient
       const savedConfig = await loadPillboxConfig(patientId);
 
       if (savedConfig) {
         console.log(`Found saved config for patient: ${patientId}`);
 
-        // Load saved configuration
         setPillboxId(savedConfig.pillboxId);
         setCompartments(savedConfig.compartments);
         setShowPillboxIdInput(false);
 
-        // Update savedConfigs state to include this config
         setSavedConfigs((prev) => {
           const filtered = prev.filter(
             (config) => config.patientId !== patientId,
@@ -998,7 +1251,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           return [...filtered, savedConfig];
         });
 
-        // Validate loaded medications
         const newValidMedications: { [key: number]: boolean } = {};
         savedConfig.compartments.forEach((comp) => {
           if (comp.medication.trim() !== "") {
@@ -1011,14 +1263,12 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           `No saved config found for patient: ${patientId}, loading medications from API`,
         );
 
-        // No saved config, load medications from API and show pillbox ID input
         await loadPatientMedications(patientId);
         setPillboxId("");
         setShowPillboxIdInput(true);
       }
     } catch (error) {
       console.error("Error in loadPatientData:", error);
-      // Reset form on error to prevent white screen
       resetForm();
     } finally {
       setLoadingPatientData(false);
@@ -1036,6 +1286,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         id: index + 1,
         medication: "",
         dosage: "",
+        stock: "",
         timeSlots: [],
       }));
       setCompartments(emptyCompartments);
@@ -1056,7 +1307,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
    *
    * @function updateCompartment
    * @param {number} id - The compartment ID to update
-   * @param {keyof Omit<Compartment, "id">} field - The field to update ("medication", "dosage", or "timeSlots")
+   * @param {keyof Omit<Compartment, "id">} field - The field to update ("medication", "dosage", "stock", or "timeSlots")
    * @param {string} value - The new value for the field
    */
   const updateCompartment = (
@@ -1109,6 +1360,16 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       return;
     }
 
+    const compartment = compartments.find((comp) => comp.id === compartmentId);
+    if (compartment && compartment.timeSlots.length > 0) {
+      Alert.alert(
+        t("error"),
+        t("compartmentAlreadyHasTimeSlot") ||
+          "Este compartimento ya tiene un horario. Elimina el horario existente antes de agregar uno nuevo.",
+      );
+      return;
+    }
+
     setCompartments((prev) =>
       prev.map((comp) =>
         comp.id === compartmentId
@@ -1122,7 +1383,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
 
     Alert.alert(t("success"), t("timeSlotAdded"));
 
-    // Auto-save after adding time slot
     if (selectedPatient && pillboxId) {
       setTimeout(async () => {
         const updatedCompartments = compartments.map((comp) =>
@@ -1165,7 +1425,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
 
     Alert.alert(t("success"), t("timeSlotRemoved"));
 
-    // Auto-save after removing time slot
     if (selectedPatient && pillboxId) {
       setTimeout(async () => {
         const updatedCompartments = compartments.map((comp) =>
@@ -1218,7 +1477,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
    */
   const linkPillbox = async (capsyId: string): Promise<boolean> => {
     try {
-      // Send add-capsy message following documented workflow
       const message = {
         type: "add-capsy" as const,
         capsyId: capsyId,
@@ -1231,7 +1489,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
 
       sendMessage(message);
 
-      // Wait a moment for server response
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       console.log("Pillbox linked successfully");
@@ -1268,7 +1525,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     setIsConnecting(true);
 
     try {
-      // First, link the pillbox if it's not already saved
       const savedConfig = savedConfigs.find(
         (config) =>
           config.patientId === selectedPatient &&
@@ -1284,43 +1540,37 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         }
       }
 
-      // Build the pastilla array following the documented workflow format
       const pastillaArray = pastillaData.map((item) => {
         const compartment = compartments.find((comp) => comp.id === item.id);
 
-        // Convert timeSlots to the documented format
         const timeSlot = compartment?.timeSlots?.[0];
 
         if (timeSlot?.startTime) {
-          // Use scheduled type with specific start time
           return {
             id: item.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
             cantidad: item.cantidad,
             type: "scheduled" as const,
-            timeout: timeSlot.intervalHours * 3600000, // Required timeout field
+            timeout: timeSlot.intervalHours * 3600000, 
             startTime: timeSlot.startTime,
-            intervalMs: timeSlot.intervalHours * 3600000, // Convert hours to milliseconds
+            intervalMs: timeSlot.intervalHours * 3600000, 
           };
         } else if (timeSlot?.intervalHours) {
-          // Use interval type for immediate start with repetition
           return {
             id: item.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
             cantidad: item.cantidad,
             type: "interval" as const,
-            timeout: timeSlot.intervalHours * 3600000, // Convert hours to milliseconds
+            timeout: timeSlot.intervalHours * 3600000,
           };
         } else {
-          // Default to single dose (timeout type)
           return {
             id: item.id as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
             cantidad: item.cantidad,
             type: "timeout" as const,
-            timeout: 0, // Immediate
+            timeout: 0, 
           };
         }
       });
 
-      // Prepare capsy-individual message following documented workflow
       const message = {
         type: "capsy-individual" as const,
         capsyId: pillboxId,
@@ -1332,10 +1582,8 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         JSON.stringify(message, null, 2),
       );
 
-      // Send the message to the server using WebSocket context
       sendMessage(message);
 
-      // Show success message
       showSnackbar(t("configurationSentSuccessfully"));
       console.log("Capsy configuration sent successfully via server WebSocket");
     } catch (error: any) {
@@ -1375,7 +1623,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
       return;
     }
 
-    // Validate that all filled compartments have valid medications
     const invalidMedications = filledCompartments.filter(
       (comp) => !validMedications[comp.id],
     );
@@ -1386,12 +1633,14 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         .join(", ");
       Alert.alert(
         t("error"),
-        `Los compartimientos ${compartmentNumbers} contienen medicamentos no válidos. Por favor, selecciona medicamentos de la lista de sugerencias.`,
+        t("invalidMedicationsInCompartments").replace(
+          "{numbers}",
+          compartmentNumbers,
+        ),
       );
       return;
     }
 
-    // Validate that all filled compartments have at least one time slot
     const compartmentsWithoutSchedule = filledCompartments.filter(
       (comp) => comp.timeSlots.length === 0,
     );
@@ -1402,12 +1651,14 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
         .join(", ");
       Alert.alert(
         t("error"),
-        `Los compartimientos ${compartmentNumbers} requieren al menos un horario de administración.`,
+        t("compartmentsRequireSchedule").replace(
+          "{numbers}",
+          compartmentNumbers,
+        ),
       );
       return;
     }
 
-    // Save configuration
     await savePillboxConfig(selectedPatient, pillboxId, compartments);
 
     const pastillaData = filledCompartments.map((comp) => ({
@@ -1477,7 +1728,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           <Text style={styles.sectionTitle}>{t("pillboxManagement")}</Text>
 
           {savedConfig ? (
-            // Show existing pillbox configuration
             <View>
               <Text style={styles.sectionSubtitle}>
                 {t("pillboxAssignedTo")} {patientName}
@@ -1522,7 +1772,6 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
               </Button>
             </View>
           ) : (
-            // Show pillbox ID input for new assignment
             <View>
               <Text style={styles.sectionSubtitle}>
                 {t("assignPillboxTo")} {patientName}
@@ -1561,11 +1810,10 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
     console.log("👤 Patient name found:", patientName);
     console.log("🔧 Translation function working:", typeof t);
 
-    // Try window.confirm instead of Alert.alert for web compatibility
     console.log("🔔 About to show confirmation dialog...");
 
     const confirmed = window.confirm(
-      `¿Estás seguro de que deseas eliminar la configuración del pastillero de ${patientName}? Toda la configuración se perderá.`,
+      t("confirmDeleteConfiguration").replace("{name}", patientName),
     );
 
     console.log("🔔 Confirmation result:", confirmed);
@@ -1753,7 +2001,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
                   marginLeft: 12,
                 }}
               >
-                Medicamento no válido. Selecciona uno de la lista.
+                {t("invalidMedication")}
               </Text>
             )}
 
@@ -1767,7 +2015,7 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
                   marginLeft: 12,
                 }}
               >
-                ✓ Medicamento válido
+                {t("validMedication")}
               </Text>
             )}
 
@@ -1853,6 +2101,24 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           outlineColor="#ccc"
           activeOutlineColor="#60c4b4"
           placeholder={t("dosePlaceholder")}
+          keyboardType="numeric"
+        />
+
+        <TextInput
+          style={styles.input}
+          label={t("stock")}
+          value={compartment.stock}
+          onChangeText={(value) => {
+            // Allow only numeric values for stock
+            const isNumericOnly = /^[0-9]*$/.test(value);
+            if (isNumericOnly) {
+              updateCompartment(compartment.id, "stock", value);
+            }
+          }}
+          mode="outlined"
+          outlineColor="#ccc"
+          activeOutlineColor="#60c4b4"
+          placeholder={t("stockPlaceholder")}
           keyboardType="numeric"
         />
 
@@ -1979,11 +2245,19 @@ const PillboxSettings: React.FC<PillboxSettingsProps> = () => {
           buttonColor="#ffffff"
           textColor="#60c4b4"
           disabled={
-            !compartmentState.startTime || !compartmentState.intervalHours
+            !compartmentState.startTime ||
+            !compartmentState.intervalHours ||
+            compartment.timeSlots.length > 0
           }
         >
           {t("addTimeSlot")}
         </Button>
+
+        {compartment.timeSlots.length > 0 && (
+          <Text style={styles.infoText}>
+            {t("compartmentAlreadyHasTimeSlot")}
+          </Text>
+        )}
 
         {compartment.timeSlots.map((timeSlot, index) => (
           <View key={index} style={styles.timeSlotContainer}>

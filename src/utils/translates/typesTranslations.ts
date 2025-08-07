@@ -222,6 +222,16 @@ export type typeLanguages = {
   medication: string;
   dose: string;
   dosePlaceholder: string;
+  invalidMedication: string;
+  validMedication: string;
+  errorSavingConfiguration: string;
+  configurationDeletedSuccessfully: string;
+  errorDeletingConfiguration: string;
+  invalidMedicationsInCompartments: string;
+  compartmentsRequireSchedule: string;
+  unknownError: string;
+  confirmDeleteConfiguration: string;
+  userNotIdentified: string;
   sendToPillbox: string;
   connecting: string;
   confirmSend: string;
@@ -247,6 +257,7 @@ export type typeLanguages = {
   invalidTimeFormat: string;
   timeSlotAdded: string;
   timeSlotRemoved: string;
+  compartmentAlreadyHasTimeSlot: string;
   schedulingOptional: string;
   schedulingRequired: string;
   pillboxManagement: string;

@@ -238,6 +238,19 @@ const en: typeLanguages = {
   medication: "Medication",
   dose: "Dose",
   dosePlaceholder: "e.g: 500mg",
+  invalidMedication: "Invalid medication. Please select one from the list.",
+  validMedication: "✓ Valid medication",
+  errorSavingConfiguration: "Error saving configuration",
+  configurationDeletedSuccessfully: "Configuration deleted successfully",
+  errorDeletingConfiguration: "Error deleting configuration",
+  invalidMedicationsInCompartments:
+    "Compartments {numbers} contain invalid medications. Please select medications from the suggestions list.",
+  compartmentsRequireSchedule:
+    "Compartments {numbers} require at least one administration schedule.",
+  unknownError: "Unknown error",
+  confirmDeleteConfiguration:
+    "Are you sure you want to delete the pillbox configuration for {name}? All configuration will be lost.",
+  userNotIdentified: "Error: User not identified",
   sendToPillbox: "Send to Pillbox",
   connecting: "Connecting...",
   confirmSend: "Confirm Send",
@@ -265,6 +278,8 @@ const en: typeLanguages = {
   invalidTimeFormat: "Invalid time format",
   timeSlotAdded: "Time slot added",
   timeSlotRemoved: "Time slot removed",
+  compartmentAlreadyHasTimeSlot:
+    "This compartment already has a time slot. Remove the existing time slot before adding a new one.",
   schedulingOptional: "Schedule configuration is optional",
   schedulingRequired:
     "Schedule configuration is required - please add at least one time slot",

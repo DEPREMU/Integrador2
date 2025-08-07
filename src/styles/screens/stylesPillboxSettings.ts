@@ -154,4 +154,12 @@ export const stylesPillboxSettings = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  infoText: {
+    color: "#f39c12",
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: 5,
+    marginBottom: 10,
+    textAlign: "center",
+  },
 });
